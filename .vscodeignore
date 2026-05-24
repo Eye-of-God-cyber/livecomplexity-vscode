@@ -1,0 +1,12 @@
+.vscode/**
+src/**
+test/**
+node_modules/**
+.gitignore
+eslint.config.mjs
+esbuild.config.mjs
+vitest.config.ts
+tsconfig.json
+.prettierrc
+**/*.ts
+!dist/**

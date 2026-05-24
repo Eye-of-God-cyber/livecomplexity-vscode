@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "pnpm run build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "watch",
+      "type": "shell",
+      "command": "pnpm run watch",
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      }
+    }
+  ]
+}

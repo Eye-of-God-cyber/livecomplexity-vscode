@@ -1,0 +1,84 @@
+{
+  "name": "livecomplexity",
+  "displayName": "LiveComplexity",
+  "description": "Real-time algorithm complexity analysis for C++",
+  "version": "0.0.1",
+  "publisher": "livecomplexity",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Education"
+  ],
+  "activationEvents": [
+    "onLanguage:cpp"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "livecomplexity.showOutput",
+        "title": "LiveComplexity: Show Output"
+      }
+    ],
+    "configuration": {
+      "title": "LiveComplexity",
+      "properties": {
+        "liveComplexity.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable LiveComplexity analysis"
+        },
+        "liveComplexity.debounceMs": {
+          "type": "number",
+          "default": 300,
+          "minimum": 100,
+          "maximum": 2000,
+          "description": "Delay in milliseconds after typing stops before analysis runs"
+        },
+        "liveComplexity.showInlineAnnotations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show complexity annotations inline after loop lines"
+        },
+        "liveComplexity.showHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show complexity explanations on hover"
+        },
+        "liveComplexity.maxFileSizeKB": {
+          "type": "number",
+          "default": 500,
+          "minimum": 50,
+          "maximum": 5000,
+          "description": "Skip analysis for files larger than this size in KB"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "vsce package --no-dependencies"
+  },
+
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.16.0",
+    "vitest": "^3.0.0"
+  }
+}
