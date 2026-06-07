@@ -69,16 +69,18 @@
     "test:watch": "vitest",
     "package": "vsce package --no-dependencies"
   },
-
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/node": "^25.9.1",
     "@types/vscode": "^1.90.0",
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.15.0",
     "prettier": "^3.4.0",
+    "tree-sitter-wasms": "^0.1.13",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.16.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "web-tree-sitter": "^0.20.8"
   }
 }
