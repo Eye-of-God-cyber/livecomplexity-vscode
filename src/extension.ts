@@ -1,36 +1,46 @@
 import * as vscode from 'vscode';
-import { createLogger, Logger } from './utils/logger';
-import { getSettings } from './config/settings';
-
-let logger: Logger;
+import { createLogger } from './utils/logger';
+import { AnalysisCache } from './ui/analysisCache';
+import { DecorationProvider } from './ui/decorationProvider';
+import { HoverProvider } from './ui/hoverProvider';
+import { AnalysisController } from './ui/analysisController';
 
 export function activate(context: vscode.ExtensionContext): void {
-  logger = createLogger('LiveComplexity');
-
+  const logger = createLogger('LiveComplexity');
   const version = context.extension.packageJSON.version as string;
-  logger.log(`LiveComplexity v${version} activated`);
+  logger.log(`LiveComplexity v${version} activating…`);
 
-  const settings = getSettings();
-  if (!settings.enable) {
-    logger.log('Extension is disabled via settings');
-  }
+  // ---------------------------------------------------------------- services
+  const cache = new AnalysisCache();
+  const decorations = new DecorationProvider();
+  const controller = new AnalysisController(context, cache, decorations, logger);
 
-  // Command: show the output channel for debugging
-  const showOutputCmd = vscode.commands.registerCommand('livecomplexity.showOutput', () => {
-    logger.show();
-  });
+  // ---------------------------------------------------------------- commands
+  const showOutputCmd = vscode.commands.registerCommand(
+    'livecomplexity.showOutput',
+    () => logger.show(),
+  );
 
-  // React to configuration changes
-  const configListener = vscode.workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('liveComplexity')) {
-      const updated = getSettings();
-      logger.log(
-        `Settings changed — enable: ${updated.enable}, debounceMs: ${updated.debounceMs}`,
-      );
-    }
-  });
+  // ---------------------------------------------------------------- providers
+  const hoverDisposable = vscode.languages.registerHoverProvider(
+    [{ language: 'cpp' }, { language: 'c' }],
+    new HoverProvider(cache),
+  );
 
-  context.subscriptions.push(showOutputCmd, configListener, { dispose: () => logger.dispose() });
+  // ---------------------------------------------------------------- start
+  controller.activate();
+
+  // ---------------------------------------------------------------- cleanup
+  context.subscriptions.push(
+    showOutputCmd,
+    hoverDisposable,
+    controller,
+    decorations,
+    cache,
+    { dispose: () => logger.dispose() },
+  );
+
+  logger.log('LiveComplexity activated.');
 }
 
 export function deactivate(): void {
