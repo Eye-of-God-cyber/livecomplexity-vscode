@@ -207,4 +207,34 @@ describe('Function-Level Complexity Inference', () => {
     expect(result.functions[0].startLine).toBeGreaterThanOrEqual(0);
     expect(result.functions[0].endLine).toBeGreaterThanOrEqual(result.functions[0].startLine);
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // REGRESSION TESTS — Phase 3A bug fixes (FIX-1, FIX-3)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  it('[FIX-1] Lambda scope: loop inside lambda must NOT inflate outer function complexity', () => {
+    // Before fix: outer was O(n) because the lambda's for-loop leaked into it.
+    // After fix:  outer has no own loops → O(1).
+    const result = analyze(`
+      void outer(int n) {
+        auto f = [](int n) { for(int i=0;i<n;i++){} };
+      }
+    `);
+    expect(result.functions).toHaveLength(1);
+    expect(result.functions[0].name).toBe('outer');
+    expect(result.functions[0].complexity).toBe('O(1)');
+  });
+
+  it('[FIX-3] Comma-expression update: two-pointer `l++,r--` must classify as O(n)', () => {
+    // Before fix: update was comma_expression → Unknown/low.
+    // After fix:  first operand l++ is unwrapped → linear/high → O(n).
+    const result = analyze(`
+      void twoPointer(int n) {
+        for(int l=0,r=n-1;l<r;l++,r--) {}
+      }
+    `);
+    expect(result.functions).toHaveLength(1);
+    expect(result.functions[0].complexity).toBe('O(n)');
+    expect(result.functions[0].confidence).toBe('high');
+  });
 });

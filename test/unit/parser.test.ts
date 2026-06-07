@@ -296,4 +296,24 @@ describe('C++ Parser and AST Utilities', () => {
     // Tree-sitter might or might not recover the function node depending on the error severity.
     // The main assertion is that it doesn't crash during traversal.
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // REGRESSION TEST — Phase 3A bug fix 2 (classifier level)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  it('[FIX-2] Missing condition: `for(i=0;;i++)` must classify as Unknown, not O(n)', () => {
+    // Before fix: classifier saw `i++` update and returned linear/high, ignoring
+    //             that the condition field is absent (i.e. the loop is infinite).
+    // After fix:  returns unknown/low when conditionNode is null but updateNode present.
+    const code = `
+      void fn(int n) {
+        for(int i=0;;i++) { break; }
+      }
+    `;
+    const tree = parseOneOff(code);
+    const result = extractStructure(tree!);
+    expect(result.loops).toHaveLength(1);
+    expect(result.loops[0].classification).toBe('unknown');
+    expect(result.loops[0].confidence).toBe('low');
+  });
 });

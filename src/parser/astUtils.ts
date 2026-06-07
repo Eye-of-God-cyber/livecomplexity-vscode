@@ -162,6 +162,25 @@ export function extractFunctionLoops(fnNode: SyntaxNode): ExtractedLoop[] {
   const loopParentMap = new Map<number, number | null>();
 
   for (const node of loopNodes) {
+    // FIX 1 — Lambda scope leak:
+    // Skip any loop that lives inside a nested lambda or function_definition that
+    // is NOT fnNode itself. Walk up until we find the nearest scope boundary;
+    // if it is not fnNode, this loop belongs to an inner scope and must be ignored.
+    let scopeAncestor: SyntaxNode | null = node.parent;
+    while (scopeAncestor) {
+      if (
+        scopeAncestor.type === 'function_definition' ||
+        scopeAncestor.type === 'lambda_expression'
+      ) {
+        break;
+      }
+      scopeAncestor = scopeAncestor.parent;
+    }
+    // If the nearest scope ancestor is not our function node, skip this loop.
+    if (!scopeAncestor || scopeAncestor.id !== fnNode.id) {
+      continue;
+    }
+
     const type = (node.type === 'for_statement' || node.type === 'for_range_loop') ? 'for' : 'while';
     const { classification, confidence } = classifyLoop(node);
 
@@ -176,7 +195,7 @@ export function extractFunctionLoops(fnNode: SyntaxNode): ExtractedLoop[] {
 
     loopMap.set(node.id, extractedLoop);
 
-    // Walk up to find the nearest enclosing loop, stopping at function or lambda boundaries
+    // Walk up to find the nearest enclosing loop within the same function scope
     let parentLoopId: number | null = null;
     let current: SyntaxNode | null = node.parent;
     while (current) {
@@ -184,7 +203,6 @@ export function extractFunctionLoops(fnNode: SyntaxNode): ExtractedLoop[] {
         parentLoopId = current.id;
         break;
       }
-      // Stop at the function itself or any nested lambda — they are independent scopes
       if (current.type === 'function_definition' || current.type === 'lambda_expression') {
         break;
       }
@@ -194,17 +212,18 @@ export function extractFunctionLoops(fnNode: SyntaxNode): ExtractedLoop[] {
     loopParentMap.set(node.id, parentLoopId);
   }
 
-  // Second pass: wire childLoops
+  // Second pass: wire childLoops.
+  // Iterate only the nodes that passed the scope check (present in loopMap).
   const topLevelLoops: ExtractedLoop[] = [];
-  for (const node of loopNodes) {
-    const extractedLoop = loopMap.get(node.id)!;
-    const parentLoopId = loopParentMap.get(node.id);
+  for (const [nodeId, extractedLoop] of loopMap) {
+    const parentLoopId = loopParentMap.get(nodeId);
 
     if (parentLoopId != null) {
       const parentLoop = loopMap.get(parentLoopId);
       if (parentLoop) {
         parentLoop.childLoops.push(extractedLoop);
       } else {
+        // Parent was skipped (inside a lambda) — treat this as top-level
         topLevelLoops.push(extractedLoop);
       }
     } else {

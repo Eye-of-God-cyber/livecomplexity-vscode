@@ -25,6 +25,22 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     conditionNode = node.childForFieldName('condition');
     initializerNode = node.childForFieldName('initializer');
     updateNode = node.childForFieldName('update');
+
+    // FIX 2 — Missing condition guard:
+    // A for_statement with no condition field (e.g. `for(i=0;;i++)`) is semantically
+    // equivalent to `for(;;)` — it is an infinite loop. Return unknown immediately
+    // so we do not confidently classify it as linear.
+    if (updateNode !== null && conditionNode === null) {
+      return { classification: 'unknown', confidence: 'low' };
+    }
+
+    // FIX 3 — comma_expression update handling:
+    // Two-pointer and similar idioms use `l++, r--` in the update clause, which
+    // tree-sitter parses as a comma_expression. Unwrap to the first operand so
+    // the classifier can identify the increment pattern.
+    if (updateNode && updateNode.type === 'comma_expression') {
+      updateNode = updateNode.child(0) ?? updateNode;
+    }
   } else if (node.type === 'while_statement' || node.type === 'do_statement') {
     conditionNode = node.childForFieldName('condition');
   }
