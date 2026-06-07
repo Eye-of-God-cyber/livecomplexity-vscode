@@ -1,8 +1,8 @@
 {
   "name": "livecomplexity",
-  "displayName": "LiveComplexity",
-  "description": "Real-time algorithm complexity analysis for C++",
-  "version": "0.0.1",
+  "displayName": "LiveComplexity: Real-time Big-O Analysis",
+  "description": "Instantly analyze and display Big-O time complexity for C++ loops and functions inline as you type.",
+  "version": "0.1.0",
   "publisher": "livecomplexity",
   "license": "MIT",
   "engines": {
@@ -10,8 +10,30 @@
   },
   "categories": [
     "Programming Languages",
-    "Education"
+    "Education",
+    "Linters"
   ],
+  "keywords": [
+    "c++",
+    "cpp",
+    "complexity",
+    "big-o",
+    "algorithm",
+    "time complexity"
+  ],
+  "icon": "assets/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/livecomplexity/livecomplexity-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/livecomplexity/livecomplexity-vscode/issues"
+  },
+  "homepage": "https://github.com/livecomplexity/livecomplexity-vscode#readme",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onLanguage:cpp"
   ],
@@ -29,31 +51,31 @@
         "liveComplexity.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Enable or disable LiveComplexity analysis"
+          "description": "Enable or disable LiveComplexity analysis globally across the workspace."
         },
         "liveComplexity.debounceMs": {
           "type": "number",
           "default": 300,
           "minimum": 100,
           "maximum": 2000,
-          "description": "Delay in milliseconds after typing stops before analysis runs"
+          "description": "Delay (ms) before analysis runs after you stop typing. Increase this on slower machines to prevent editor lag."
         },
         "liveComplexity.showInlineAnnotations": {
           "type": "boolean",
           "default": true,
-          "description": "Show complexity annotations inline after loop lines"
+          "description": "Display Big-O time complexity annotations inline at the end of function and loop declarations."
         },
         "liveComplexity.showHover": {
           "type": "boolean",
           "default": true,
-          "description": "Show complexity explanations on hover"
+          "description": "Show detailed mathematical breakdowns of loop complexity when hovering over function or loop signatures."
         },
         "liveComplexity.maxFileSizeKB": {
           "type": "number",
           "default": 500,
           "minimum": 50,
           "maximum": 5000,
-          "description": "Skip analysis for files larger than this size in KB"
+          "description": "Safety limit: Skip AST analysis for files larger than this size (KB) to maintain editor performance."
         }
       }
     }

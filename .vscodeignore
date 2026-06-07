@@ -10,3 +10,10 @@ tsconfig.json
 .prettierrc
 **/*.ts
 !dist/**
+
+# Exclude packaging/dev artifacts
+pnpm-lock.yaml
+pnpm-workspace.yaml
+test_ast.js
+test_wasm.js
+assets/ASSETS_TODO.md
