@@ -16,6 +16,23 @@ export interface ExtractedLoop {
   confidence: LoopConfidence;
   childLoops: ExtractedLoop[];
   customComplexity?: ComplexityNode;
+  /**
+   * The iteration variable name for `for` loops, e.g. `i` in `for(int i=0;i<n;i++)`.
+   * Used by the inference engine to detect step-dependent (harmonic) nested loops.
+   */
+  iteratorVar?: string;
+  /**
+   * If set, this loop's step increment is the named variable from an enclosing loop.
+   * e.g. `j += i` where `i` is an outer loop's iterator → stepDependentOn = 'i'.
+   * Used to trigger harmonic reduction instead of naive multiplication.
+   */
+  stepDependentOn?: string;
+  /**
+   * If true, this inner loop is amortized relative to its parent:
+   * its total work across all outer iterations is bounded by the parent's
+   * complexity, not by parent × self. Used for trial division and two-pointer.
+   */
+  isAmortized?: boolean;
 }
 
 export interface AnalysisResult {
@@ -280,6 +297,13 @@ export function extractFunctionLoops(
       confidence = result.confidence;
     }
 
+    // Extract the iterator variable for 'for' loops so the inference engine
+    // can detect step-dependent (harmonic) relationships with child loops.
+    let iteratorVar: string | undefined;
+    if (!isMacro && !isStl && !isUserCall && node.type === 'for_statement') {
+      iteratorVar = getForIteratorVar(node) ?? undefined;
+    }
+
     const extractedLoop: ExtractedLoop = {
       type,
       startLine: node.startPosition.row,
@@ -287,7 +311,8 @@ export function extractFunctionLoops(
       classification,
       confidence,
       childLoops: [],
-      customComplexity
+      customComplexity,
+      iteratorVar,
     };
 
     loopMap.set(node.id, extractedLoop);
@@ -332,6 +357,12 @@ export function extractFunctionLoops(
   }
 
   // Second pass: wire childLoops.
+  // Build a node-id → AST-node map from loopNodes for O(1) lookups.
+  const astNodeMap = new Map<number, SyntaxNode>();
+  for (const node of loopNodes) {
+    astNodeMap.set(node.id, node);
+  }
+
   // Iterate only the nodes that passed the scope check (present in loopMap).
   const topLevelLoops: ExtractedLoop[] = [];
   for (const [nodeId, extractedLoop] of loopMap) {
@@ -340,6 +371,30 @@ export function extractFunctionLoops(
     if (parentLoopId != null) {
       const parentLoop = loopMap.get(parentLoopId);
       if (parentLoop) {
+        const childAstNode = astNodeMap.get(nodeId);
+        const parentAstNode = astNodeMap.get(parentLoopId);
+
+        // ── Harmonic (step-dependent) check ──────────────────────────────
+        if (parentLoop.iteratorVar && childAstNode?.type === 'for_statement') {
+          if (isStepDependentOn(childAstNode, parentLoop.iteratorVar)) {
+            extractedLoop.stepDependentOn = parentLoop.iteratorVar;
+          }
+        }
+
+        // ── Amortized check ───────────────────────────────────────────────
+        // Only run when not already classified as step-dependent, and only
+        // when the child is a while/do-while inside a for loop parent.
+        if (
+          !extractedLoop.stepDependentOn &&
+          childAstNode &&
+          (childAstNode.type === 'while_statement' || childAstNode.type === 'do_statement') &&
+          parentAstNode?.type === 'for_statement'
+        ) {
+          if (isAmortizedInner(childAstNode, parentAstNode)) {
+            extractedLoop.isAmortized = true;
+          }
+        }
+
         parentLoop.childLoops.push(extractedLoop);
       } else {
         // Parent was skipped (inside a lambda) — treat this as top-level
@@ -351,6 +406,201 @@ export function extractFunctionLoops(
   }
 
   return topLevelLoops;
+}
+
+/**
+ * Extracts the iteration variable name from a for_statement initializer.
+ * Handles both `for(int i=0;...)` (init_declarator) and `for(i=0;...)` (assignment_expression).
+ * Returns null if the variable cannot be determined.
+ */
+export function getForIteratorVar(forNode: SyntaxNode): string | null {
+  const init = forNode.childForFieldName('initializer');
+  if (!init) return null;
+
+  // `for(int i = 0; ...)` — init_declarator
+  const decl = init.descendantsOfType('init_declarator')[0];
+  if (decl) {
+    const declarator = decl.childForFieldName('declarator');
+    if (declarator && declarator.type === 'identifier') return declarator.text;
+  }
+
+  // `for(i = 0; ...)` — plain assignment_expression
+  const assign = init.descendantsOfType('assignment_expression')[0];
+  if (assign) {
+    const lhs = assign.childForFieldName('left');
+    if (lhs && lhs.type === 'identifier') return lhs.text;
+  }
+
+  return null;
+}
+
+/**
+ * Returns true when an inner while/do-while loop is amortized relative to
+ * its parent for loop. Two precise structural patterns are detected:
+ *
+ * Pattern A — Two-pointer:
+ *   The inner while mutates a variable `v` that appears in the inner condition,
+ *   AND the inner condition also references the outer for loop's iteration variable.
+ *   e.g.  for(int r=0; r<n; r++) { while(l < r) l++; }
+ *         mutated=l, inner-cond references outer-iter r → amortized
+ *
+ * Pattern B — Trial division:
+ *   The inner while mutates a variable `v` that appears in the inner condition,
+ *   AND that same `v` also appears in the outer for loop's condition.
+ *   e.g.  for(int i=2; i*i<=n; i++) { while(n%i==0) n/=i; }
+ *         mutated=n, inner-cond n%i==0 contains n, outer-cond i*i<=n contains n → amortized
+ *
+ * Monotonic mutations accepted:
+ *   v++  v--  v+=literal  v-=literal  v/=anything
+ *
+ * False-positive guards:
+ *   - Mutated var must appear in inner condition (prevents y++ when cond is unrelated).
+ *   - Inner condition must reference either the outer iterator (A) or outer-cond var (B).
+ *   - Only activates when parent is a for_statement (not a while nesting another while).
+ */
+export function isAmortizedInner(innerNode: SyntaxNode, parentForNode: SyntaxNode): boolean {
+  // ── 1. Find the monotonic mutation variable in the inner body ─────────────
+  const bodyNode = innerNode.childForFieldName('body');
+  if (!bodyNode) return false;
+
+  let mutatedVar: string | null = null;
+
+  const bodyUpdates = bodyNode.descendantsOfType([
+    'update_expression', 'assignment_expression', 'math_assignment_expression'
+  ]);
+
+  for (const update of bodyUpdates) {
+    if (update.type === 'update_expression') {
+      // v++ or v-- : find any identifier child
+      for (let ci = 0; ci < update.childCount; ci++) {
+        const ch = update.child(ci);
+        if (ch && ch.type === 'identifier') {
+          mutatedVar = ch.text;
+          break;
+        }
+      }
+    } else {
+      // assignment_expression or math_assignment_expression
+      const opNode = update.childForFieldName('operator') ||
+        update.children.find(c => c.type === '+=' || c.type === '-=' || c.type === '/=');
+      if (!opNode) continue;
+      const op = opNode.type;
+
+      const lhs = update.childForFieldName('left');
+      if (!lhs || lhs.type !== 'identifier') continue;
+
+      if (op === '+=' || op === '-=') {
+        // Only accept literal step to guarantee strict monotonicity
+        const rhs = update.childForFieldName('right');
+        if (rhs && rhs.type === 'number_literal' && Number(rhs.text) > 0) {
+          mutatedVar = lhs.text;
+        }
+      } else if (op === '/=') {
+        // Division always reduces n (any divisor > 1 implied by context)
+        mutatedVar = lhs.text;
+      }
+    }
+    if (mutatedVar) break;
+  }
+
+  if (!mutatedVar) return false;
+
+  // ── 2. Mutated variable must appear in inner condition ────────────────────
+  let innerCond: SyntaxNode | null = innerNode.childForFieldName('condition');
+  if (!innerCond) return false;
+  // Unwrap condition_clause: `(expr)` → `expr`
+  if (innerCond.type === 'condition_clause') {
+    for (let ci = 0; ci < innerCond.childCount; ci++) {
+      const ch = innerCond.child(ci);
+      if (ch && ch.type !== '(' && ch.type !== ')') {
+        innerCond = ch;
+        break;
+      }
+    }
+  }
+  if (!innerCond.text.includes(mutatedVar)) return false;
+
+  // ── 3A. Two-pointer: inner condition references outer iterator ────────────
+  const outerIterVar = getForIteratorVar(parentForNode);
+  if (outerIterVar && innerCond.text.includes(outerIterVar)) {
+    return true;
+  }
+
+  // ── 3B. Trial division: mutated variable appears in outer for condition ───
+  const outerCond = parentForNode.childForFieldName('condition');
+  if (outerCond && outerCond.text.includes(mutatedVar)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Returns true when the inner for_statement's update clause increments by
+ * `outerVar` (i.e. `j += outerVar`) AND its initializer begins at an expression
+ * that depends on `outerVar` (e.g. `j = outerVar`, `j = 2*outerVar`,
+ * `j = outerVar*outerVar`).
+ *
+ * False-positive guard: `j += blockSize` where blockSize ≠ outerVar → false.
+ */
+export function isStepDependentOn(innerForNode: SyntaxNode, outerVar: string): boolean {
+  // ── 1. Update clause must be `j += outerVar` ──────────────────────────────
+  const updateNode = innerForNode.childForFieldName('update');
+  if (!updateNode) return false;
+
+  // Unwrap comma_expression (e.g. `j+=i, k++`) — use first operand
+  const effectiveUpdate = updateNode.type === 'comma_expression'
+    ? (updateNode.child(0) ?? updateNode)
+    : updateNode;
+
+  if (
+    effectiveUpdate.type !== 'assignment_expression' &&
+    effectiveUpdate.type !== 'math_assignment_expression'
+  ) return false;
+
+  // Operator must be +=
+  const opNode = effectiveUpdate.childForFieldName('operator') ||
+    effectiveUpdate.children.find(c => c.type === '+=');
+  if (!opNode || opNode.type !== '+=') return false;
+
+  // RHS of the update must be exactly the outer iterator identifier
+  const updateRhs = effectiveUpdate.childForFieldName('right');
+  if (!updateRhs || updateRhs.type !== 'identifier' || updateRhs.text !== outerVar) return false;
+
+  // ── 2. Initializer must reference outerVar ────────────────────────────────
+  const init = innerForNode.childForFieldName('initializer');
+  if (!init) return false;
+
+  // Extract the RHS of the inner initialization value
+  let initValue: SyntaxNode | null = null;
+
+  const decl = init.descendantsOfType('init_declarator')[0];
+  if (decl) {
+    initValue = decl.childForFieldName('value');
+  } else {
+    const assign = init.descendantsOfType('assignment_expression')[0];
+    if (assign) initValue = assign.childForFieldName('right');
+  }
+
+  if (!initValue) return false;
+
+  // Accept: j = outerVar
+  if (initValue.type === 'identifier' && initValue.text === outerVar) return true;
+
+  // Accept: j = k * outerVar  or  j = outerVar * k  (any constant × outerVar)
+  if (initValue.type === 'binary_expression' && initValue.childForFieldName('operator')?.type === '*') {
+    const l = initValue.childForFieldName('left');
+    const r = initValue.childForFieldName('right');
+    if ((l && l.type === 'identifier' && l.text === outerVar) ||
+        (r && r.type === 'identifier' && r.text === outerVar)) {
+      return true;
+    }
+  }
+
+  // Accept: j = outerVar * outerVar  (i*i — Sieve of Eratosthenes init)
+  // This is already covered by the `*` check above if both sides are outerVar.
+
+  return false;
 }
 
 /**

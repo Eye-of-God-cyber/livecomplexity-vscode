@@ -68,7 +68,7 @@ const CASES: Case[] = [
   { id: 14, label: 'i += k (linear variable step, medium confidence)',
     code: wrap('for(int i=0;i<n;i+=k){}'), expected: 'O(n)' },
   { id: 15, label: 'do-while i++',
-    code: wrap('int i=0; do{ i++; }while(i<n);'), expected: 'O(1)' }, // do-while: unknown by design
+    code: wrap('int i=0; do{ i++; }while(i<n);'), expected: 'O(n)' },
   { id: 16, label: 'Linear loop over m',
     code: wrap('for(int i=0;i<m;i++){}'), expected: 'O(n)' },
 
@@ -115,8 +115,8 @@ const CASES: Case[] = [
     code: wrap('for(int k=0;k<n;k++) for(int i=0;i<n;i++) for(int j=0;j<n;j++){}'), expected: 'O(n³)' },
 
   // ── STL iterator loops ────────────────────────────────────────────────────
-  { id: 34, label: 'STL iterator it++ (unknown update)',
-    code: wrap('for(auto it=v.begin();it!=v.end();it++){}'), expected: 'Unknown' },
+  { id: 34, label: 'STL iterator it++',
+    code: wrap('for(auto it=v.begin();it!=v.end();it++){}'), expected: 'O(n)' },
   { id: 35, label: 'STL iterator ++it (prefix, unknown)',
     code: wrap('for(auto it=v.begin();it!=v.end();++it){}'), expected: 'O(n)' },
 
@@ -242,6 +242,120 @@ const CASES: Case[] = [
     code: wrap('for(int i=1;i<n;i*=2) for(int j=1;j<n;j*=2) for(int k=1;k<n;k*=2){}'), expected: 'O(log³ n)' },
   { id: 84, label: 'sort in O(n²) loop -> O(n³ log n)',
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++) sort(all(v));'), expected: 'O(n³ log n)' },
+
+  // ── Dependent-loop (harmonic) patterns ───────────────────────────────────
+
+  // Pattern A: classic harmonic divisor sum — outer O(n), inner j+=i, j=i
+  { id: 85, label: 'Harmonic: outer O(n) inner j=i,j+=i -> O(n log n)',
+    code: wrap('for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=i){}'), expected: 'O(n log n)' },
+
+  // Pattern A variant: j starts at 2*i
+  { id: 86, label: 'Harmonic: outer O(n) inner j=2*i,j+=i -> O(n log n)',
+    code: wrap('for(int i=1;i<=n;i++) for(int j=2*i;j<=n;j+=i){}'), expected: 'O(n log n)' },
+
+  // Pattern B: Sieve of Eratosthenes — outer O(sqrt n), inner j=i*i,j+=i
+  { id: 87, label: 'Sieve: outer O(sqrt n) inner j=i*i,j+=i -> O(n log log n)',
+    code: wrap('for(int i=2;i*i<=n;i++) for(int j=i*i;j<=n;j+=i){}'), expected: 'O(n log log n)' },
+
+  // Pattern B variant: i<=sqrt(n) with j=i*i
+  { id: 88, label: 'Sieve sqrt bound: outer i<=sqrt(n) inner j=i*i,j+=i -> O(n log log n)',
+    code: wrap('for(int i=2;i<=sqrt(n);i++) for(int j=i*i;j<=n;j+=i){}'), expected: 'O(n log log n)' },
+
+  // Pattern C: outer O(n), inner starts at i (same as Pattern A)
+  { id: 89, label: 'Divisor sum: outer O(n) inner j=i,j+=i -> O(n log n)',
+    code: wrap('for(int i=1;i<=n;i++){ int s=0; for(int j=i;j<=n;j+=i) s++; }'), expected: 'O(n log n)' },
+
+  // False positive guard 1: j += blockSize where blockSize != outer iterator -> O(n²)
+  { id: 90, label: 'FP-guard: j+=blockSize (blockSize != i) -> O(n²) not O(n log n)',
+    code: wrap('int blockSize=100; for(int i=0;i<n;i++) for(int j=0;j<n;j+=blockSize){}'), expected: 'O(n²)' },
+
+  // False positive guard 2: j += k where k is an unrelated variable -> O(n²)
+  { id: 91, label: 'FP-guard: j+=k (k != i) -> O(n²) not O(n log n)',
+    code: wrap('int k=3; for(int i=0;i<n;i++) for(int j=0;j<n;j+=k){}'), expected: 'O(n²)' },
+
+  // False positive guard 3: j += constant (not outer var) -> O(n²)
+  { id: 92, label: 'FP-guard: j+=2 (constant step) -> O(n²) not O(n log n)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j+=2){}'), expected: 'O(n²)' },
+
+  // False positive guard 4: j starts at 0 (not a function of i) even though j+=i -> NOT harmonic
+  // j = 0 means init does not depend on i, so not step-dependent
+  { id: 93, label: 'FP-guard: j=0,j+=i (init not dependent on i) -> O(n²)',
+    code: wrap('for(int i=1;i<=n;i++) for(int j=0;j<n;j+=i){}'), expected: 'O(n²)' },
+
+  // Nested harmonic inside outer O(n): should produce O(n log n)
+  { id: 94, label: 'Fenwick build: outer i, inner j+=j&(-j) -> O(n log n)',
+    code: wrap('for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=j&(-j)){}'), expected: 'O(n log n)' },
+
+  // Harmonic sequential to a linear: should take max -> O(n log n)
+  { id: 95, label: 'Harmonic + sequential linear: max = O(n log n)',
+    code: wrap('for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=i){} for(int k=0;k<n;k++){}'), expected: 'O(n log n)' },
+
+  // Sieve with if guard (standard Sieve of Eratosthenes)
+  { id: 96, label: 'Full Sieve with if guard -> O(n log log n)',
+    code: wrap('for(int i=2;i*i<=n;i++){ if(true){ for(int j=i*i;j<=n;j+=i){} } }'), expected: 'O(n log log n)' },
+
+  // ── Phase C: Amortized analysis ─────────────────────────────────────────
+
+  // Trial division: inner while(n%i==0) n/=i is amortized — outer stays O(sqrt n)
+  { id: 97, label: 'Trial division: for(i;i*i<=n;i++) while(n%i==0) n/=i -> O(sqrt n)',
+    code: wrap('for(int i=2;i*i<=n;i++){ while(n%i==0){ n/=i; } }'), expected: 'O(sqrt n)' },
+
+  // Trial division with explicit body block
+  { id: 98, label: 'Trial division (prime factorization body) -> O(sqrt n)',
+    code: 'void factorize(long long n){ for(long long i=2;i*i<=n;i++){ while(n%i==0){ n/=i; } } }',
+    expected: 'O(sqrt n)' },
+
+  // Two-pointer classic: l advances at most n times total
+  { id: 99, label: 'Two-pointer: for(r;r<n;r++) while(l<r) l++ -> O(n)',
+    code: wrap('int l=0; for(int r=0;r<n;r++){ while(l<r){ l++; } }'), expected: 'O(n)' },
+
+  // Two-pointer with <= condition
+  { id: 100, label: 'Two-pointer: while(l<=r) l++ -> O(n)',
+    code: wrap('int l=0; for(int r=0;r<n;r++){ while(l<=r){ l++; } }'), expected: 'O(n)' },
+
+  // Sliding window: same structure as two-pointer
+  { id: 101, label: 'Sliding window: while(l<r) l+=1 -> O(n)',
+    code: wrap('int l=0; for(int r=0;r<n;r++){ while(l<r){ l+=1; } }'), expected: 'O(n)' },
+
+  // Two-pointer with linear body: O(n) outer × amortized inner + O(1) body = O(n)
+  { id: 102, label: 'Two-pointer with body ops -> O(n)',
+    code: wrap('int l=0,s=0; for(int r=0;r<n;r++){ s+=r; while(l<r){ s-=l; l++; } }'), expected: 'O(n)' },
+
+  // False positive guard A: y++ where y is NOT in inner condition -> O(n²)
+  { id: 103, label: 'FP-guard amortized: y++ not in inner cond -> O(n²)',
+    code: wrap('int x=n,y=0; for(int i=0;i<n;i++){ while(x>0){ y++; } }'), expected: 'O(n²)' },
+
+  // False positive guard B: while(flag) with unrelated update (c is not in cond, flag is not monotonic)
+  // -> engine correctly returns O(n²) because c++ is not in the while condition
+  { id: 104, label: 'FP-guard amortized: while(flag) c++ (c not in cond) -> O(n²)',
+    code: wrap('bool flag=true; int c=0; for(int i=0;i<n;i++){ while(flag){ c++; flag=false; } }'), expected: 'O(n²)' },
+
+  // False positive guard C: j<n where j is unrelated to outer bound variable
+  // j is not the outer iterator r, and j does not appear in outer condition i<n
+  { id: 105, label: 'FP-guard amortized: while(j<n) k++ (k not in cond) -> O(n²)',
+    code: wrap('int j=0,k=0; for(int i=0;i<n;i++){ while(j<n){ k++; } }'), expected: 'O(n²)' },
+
+  // Amortized + independent mix: outer O(n), amortized inner + independent inner -> O(n)
+  { id: 106, label: 'Two-pointer + sequential inner O(1) -> O(n)',
+    code: wrap('int l=0; for(int r=0;r<n;r++){ int x=r*2; while(l<r){ l++; } }'), expected: 'O(n)' },
+
+  // Trial division in sqrt loop followed by linear loop: max = O(n)
+  { id: 107, label: 'Trial division + sequential O(n) loop -> O(n)',
+    code: wrap('for(int i=2;i*i<=n;i++){ while(n%i==0){ n/=i; } } for(int k=0;k<n;k++){}'), expected: 'O(n)' },
+
+  // Trial division alone with i<=sqrt(n) bound
+  { id: 108, label: 'Trial division: i<=sqrt(n) bound -> O(sqrt n)',
+    code: wrap('for(int i=2;i<=sqrt(n);i++){ while(n%i==0){ n/=i; } }'), expected: 'O(sqrt n)' },
+
+  // ── Stabilization fixes ───────────────────────────────────────────────────
+
+  // Fix 22: mid = (lo+hi)/2 in update should NOT be logarithmic
+  { id: 109, label: 'Fix 22: mid=(lo+hi)/2 update is linear -> Unknown (due to condition)',
+    code: wrap('int lo=0,hi=n; for(int mid=(lo+hi)/2; lo<=hi; mid=(lo+hi)/2){ lo=mid+1; }'), expected: 'Unknown' },
+
+  // Fix 43: pointer traversal should be unknown
+  { id: 110, label: 'Fix 43: pointer traversal ptr=ptr->next -> Unknown',
+    code: wrap('while(ptr!=nullptr){ ptr=ptr->next; }'), expected: 'Unknown' },
 ];
 
 // ─── vitest suite ───────────────────────────────────────────────────────────

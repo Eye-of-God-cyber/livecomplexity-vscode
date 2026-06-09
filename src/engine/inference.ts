@@ -16,42 +16,46 @@ function getBaseComplexity(classification: LoopClassification | 'custom', custom
   }
   switch (classification) {
     case 'constant':
-      return { power: 0, logPower: 0, isUnknown: false };
+      return { power: 0, logPower: 0, loglogPower: 0, isUnknown: false };
     case 'linear':
-      return { power: 1, logPower: 0, isUnknown: false };
+      return { power: 1, logPower: 0, loglogPower: 0, isUnknown: false };
     case 'logarithmic':
-      return { power: 0, logPower: 1, isUnknown: false };
+      return { power: 0, logPower: 1, loglogPower: 0, isUnknown: false };
     case 'fractional':
-      return { power: 0.5, logPower: 0, isUnknown: false };
+      return { power: 0.5, logPower: 0, loglogPower: 0, isUnknown: false };
     case 'linear_logarithmic':
-      return { power: 1, logPower: 1, isUnknown: false };
+      return { power: 1, logPower: 1, loglogPower: 0, isUnknown: false };
     case 'unknown':
     default:
-      return { power: 0, logPower: 0, isUnknown: true };
+      return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
   }
 }
 
 function multiplyNodes(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
   if (a.isUnknown || b.isUnknown) {
-    return { power: 0, logPower: 0, isUnknown: true };
+    return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
   }
   return {
     power: a.power + b.power,
     logPower: a.logPower + b.logPower,
+    // loglog propagates additively but is clamped: O(n)*O(log log n) = O(n log log n)
+    loglogPower: Math.min(1, a.loglogPower + b.loglogPower),
     isUnknown: false
   };
 }
 
 function maxNode(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
   if (a.isUnknown || b.isUnknown) {
-    return { power: 0, logPower: 0, isUnknown: true };
+    return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
   }
-  // Dominance rule: Higher power wins. If powers are equal, higher logPower wins.
+  // Dominance rule: Higher power wins. If powers equal, higher logPower wins.
+  // loglogPower is a sub-log factor; only compare when all else is equal.
   if (a.power > b.power) return a;
   if (b.power > a.power) return b;
   if (a.logPower > b.logPower) return a;
   if (b.logPower > a.logPower) return b;
-  return a;
+  if (a.loglogPower >= b.loglogPower) return a;
+  return b;
 }
 
 function mergeConfidence(a: ConfidenceLevel, b: ConfidenceLevel): ConfidenceLevel {
@@ -62,6 +66,8 @@ function mergeConfidence(a: ConfidenceLevel, b: ConfidenceLevel): ConfidenceLeve
 
 function formatComplexity(node: ComplexityNode): ComplexityClass {
   if (node.isUnknown) return 'Unknown';
+  // O(n log log n) — raised by harmonic reduction from a fractional outer loop
+  if (node.power === 1 && node.logPower === 0 && node.loglogPower === 1) return 'O(n log log n)';
   if (node.power === 0 && node.logPower === 0) return 'O(1)';
   if (node.power === 0 && node.logPower === 1) return 'O(log n)';
   if (node.power === 0 && node.logPower === 2) return 'O(log² n)';
@@ -87,11 +93,11 @@ export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
       complexity: 'O(1)',
       confidence: 'high',
       explanation: ['No loops detected. Complexity is O(1).'],
-      node: { power: 0, logPower: 0, isUnknown: false }
+      node: { power: 0, logPower: 0, loglogPower: 0, isUnknown: false }
     };
   }
 
-  let overallNode: ComplexityNode = { power: 0, logPower: 0, isUnknown: false };
+  let overallNode: ComplexityNode = { power: 0, logPower: 0, loglogPower: 0, isUnknown: false };
   let overallConfidence: ConfidenceLevel = 'high';
   const explanations: string[] = [];
 
@@ -133,34 +139,141 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
     return { node: baseNode, confidence: currentConfidence, explanation: explanations };
   }
 
-  let maxChildNode: ComplexityNode = { power: 0, logPower: 0, isUnknown: false };
-  let childDomConfidence: ConfidenceLevel = 'high';
+  // Partition children into harmonic, amortized, and independent sets.
+  const harmonicChildren  = loop.childLoops.filter(c => c.stepDependentOn !== undefined);
+  const amortizedChildren = loop.childLoops.filter(c => c.isAmortized === true && c.stepDependentOn === undefined);
+  const independentChildren = loop.childLoops.filter(
+    c => c.stepDependentOn === undefined && c.isAmortized !== true
+  );
 
-  for (const child of loop.childLoops) {
+  // ── Independent children: classic max-then-multiply ──────────────────────
+  let maxIndependentNode: ComplexityNode = { power: 0, logPower: 0, loglogPower: 0, isUnknown: false };
+  let indepConfidence: ConfidenceLevel = 'high';
+  for (const child of independentChildren) {
     const childResult = analyzeLoopHierarchy(child);
-    maxChildNode = maxNode(maxChildNode, childResult.node);
-    childDomConfidence = mergeConfidence(childDomConfidence, childResult.confidence);
+    maxIndependentNode = maxNode(maxIndependentNode, childResult.node);
+    indepConfidence = mergeConfidence(indepConfidence, childResult.confidence);
     explanations.push(...childResult.explanation);
   }
 
-  currentConfidence = mergeConfidence(currentConfidence, childDomConfidence);
-  const multipliedNode = multiplyNodes(baseNode, maxChildNode);
-  
-  if (!multipliedNode.isUnknown && !baseNode.isUnknown && !maxChildNode.isUnknown) {
+  // ── Harmonic children: apply harmonic reduction ───────────────────────────
+  //
+  // Harmonic reduction rule:
+  //   outer O(n)        + inner j+=i, j=f(i) → O(n log n)
+  //   outer O(sqrt n)   + inner j+=i, j=f(i) → O(n log log n)
+  //   outer O(n log n)  + inner j+=i, j=f(i) → O(n log n)  [already n log n dominates]
+  //
+  // The inner loop iterates O(n/i) times per outer iteration.
+  // Σ_{i=1}^{n} n/i = n·H_n = O(n log n).
+  // Σ_{i=1}^{sqrt(n)} n/i = n·H_{sqrt(n)} = O(n log(sqrt(n))) = O(n log log n)  [Sieve-style]
+  //
+  // We choose the result based on the outer loop's classification:
+  //   outer linear (power=1)     → O(n log n)
+  //   outer fractional (power=0.5, i.e. sqrt n) → O(n log log n)
+  //   outer linear_log or higher → fall back to multiply (conservative)
+  //
+  let maxHarmonicNode: ComplexityNode = { power: 0, logPower: 0, loglogPower: 0, isUnknown: false };
+  let harmonicConfidence: ConfidenceLevel = 'high';
+  if (harmonicChildren.length > 0) {
+    // We pick the best (dominant) harmonic child for its own self-complexity,
+    // but we do NOT multiply: instead we apply the summation formula.
+    for (const child of harmonicChildren) {
+      const childResult = analyzeLoopHierarchy(child);
+      harmonicConfidence = mergeConfidence(harmonicConfidence, childResult.confidence);
+      explanations.push(...childResult.explanation);
+    }
+
+    let harmonicResultNode: ComplexityNode;
+    if (baseNode.power === 1 && baseNode.logPower === 0 && baseNode.loglogPower === 0) {
+      // Outer is O(n): Σ(n/i) for i=1..n = O(n log n)
+      harmonicResultNode = { power: 1, logPower: 1, loglogPower: 0, isUnknown: false };
+      explanations.push(
+        `Step-dependent inner loop at line ${harmonicChildren[0].startLine + 1} creates harmonic series: ` +
+        `outer O(n) × Σ(n/i) = O(n log n).`
+      );
+    } else if (baseNode.power === 0.5 && baseNode.logPower === 0 && baseNode.loglogPower === 0) {
+      // Outer is O(sqrt n): Σ(n/i) for i=1..sqrt(n) = O(n log log n)  [Sieve]
+      harmonicResultNode = { power: 1, logPower: 0, loglogPower: 1, isUnknown: false };
+      explanations.push(
+        `Step-dependent inner loop at line ${harmonicChildren[0].startLine + 1} with outer O(sqrt n): ` +
+        `sieve-style harmonic sum = O(n log log n).`
+      );
+    } else {
+      // For other outer complexities, fall back to conservative multiply.
+      // e.g. outer O(n log n) × inner O(n) is still O(n² log n) upper bound.
+      const childSelfResult = analyzeLoopHierarchy(harmonicChildren[0]);
+      harmonicResultNode = multiplyNodes(baseNode, childSelfResult.node);
+      explanations.push(
+        `Step-dependent inner loop at line ${harmonicChildren[0].startLine + 1}: ` +
+        `harmonic reduction not applicable for outer ${formatComplexity(baseNode)}, using conservative multiply.`
+      );
+    }
+    maxHarmonicNode = maxNode(maxHarmonicNode, harmonicResultNode);
+  }
+
+  // ── Amortized children: do NOT multiply outer × inner ────────────────────
+  //
+  // An amortized inner loop's total work across all outer iterations is O(outer).
+  // Therefore it contributes the same as O(1) per outer iteration.
+  // We still recurse into its body (in case it has grandchildren) but we do
+  // NOT include its own complexity in the multiplication.
+  //
+  //   outer O(sqrt n) × amortized-inner: total stays O(sqrt n)  [trial division]
+  //   outer O(n)      × amortized-inner: total stays O(n)        [two-pointer]
+  //
+  let amortizedConfidence: ConfidenceLevel = 'high';
+  for (const child of amortizedChildren) {
+    const childResult = analyzeLoopHierarchy(child);
+    amortizedConfidence = mergeConfidence(amortizedConfidence, childResult.confidence);
+    explanations.push(...childResult.explanation);
+    explanations.push(
+      `Inner loop at line ${child.startLine + 1} is amortized: total work across all outer ` +
+      `iterations is bounded by the outer loop's complexity.`
+    );
+  }
+
+  // ── Combine: independent × outer, harmonic precomputed, amortized = free ─
+  const independentTotal = multiplyNodes(baseNode, maxIndependentNode);
+  currentConfidence = mergeConfidence(
+    currentConfidence,
+    mergeConfidence(indepConfidence, mergeConfidence(harmonicConfidence, amortizedConfidence))
+  );
+
+  let resultNode: ComplexityNode;
+  const hasHarmonic   = harmonicChildren.length > 0;
+  const hasAmortized  = amortizedChildren.length > 0;
+  const hasIndependent = independentChildren.length > 0;
+
+  if (hasHarmonic && !hasIndependent) {
+    resultNode = maxHarmonicNode;
+  } else if (hasHarmonic) {
+    resultNode = maxNode(maxHarmonicNode, independentTotal);
+  } else if (hasAmortized && !hasIndependent) {
+    // Only amortized children — outer contributes its own base complexity.
+    resultNode = baseNode;
+  } else if (hasAmortized) {
+    // Amortized + independent — max(baseNode, independentTotal) = independentTotal dominates.
+    resultNode = maxNode(baseNode, independentTotal);
+  } else {
+    // Pure independent (original behavior).
+    resultNode = independentTotal;
+  }
+
+  if (!resultNode.isUnknown && !baseNode.isUnknown) {
     if (baseNode.power === 0 && baseNode.logPower === 0) {
       explanations.push(`Outer loop at line ${loop.startLine + 1} is constant, so it does not multiply inner complexity.`);
-    } else {
+    } else if (hasIndependent && !hasHarmonic && !hasAmortized) {
+      const innerStr = formatComplexity(maxIndependentNode);
       const outerStr = formatComplexity(baseNode);
-      const innerStr = formatComplexity(maxChildNode);
-      const totalStr = formatComplexity(multipliedNode);
+      const totalStr = formatComplexity(resultNode);
       explanations.push(`Nested ${innerStr} loop inside ${outerStr} loop multiply to produce ${totalStr}.`);
     }
-  } else if (multipliedNode.isUnknown) {
+  } else if (resultNode.isUnknown) {
     explanations.push(`Unknown complexity in nested hierarchy leads to overall Unknown.`);
   }
 
   return {
-    node: multipliedNode,
+    node: resultNode,
     confidence: currentConfidence,
     explanation: explanations
   };
@@ -262,7 +375,7 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
     const fnNode = fnMap.get(name)!;
     
     if (recursiveNodes.has(name)) {
-      functionRegistry.set(name, { power: 0, logPower: 0, isUnknown: true });
+      functionRegistry.set(name, { power: 0, logPower: 0, loglogPower: 0, isUnknown: true });
       results.push({
         name,
         startLine: fnNode.startPosition.row,

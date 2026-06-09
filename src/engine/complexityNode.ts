@@ -1,4 +1,4 @@
-export type ComplexityClass = 'O(1)' | 'O(log n)' | 'O(log² n)' | 'O(log³ n)' | 'O(sqrt n)' | 'O(n)' | 'O(n log n)' | 'O(n sqrt n)' | 'O(n log² n)' | 'O(n²)' | 'O(n² log n)' | 'O(n² sqrt n)' | 'O(n sqrt n log n)' | 'O(n³)' | 'O(n³ log n)' | 'Unknown';
+export type ComplexityClass = 'O(1)' | 'O(log n)' | 'O(log² n)' | 'O(log³ n)' | 'O(sqrt n)' | 'O(n)' | 'O(n log n)' | 'O(n sqrt n)' | 'O(n log² n)' | 'O(n log log n)' | 'O(n²)' | 'O(n² log n)' | 'O(n² sqrt n)' | 'O(n sqrt n log n)' | 'O(n³)' | 'O(n³ log n)' | 'Unknown';
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
 
 export interface ComplexityResult {
@@ -11,10 +11,12 @@ export interface ComplexityResult {
 /**
  * Internal mathematical representation of Big-O complexity.
  * O(n^power * log^logPower n)
+ * loglogPower = 1 encodes the extra log log n factor (e.g. O(n log log n)).
  */
 export interface ComplexityNode {
   power: number;
   logPower: number;
+  loglogPower: number;  // 0 = absent, 1 = O(... log log n)
   isUnknown: boolean;
 }
 

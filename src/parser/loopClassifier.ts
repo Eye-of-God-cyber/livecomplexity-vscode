@@ -397,12 +397,24 @@ function analyzeUpdatePattern(
         if (rhs && rhs.type === 'binary_expression' && rhs.childForFieldName('operator')?.type === '/') {
           const divRhs = rhs.childForFieldName('right');
           if (divRhs && divRhs.type === 'number_literal' && Number(divRhs.text) > 1) {
-            return { classification: 'logarithmic', confidence: 'low' };
+            // Only classify as logarithmic if the LHS variable participates in the numerator
+            const lhsNode = updateNode.childForFieldName('left');
+            const divLhsNode = rhs.childForFieldName('left');
+            if (lhsNode && divLhsNode && divLhsNode.text.includes(lhsNode.text)) {
+              return { classification: 'logarithmic', confidence: 'low' };
+            }
           }
         }
-        return { classification: 'linear', confidence: 'low' };
+        return { classification: 'unknown', confidence: 'low' };
       }
       if (text.includes('*')) return { classification: 'logarithmic', confidence: 'low' };
+
+      // Pointer or field traversal: e.g. x = x->next or x = x.child
+      const rhs = updateNode.childForFieldName('right');
+      if (rhs && (rhs.type === 'field_expression' || rhs.text.includes('->'))) {
+        return { classification: 'unknown', confidence: 'low' };
+      }
+
       return { classification: 'linear', confidence: 'low' };
     }
 
