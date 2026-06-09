@@ -148,7 +148,7 @@ const CASES: Case[] = [
   { id: 46, label: 'Sliding window outer',
     code: wrap('for(int i=0;i<n;i++){}\nfor(int j=0;j<n;j++){}'), expected: 'O(n)' },
   { id: 47, label: 'Sieve outer (i*i<=n, linear guard)',
-    code: wrap('for(int i=2;i*i<=n;i++){}'), expected: 'O(n)' },
+    code: wrap('for(int i=2;i*i<=n;i++){}'), expected: 'O(sqrt n)' },
   { id: 48, label: 'Constant + O(n) sequential',
     code: wrap('for(int i=0;i<10;i++){}\nfor(int j=0;j<n;j++){}'), expected: 'O(n)' },
   { id: 49, label: 'O(n) + O(n log n) sequential – dominance',
@@ -160,11 +160,69 @@ const CASES: Case[] = [
     code: wrap('for(int x=0;x<n;x++){\n  int i=1;\n  while(i<n){ i*=2; }\n}'), expected: 'O(n log n)' },
   { id: 52, label: 'Constant loop inside linear loop (constant ignored)',
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<10;j++){}'), expected: 'O(n)' },
+
+  // ── Macro loops ───────────────────────────────────────────────────────────
+  { id: 53, label: 'Linear macro loop',
+    code: '#define fo(i,n) for(int i=0;i<n;i++)\n' + wrap('fo(i,n){}'), expected: 'O(n)' },
+  { id: 54, label: 'Logarithmic macro loop',
+    code: '#define lg(i,n) for(int i=1;i<n;i*=2)\n' + wrap('lg(i,n){}'), expected: 'O(log n)' },
+  { id: 55, label: 'Nested macro loops',
+    code: '#define fo(i,n) for(int i=0;i<n;i++)\n' + wrap('fo(i,n){\nfo(j,n){}\n}'), expected: 'O(n²)' },
+  { id: 56, label: 'Non-loop macro',
+    code: '#define custom(x) strangeThing(x)\n' + wrap('custom(n);'), expected: 'O(1)' },
+
+  // ── STL calls ─────────────────────────────────────────────────────────────
+  { id: 57, label: 'sort(all(v))',
+    code: wrap('sort(all(v));'), expected: 'O(n log n)' },
+  { id: 58, label: 'for(...) sort(all(v))',
+    code: wrap('for(int i=0;i<n;i++) sort(all(v));'), expected: 'O(n² log n)' },
+  { id: 59, label: 'lower_bound(...)',
+    code: wrap('lower_bound(v.begin(), v.end(), x);'), expected: 'O(log n)' },
+  { id: 60, label: 'reverse(...)',
+    code: wrap('reverse(all(v));'), expected: 'O(n)' },
+  { id: 61, label: 'sort(all(a)); sort(all(b));',
+    code: wrap('sort(all(a)); sort(all(b));'), expected: 'O(n log n)' },
+  { id: 62, label: 'log loop containing sort',
+    code: wrap('for(int i=1;i<n;i*=2) sort(all(v));'), expected: 'O(n log² n)' },
+
+  // ── Function Call Propagation ─────────────────────────────────────────────
+  { id: 63, label: 'A -> O(n)',
+    code: 'void A(int n) { for(int i=0;i<n;i++){} }', expected: 'O(n)' },
+  { id: 64, label: 'B calling A -> O(n)',
+    code: 'void B(int n) { A(n); } void A(int n) { for(int i=0;i<n;i++){} }', expected: 'O(n)' },
+  { id: 65, label: 'solve calling A(n²) and sort -> O(n²)',
+    code: 'void solve(int n) { A(n); sort(all(v)); } void A(int n) { for(int i=0;i<n;i++) for(int j=0;j<n;j++){} }', expected: 'O(n²)' },
+  { id: 66, label: 'for(...) A(n) -> O(n²)',
+    code: 'void solve(int n) { for(int i=0;i<n;i++) A(n); } void A(int n) { for(int i=0;i<n;i++){} }', expected: 'O(n²)' },
+  { id: 67, label: 'A -> B -> C propagation chain',
+    code: 'void A(int n) { B(n); } void B(int n) { C(n); } void C(int n) { for(int i=0;i<n;i++){} }', expected: 'O(n)' },
+  { id: 68, label: 'Direct recursion',
+    code: 'void recurse(int n) { if(n>0) recurse(n-1); }', expected: 'Unknown' },
+  { id: 69, label: 'Mutual recursion',
+    code: 'void A(int n) { B(n); } void B(int n) { A(n); }', expected: 'Unknown' },
+
+  // ── Bitwise Logarithmic Loops ───────────────────────────────────────────────
+  { id: 70, label: 'for(int i=1;i<n;i<<=1) -> O(log n)',
+    code: wrap('for(int i=1;i<n;i<<=1){}'), expected: 'O(log n)' },
+  { id: 71, label: 'for(int i=n;i>0;i>>=1) -> O(log n)',
+    code: wrap('for(int i=n;i>0;i>>=1){}'), expected: 'O(log n)' },
+  { id: 72, label: 'while(n){ n >>= 1; } -> O(log n)',
+    code: wrap('while(n>0){ n >>= 1; }'), expected: 'O(log n)' },
+
+  // ── Square Root Loops ───────────────────────────────────────────────────────
+  { id: 73, label: 'for(long long i=1;i*i<=n;i++) -> O(sqrt n)',
+    code: wrap('for(long long i=1;i*i<=n;i++){}'), expected: 'O(sqrt n)' },
+  { id: 74, label: 'for(long long i=2;i*i<x;i++) -> O(sqrt n)',
+    code: wrap('for(long long i=2;i*i<x;i++){}'), expected: 'O(sqrt n)' },
+  { id: 75, label: 'nested sqrt loop inside linear loop -> O(n sqrt n)',
+    code: wrap('for(int i=0;i<n;i++) { for(int j=1;j*j<=n;j++){} }'), expected: 'O(n sqrt n)' },
+  { id: 76, label: 'i <= sqrt(n)',
+    code: wrap('for(int i=1; i<=sqrt(n); i++) {}'), expected: 'O(sqrt n)' },
 ];
 
 // ─── vitest suite ───────────────────────────────────────────────────────────
 
-describe('Validation Suite — 52 patterns', () => {
+describe('Validation Suite — 76 patterns', () => {
   beforeAll(async () => {
     await initParser(distDir);
   });

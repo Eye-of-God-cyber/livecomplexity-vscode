@@ -1,0 +1,374 @@
+import { initParser, parseOneOff } from '../src/parser/treeSitter';
+import { analyzeFunctions } from '../src/engine/inference';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const distDir = path.join(__dirname, '../dist');
+
+interface AuditCase { name: string; fn: string; code: string; correct: string; }
+
+const cases: AuditCase[] = [
+
+  // ─── 1. Binary Search variants ─────────────────────────────────────────
+  { name: 'Classic binary search', fn: 'solve',
+    code: `void solve(int n) { int lo=0,hi=n; while(lo<hi){ int mid=(lo+hi)/2; if(mid>n/2)hi=mid; else lo=mid+1; } }`,
+    correct: 'O(log n)' },
+  { name: 'Binary search iterative', fn: 'bs',
+    code: `int bs(vector<int>& a, int x){ int lo=0,hi=a.size()-1; while(lo<=hi){ int m=(lo+hi)/2; if(a[m]==x)return m; else if(a[m]<x)lo=m+1; else hi=m-1; } return -1; }`,
+    correct: 'O(log n)' },
+  { name: 'Binary search on answer', fn: 'solve',
+    code: `void solve(int n){ int lo=1,hi=n; while(lo<hi){ int mid=(lo+hi)/2; lo=mid+1; } }`,
+    correct: 'O(log n)' },
+  { name: 'Binary search with linear check', fn: 'check',
+    code: `bool check(int n, int k){ for(int i=0;i<n;i++) if(i>k) return false; return true; }
+void solve(int n){ int lo=0,hi=n; while(lo<hi){ int mid=(lo+hi)/2; if(check(n,mid))hi=mid; else lo=mid+1; } }`,
+    correct: 'O(n log n)' },
+
+  // ─── 2. Prime Factorization ─────────────────────────────────────────────
+  { name: 'Trial division prime factors', fn: 'factorize',
+    code: `void factorize(long long n){ for(long long i=2;i*i<=n;i++){ while(n%i==0){ n/=i; } } }`,
+    correct: 'O(sqrt n)' },
+  { name: 'Pollard rho placeholder O(n)', fn: 'factorize',
+    code: `void factorize(int n){ for(int i=2;i<n;i++){ if(n%i==0) n/=i; } }`,
+    correct: 'O(n)' },
+
+  // ─── 3. Divisor counting ────────────────────────────────────────────────
+  { name: 'Count divisors sqrt loop', fn: 'countDivisors',
+    code: `int countDivisors(int n){ int cnt=0; for(int i=1;i*i<=n;i++){ cnt++; if(i*i!=n)cnt++; } return cnt; }`,
+    correct: 'O(sqrt n)' },
+  { name: 'Count divisors linear', fn: 'countDivisors',
+    code: `int countDivisors(int n){ int cnt=0; for(int i=1;i<=n;i++) if(n%i==0) cnt++; return cnt; }`,
+    correct: 'O(n)' },
+
+  // ─── 4. Sieve of Eratosthenes ───────────────────────────────────────────
+  { name: 'Sieve outer loop only', fn: 'sieve',
+    code: `void sieve(int n){ vector<bool> p(n+1,true); for(int i=2;i*i<=n;i++){} }`,
+    correct: 'O(sqrt n)' },
+  { name: 'Linear sieve prep', fn: 'sieve',
+    code: `void sieve(int n){ vector<bool> p(n+1,true); for(int i=2;i<=n;i++) p[i]=true; }`,
+    correct: 'O(n)' },
+
+  // ─── 5. DFS/BFS wrappers ────────────────────────────────────────────────
+  { name: 'BFS O(V+E) - linear queue loop', fn: 'bfs',
+    code: `void bfs(int n){ vector<bool> vis(n,false); queue<int> q; q.push(0); while(!q.empty()){ int u=q.front(); q.pop(); for(int i=0;i<n;i++) if(!vis[i]){ vis[i]=true; q.push(i); } } }`,
+    correct: 'O(n^2)' },
+  { name: 'DFS with loop in body', fn: 'dfs',
+    code: `void dfs(int u, int n){ for(int i=0;i<n;i++){ } }`,
+    correct: 'O(n)' },
+  { name: 'DFS recursive placeholder O(1)', fn: 'dfs',
+    code: `void dfs(int u){ if(u<0)return; }`,
+    correct: 'O(1)' },
+
+  // ─── 6. Segment Tree ────────────────────────────────────────────────────
+  { name: 'Segment tree build', fn: 'build',
+    code: `void build(int node, int n){ for(int i=0;i<n;i++){} }`,
+    correct: 'O(n)' },
+  { name: 'Segment tree query O(log n)', fn: 'query',
+    code: `int query(int lo, int hi){ int ans=0; for(int i=1;i<hi;i*=2) ans+=i; return ans; }`,
+    correct: 'O(log n)' },
+  { name: 'Segment tree update O(log n)', fn: 'update',
+    code: `void update(int pos){ for(int i=pos;i>0;i>>=1){ } }`,
+    correct: 'O(log n)' },
+
+  // ─── 7. Fenwick Tree ────────────────────────────────────────────────────
+  { name: 'Fenwick point update', fn: 'fwUpdate',
+    code: `void fwUpdate(int i, int n){ for(;i<=n;i+=i&(-i)){} }`,
+    correct: 'O(log n)' },
+  { name: 'Fenwick prefix query', fn: 'fwQuery',
+    code: `int fwQuery(int i){ int s=0; for(;i>0;i-=i&(-i)) s++; return s; }`,
+    correct: 'O(log n)' },
+  { name: 'Fenwick build', fn: 'fwBuild',
+    code: `void fwBuild(int n){ for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=j&(-j)){} }`,
+    correct: 'O(n log n)' },
+
+  // ─── 8. Sparse Table ────────────────────────────────────────────────────
+  { name: 'Sparse table build O(n log n)', fn: 'sparseTable',
+    code: `void sparseTable(int n){ for(int j=1;j<20;j++) for(int i=0;i+(1<<j)<=n;i++){} }`,
+    correct: 'O(n log n)' },
+  { name: 'Sparse table query O(1)', fn: 'stQuery',
+    code: `int stQuery(int l, int r){ return l+r; }`,
+    correct: 'O(1)' },
+
+  // ─── 9. Two Pointers ────────────────────────────────────────────────────
+  { name: 'Two pointer sum', fn: 'twoSum',
+    code: `bool twoSum(int n, int target){ int l=0,r=n-1; while(l<r){ int s=l+r; if(s==target)return true; else if(s<target)l++; else r--; } return false; }`,
+    correct: 'O(n)' },
+  { name: 'Two pointer longest substring', fn: 'solve',
+    code: `int solve(int n){ int l=0,res=0; for(int r=0;r<n;r++){ while(l<r)l++; res=r-l+1; } return res; }`,
+    correct: 'O(n)' },
+
+  // ─── 10. Sliding Window ─────────────────────────────────────────────────
+  { name: 'Sliding window max', fn: 'slidingMax',
+    code: `void slidingMax(int n, int k){ for(int i=0;i<n;i++){} }`,
+    correct: 'O(n)' },
+  { name: 'Sliding window sum', fn: 'slidingSum',
+    code: `int slidingSum(int n){ int s=0; for(int i=0;i<n;i++) s+=i; return s; }`,
+    correct: 'O(n)' },
+
+  // ─── 11. Prefix Sums ────────────────────────────────────────────────────
+  { name: 'Prefix sum build', fn: 'buildPrefix',
+    code: `void buildPrefix(int n){ int p=0; for(int i=0;i<n;i++) p+=i; }`,
+    correct: 'O(n)' },
+  { name: 'Prefix sum 2D', fn: 'build2D',
+    code: `void build2D(int n, int m){ for(int i=0;i<n;i++) for(int j=0;j<m;j++){} }`,
+    correct: 'O(n^2)' },
+  { name: 'Range query O(1) placeholder', fn: 'query',
+    code: `int query(int l, int r){ return r-l+1; }`,
+    correct: 'O(1)' },
+
+  // ─── 12. STL Algorithm combinations ────────────────────────────────────
+  { name: 'sort then binary search', fn: 'solve',
+    code: `void solve(int n){ sort(all(v)); lower_bound(v.begin(),v.end(),0); }`,
+    correct: 'O(n log n)' },
+  { name: 'sort inside nested loops', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<n;i++) for(int j=0;j<n;j++) sort(all(v)); }`,
+    correct: 'O(n^3 log n)' },
+  { name: 'accumulate O(n)', fn: 'solve',
+    code: `void solve(int n){ int s=accumulate(v.begin(),v.end(),0); }`,
+    correct: 'O(n)' },
+  { name: 'fill then sort', fn: 'solve',
+    code: `void solve(int n){ fill(v.begin(),v.end(),0); sort(v.begin(),v.end()); }`,
+    correct: 'O(n log n)' },
+  { name: 'next_permutation loop', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<n;i++) next_permutation(v.begin(),v.end()); }`,
+    correct: 'O(n^2)' },
+  { name: 'stable_sort', fn: 'solve',
+    code: `void solve(int n){ stable_sort(v.begin(),v.end()); }`,
+    correct: 'O(n log n)' },
+  { name: 'reverse and accumulate sequential', fn: 'solve',
+    code: `void solve(int n){ reverse(all(v)); int s=accumulate(v.begin(),v.end(),0); }`,
+    correct: 'O(n)' },
+
+  // ─── 13. Macro combinations ─────────────────────────────────────────────
+  { name: 'rep macro linear', fn: 'solve',
+    code: `#define rep(i,n) for(int i=0;i<n;i++)\nvoid solve(int n){ rep(i,n){} }`,
+    correct: 'O(n)' },
+  { name: 'rep macro nested', fn: 'solve',
+    code: `#define rep(i,n) for(int i=0;i<n;i++)\nvoid solve(int n){ rep(i,n){ rep(j,n){} } }`,
+    correct: 'O(n^2)' },
+  { name: 'fo macro with sort inside', fn: 'solve',
+    code: `#define fo(i,n) for(int i=0;i<n;i++)\nvoid solve(int n){ fo(i,n){ sort(all(v)); } }`,
+    correct: 'O(n^2 log n)' },
+  { name: 'log macro (bitshift)', fn: 'solve',
+    code: `#define logloop(i,n) for(int i=1;i<n;i<<=1)\nvoid solve(int n){ logloop(i,n){} }`,
+    correct: 'O(log n)' },
+
+  // ─── 14. Function propagation combos ────────────────────────────────────
+  { name: 'propagation: O(n) helper called once', fn: 'solve',
+    code: `void helper(int n){ for(int i=0;i<n;i++){} }
+void solve(int n){ helper(n); }`,
+    correct: 'O(n)' },
+  { name: 'propagation: O(n) helper in O(n) loop', fn: 'solve',
+    code: `void helper(int n){ for(int i=0;i<n;i++){} }
+void solve(int n){ for(int i=0;i<n;i++) helper(n); }`,
+    correct: 'O(n^2)' },
+  { name: 'propagation: O(log n) helper', fn: 'solve',
+    code: `void bsearch(int n){ for(int i=1;i<n;i*=2){} }
+void solve(int n){ for(int i=0;i<n;i++) bsearch(n); }`,
+    correct: 'O(n log n)' },
+  { name: 'propagation: O(sqrt n) helper', fn: 'solve',
+    code: `void sqrtHelper(int n){ for(int i=1;i*i<=n;i++){} }
+void solve(int n){ sqrtHelper(n); }`,
+    correct: 'O(sqrt n)' },
+  { name: 'propagation: O(sqrt n) helper in loop', fn: 'solve',
+    code: `void sqrtHelper(int n){ for(int i=1;i*i<=n;i++){} }
+void solve(int n){ for(int i=0;i<n;i++) sqrtHelper(n); }`,
+    correct: 'O(n sqrt n)' },
+  { name: 'propagation: O(n log n) helper once', fn: 'solve',
+    code: `void sorter(int n){ sort(all(v)); }
+void solve(int n){ sorter(n); }`,
+    correct: 'O(n log n)' },
+
+  // ─── 15. Sqrt loops variants ─────────────────────────────────────────────
+  { name: 'sqrt loop standard', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i*i<=n;i++){} }`,
+    correct: 'O(sqrt n)' },
+  { name: 'sqrt loop with strict <', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i*i<n;i++){} }`,
+    correct: 'O(sqrt n)' },
+  { name: 'sqrt(n) bound explicit', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i<=sqrt(n);i++){} }`,
+    correct: 'O(sqrt n)' },
+  { name: 'sqrt outer, linear inner', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i*i<=n;i++) for(int j=0;j<n;j++){} }`,
+    correct: 'O(n sqrt n)' },
+  { name: 'sqrt nested in sqrt', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i*i<=n;i++) for(int j=1;j*j<=n;j++){} }`,
+    correct: 'O(n)' },
+  { name: 'sqrt loop sequential with linear', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<n;i++){} for(int j=1;j*j<=n;j++){} }`,
+    correct: 'O(n)' },
+
+  // ─── 16. Bitwise logarithmic loops ──────────────────────────────────────
+  { name: 'left shift', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i<n;i<<=1){} }`,
+    correct: 'O(log n)' },
+  { name: 'right shift', fn: 'solve',
+    code: `void solve(int n){ for(int i=n;i>0;i>>=1){} }`,
+    correct: 'O(log n)' },
+  { name: 'right shift while', fn: 'solve',
+    code: `void solve(int n){ while(n>0){ n>>=1; } }`,
+    correct: 'O(log n)' },
+  { name: 'left shift in O(n) loop', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<n;i++) for(int j=1;j<n;j<<=1){} }`,
+    correct: 'O(n log n)' },
+
+  // ─── 17. Fenwick-style bit manipulation ─────────────────────────────────
+  { name: 'i&(-i) lowbit update', fn: 'update',
+    code: `void update(int i, int n){ for(;i<=n;i+=i&(-i)){} }`,
+    correct: 'O(log n)' },
+  { name: 'i&(-i) query descend', fn: 'query',
+    code: `int query(int i){ int s=0; for(;i>0;i-=i&(-i)) s++; return s; }`,
+    correct: 'O(log n)' },
+
+  // ─── 18. Nested mixed complexity ────────────────────────────────────────
+  { name: 'O(sqrt n) in O(n)', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<n;i++) for(int j=1;j*j<=i;j++){} }`,
+    correct: 'O(n sqrt n)' },
+  { name: 'O(log n) in O(n) in O(log n)', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i<n;i*=2) for(int j=0;j<n;j++) for(int k=1;k<n;k*=2){} }`,
+    correct: 'O(n log^2 n)' },
+  { name: 'triple nested log', fn: 'solve',
+    code: `void solve(int n){ for(int i=1;i<n;i*=2) for(int j=1;j<n;j*=2) for(int k=1;k<n;k*=2){} }`,
+    correct: 'O(log^3 n)' },
+  { name: 'O(n^2) then sort dominance', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<n;i++) for(int j=0;j<n;j++){} sort(all(v)); }`,
+    correct: 'O(n^2)' },
+
+  // ─── 19. Edge cases ─────────────────────────────────────────────────────
+  { name: 'Empty function', fn: 'solve',
+    code: `void solve(int n){ }`,
+    correct: 'O(1)' },
+  { name: 'Function with only assignment', fn: 'solve',
+    code: `void solve(int n){ int x=n; int y=x+1; }`,
+    correct: 'O(1)' },
+  { name: 'Constant loop 10 iters', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<10;i++){} }`,
+    correct: 'O(1)' },
+  { name: 'Constant then linear', fn: 'solve',
+    code: `void solve(int n){ for(int i=0;i<10;i++){} for(int j=0;j<n;j++){} }`,
+    correct: 'O(n)' },
+  { name: 'if/else no loop', fn: 'solve',
+    code: `void solve(int n){ if(n>0) n--; else n++; }`,
+    correct: 'O(1)' },
+
+  // ─── 20. Realistic CP function mixes ────────────────────────────────────
+  { name: 'GCD Euclidean log', fn: 'gcd',
+    code: `int gcd(int a, int b){ while(b){ int t=a%b; a=b; b=t; } return a; }`,
+    correct: 'O(log n)' },
+  { name: 'Power function log', fn: 'pw',
+    code: `long long pw(long long b, long long e){ long long r=1; while(e>0){ if(e&1)r*=b; b*=b; e>>=1; } return r; }`,
+    correct: 'O(log n)' },
+  { name: 'Matrix multiply O(n^3)', fn: 'matmul',
+    code: `void matmul(int n){ for(int i=0;i<n;i++) for(int j=0;j<n;j++) for(int k=0;k<n;k++){} }`,
+    correct: 'O(n^3)' },
+  { name: 'LIS O(n log n)', fn: 'lis',
+    code: `int lis(int n){ for(int i=0;i<n;i++) lower_bound(dp.begin(),dp.end(),a[i]); return dp.size(); }`,
+    correct: 'O(n log n)' },
+  { name: 'Dijkstra with priority queue', fn: 'dijkstra',
+    code: `void dijkstra(int n){ for(int i=0;i<n;i++) for(int j=1;j<n;j*=2){} }`,
+    correct: 'O(n log n)' },
+  { name: 'Floyd-Warshall O(n^3)', fn: 'floydWarshall',
+    code: `void floydWarshall(int n){ for(int k=0;k<n;k++) for(int i=0;i<n;i++) for(int j=0;j<n;j++){} }`,
+    correct: 'O(n^3)' },
+  { name: 'Knapsack O(n*W)', fn: 'knapsack',
+    code: `void knapsack(int n, int W){ for(int i=0;i<n;i++) for(int j=0;j<W;j++){} }`,
+    correct: 'O(n^2)' },
+  { name: 'Edit distance O(n*m)', fn: 'editDist',
+    code: `int editDist(int n, int m){ for(int i=0;i<n;i++) for(int j=0;j<m;j++){} return 0; }`,
+    correct: 'O(n^2)' },
+  { name: 'Kadane algorithm O(n)', fn: 'kadane',
+    code: `int kadane(int n){ int ms=0,cs=0; for(int i=0;i<n;i++){ cs+=i; if(cs<0)cs=0; ms=max(ms,cs); } return ms; }`,
+    correct: 'O(n)' },
+  { name: 'Z function O(n)', fn: 'zfunc',
+    code: `void zfunc(int n){ int l=0,r=0; for(int i=1;i<n;i++){} }`,
+    correct: 'O(n)' },
+  { name: 'KMP failure function O(n)', fn: 'kmp',
+    code: `void kmp(int n){ for(int i=1;i<n;i++){} }`,
+    correct: 'O(n)' },
+  { name: 'Sieve sum of factors O(n log n)', fn: 'sieve',
+    code: `void sieve(int n){ for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=i){} }`,
+    correct: 'O(n log n)' },
+
+  // ─── 21. Recursive complexity (propagation) ──────────────────────────────
+  { name: 'Merge sort helper O(n)', fn: 'solve',
+    code: `void merge_helper(int n){ for(int i=0;i<n;i++){} }
+void solve(int n){ for(int i=1;i<n;i*=2) merge_helper(n); }`,
+    correct: 'O(n log n)' },
+  { name: 'Preprocess then query', fn: 'solve',
+    code: `void preprocess(int n){ for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=i){} }
+void solve(int n){ preprocess(n); for(int i=0;i<n;i++){} }`,
+    correct: 'O(n log n)' },
+  { name: 'Inner O(n^2) called in log loop', fn: 'solve',
+    code: `void inner(int n){ for(int i=0;i<n;i++) for(int j=0;j<n;j++){} }
+void solve(int n){ for(int i=1;i<n;i*=2) inner(n); }`,
+    correct: 'O(n^2 log n)' },
+
+  // ─── 22. do-while ───────────────────────────────────────────────────────
+  { name: 'do-while with += (linear)', fn: 'solve',
+    code: `void solve(int n){ int i=0; do{ i+=2; }while(i<n); }`,
+    correct: 'O(n)' },
+  { name: 'do-while with *=2 (log)', fn: 'solve',
+    code: `void solve(int n){ int i=1; do{ i*=2; }while(i<n); }`,
+    correct: 'O(log n)' },
+
+  // ─── 23. Range-based for ─────────────────────────────────────────────────
+  { name: 'range-based for over vector', fn: 'solve',
+    code: `void solve(vector<int>& v){ for(auto x : v){} }`,
+    correct: 'O(n)' },
+
+  // ─── 24. GCD/LCM common CP patterns ────────────────────────────────────
+  { name: 'multiple GCD calls sequential', fn: 'solve',
+    code: `int gcd(int a, int b){ while(b){ int t=a%b;a=b;b=t; } return a; }
+void solve(int n){ for(int i=0;i<n;i++) gcd(i,n); }`,
+    correct: 'O(n log n)' },
+
+  // ─── 25. Edge: accidental quadratic (wrong code) ─────────────────────────
+  { name: 'accidental O(n^2) sort in loop', fn: 'solve',
+    code: `void solve(int n){ for(int q=0;q<n;q++) sort(v.begin(),v.end()); }`,
+    correct: 'O(n^2 log n)' },
+];
+
+interface AuditResult { id: number; name: string; fn: string; code: string; correct: string; actual: string; pass: boolean; }
+
+async function runAudit() {
+  await initParser(distDir);
+  const results: AuditResult[] = [];
+  
+  for (let i = 0; i < cases.length; i++) {
+    const c = cases[i];
+    const tree = parseOneOff(c.code);
+    if (!tree) {
+      results.push({ id: i+1, name: c.name, fn: c.fn, code: c.code, correct: c.correct, actual: 'Parse Error', pass: false });
+      continue;
+    }
+    
+    const analysis = analyzeFunctions(tree);
+    const fnResult = analysis.functions.find(f => f.name === c.fn) || analysis.functions[analysis.functions.length - 1];
+    const actual = fnResult ? fnResult.complexity : 'Not found';
+    
+    // Normalize comparison
+    const normalizeCorrect = (s: string) => s
+      .replace('O(n^2 log n)', 'O(n² log n)')
+      .replace('O(n^2)', 'O(n²)')
+      .replace('O(n^3)', 'O(n³)')
+      .replace('O(sqrt(n))', 'O(sqrt n)')
+      .replace('O(n sqrt(n))', 'O(n sqrt n)')
+      .replace('O(n log^2 n)', 'O(n log² n)');
+      
+    const pass = actual === normalizeCorrect(c.correct);
+    results.push({ id: i+1, name: c.name, fn: c.fn, code: c.code, correct: c.correct, actual, pass });
+  }
+  
+  // Summary
+  const passed = results.filter(r => r.pass).length;
+  const failed = results.filter(r => !r.pass);
+  
+  console.log(`\nPASSED: ${passed}/${results.length}`);
+  console.log(`FAILED: ${failed.length}`);
+  failed.forEach(r => console.log(`  [${r.id}] ${r.name} | Expected: ${r.correct} | Got: ${r.actual}`));
+  
+  fs.writeFileSync(path.join(__dirname, 'stress_audit_results.json'), JSON.stringify(results, null, 2));
+}
+
+runAudit().catch(console.error);

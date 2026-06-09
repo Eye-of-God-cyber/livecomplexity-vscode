@@ -1,0 +1,170 @@
+[
+  {
+    "name": "Different bounds (n, m)",
+    "code": "void solve(int n, int m) { for(int i=0;i<n;i++) { for(int j=0;j<m;j++) {} } }",
+    "correct": "O(n*m)",
+    "actual": "O(n²)"
+  },
+  {
+    "name": "Three variables (n, m, k)",
+    "code": "void solve(int n, int m, int k) { for(int i=0;i<n;i++) for(int j=0;j<m;j++) for(int l=0;l<k;l++) {} }",
+    "correct": "O(n*m*k)",
+    "actual": "O(n³)"
+  },
+  {
+    "name": "Sequential different variables",
+    "code": "void solve(int n, int m) { for(int i=0;i<n;i++){} for(int j=0;j<m;j++){} }",
+    "correct": "O(n + m)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "Helper function inside loop",
+    "code": "void helper(int m) { for(int i=0;i<m;i++){} } void solve(int n) { for(int i=0;i<n;i++) helper(n); }",
+    "correct": "O(n^2)",
+    "actual": "O(n²)"
+  },
+  {
+    "name": "Multiple helper calls",
+    "code": "void h1(int n) { for(int i=0;i<n;i++){} } void h2(int n) { for(int i=0;i<n;i++){} } void solve(int n) { h1(n); h2(n); }",
+    "correct": "O(n)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "Deep call chain",
+    "code": "void f1(int n){ for(int i=0;i<n;i++){} } void f2(int n){ f1(n); } void f3(int n){ f2(n); } void solve(int n){ f3(n); }",
+    "correct": "O(n)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "sort inside loop",
+    "code": "void solve(int n) { for(int i=0;i<n;i++) sort(v.begin(), v.end()); }",
+    "correct": "O(n^2 log n)",
+    "actual": "O(n² log n)"
+  },
+  {
+    "name": "lower_bound inside loop",
+    "code": "void solve(int n) { for(int i=0;i<n;i++) auto it = lower_bound(v.begin(), v.end(), i); }",
+    "correct": "O(n log n)",
+    "actual": "O(n log n)"
+  },
+  {
+    "name": "reverse sequential to sort",
+    "code": "void solve(int n) { reverse(all(v)); sort(all(v)); }",
+    "correct": "O(n log n)",
+    "actual": "O(n log n)"
+  },
+  {
+    "name": "Macro loop with custom bounds",
+    "code": "#define rep(i, a, b) for(int i = a; i < b; ++i)\nvoid solve(int n) { rep(i, 0, n) {} }",
+    "correct": "O(n)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "Macro inside loop",
+    "code": "#define fo(i, n) for(int i=0;i<n;i++)\nvoid solve(int n) { for(int i=0;i<n;i++) fo(j, n) {} }",
+    "correct": "O(n^2)",
+    "actual": "O(n²)"
+  },
+  {
+    "name": "Macro calling macro (not officially supported but let us see)",
+    "code": "#define fo(i, n) for(int i=0;i<n;i++)\n#define fo2(n) fo(i, n)\nvoid solve(int n) { fo2(n) {} }",
+    "correct": "O(n)",
+    "actual": "O(1)"
+  },
+  {
+    "name": "i * i <= n",
+    "code": "void solve(int n) { for(int i=1; i*i<=n; i++) {} }",
+    "correct": "O(sqrt(n))",
+    "actual": "O(n)"
+  },
+  {
+    "name": "i * i < n",
+    "code": "void solve(int n) { for(int i=1; i*i<n; i++) {} }",
+    "correct": "O(sqrt(n))",
+    "actual": "O(n)"
+  },
+  {
+    "name": "i *= 2",
+    "code": "void solve(int n) { for(int i=1; i<n; i*=2) {} }",
+    "correct": "O(log n)",
+    "actual": "O(log n)"
+  },
+  {
+    "name": "n /= 2",
+    "code": "void solve(int n) { while(n > 0) { n /= 2; } }",
+    "correct": "O(log n)",
+    "actual": "O(log n)"
+  },
+  {
+    "name": "i <<= 1",
+    "code": "void solve(int n) { for(int i=1; i<n; i<<=1) {} }",
+    "correct": "O(log n)",
+    "actual": "Unknown"
+  },
+  {
+    "name": "n >>= 1",
+    "code": "void solve(int n) { while(n > 0) { n >>= 1; } }",
+    "correct": "O(log n)",
+    "actual": "Unknown"
+  },
+  {
+    "name": "Early return in loop",
+    "code": "void solve(int n) { for(int i=0;i<n;i++) { if(i == 5) return; } }",
+    "correct": "O(n) worst-case",
+    "actual": "O(n)"
+  },
+  {
+    "name": "Break in loop",
+    "code": "void solve(int n) { for(int i=0;i<n;i++) { if(i == 5) break; } }",
+    "correct": "O(n) worst-case",
+    "actual": "O(n)"
+  },
+  {
+    "name": "O(n) nested in O(log n)",
+    "code": "void solve(int n) { for(int i=1; i<n; i*=2) { for(int j=0; j<n; j++) {} } }",
+    "correct": "O(n log n)",
+    "actual": "O(n log n)"
+  },
+  {
+    "name": "O(log n) nested in O(n)",
+    "code": "void solve(int n) { for(int i=0; i<n; i++) { for(int j=1; j<n; j*=2) {} } }",
+    "correct": "O(n log n)",
+    "actual": "O(n log n)"
+  },
+  {
+    "name": "O(n) sequential to O(log n)",
+    "code": "void solve(int n) { for(int i=0; i<n; i++) {} for(int j=1; j<n; j*=2) {} }",
+    "correct": "O(n)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "n log n nested in n",
+    "code": "void solve(int n) { for(int i=0;i<n;i++) { sort(all(v)); } }",
+    "correct": "O(n^2 log n)",
+    "actual": "O(n² log n)"
+  },
+  {
+    "name": "O(n^2) nested in log n",
+    "code": "void solve(int n) { for(int i=1; i<n; i*=2) { for(int j=0; j<n; j++) for(int k=0; k<n; k++) {} } }",
+    "correct": "O(n^2 log n)",
+    "actual": "O(n² log n)"
+  },
+  {
+    "name": "Vector iterator loop",
+    "code": "void solve(vector<int>& v) { for(auto it = v.begin(); it != v.end(); ++it) {} }",
+    "correct": "O(n)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "Map iterator loop",
+    "code": "void solve(map<int,int>& m) { for(auto it = m.begin(); it != m.end(); ++it) {} }",
+    "correct": "O(n)",
+    "actual": "O(n)"
+  },
+  {
+    "name": "Pointer traversal",
+    "code": "void solve(ListNode* head) { while(head != nullptr) { head = head->next; } }",
+    "correct": "O(n)",
+    "actual": "Unknown"
+  }
+]

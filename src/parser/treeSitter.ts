@@ -57,7 +57,10 @@ export class DocumentAST {
   public parse(source: string): Tree | null {
     if (!isReady || !parser) return null;
 
-    const newTree = parser.parse(source, this.tree || undefined);
+    // Force a fresh parse to prevent line-number desync on document edits.
+    // Incremental parsing requires complex VSCode->TreeSitter Edit mapping
+    // which is unnecessary for small files since a fresh parse takes <5ms.
+    const newTree = parser.parse(source);
     
     // Safely dispose the old tree to prevent memory leaks in WASM
     if (this.tree) {

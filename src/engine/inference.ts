@@ -1,5 +1,5 @@
-import { Tree } from 'web-tree-sitter';
-import { ExtractedLoop, extractFunctionLoops, extractFunctionName } from '../parser/astUtils';
+import { Tree, SyntaxNode } from 'web-tree-sitter';
+import { ExtractedLoop, extractFunctionLoops, extractFunctionName, buildMacroRegistry } from '../parser/astUtils';
 import {
   ComplexityClass,
   ComplexityNode,
@@ -10,7 +10,10 @@ import {
 } from './complexityNode';
 import { LoopClassification } from '../parser/loopClassifier';
 
-function getBaseComplexity(classification: LoopClassification): ComplexityNode {
+function getBaseComplexity(classification: LoopClassification | 'custom', customComplexity?: ComplexityNode): ComplexityNode {
+  if (classification === 'custom' && customComplexity) {
+    return customComplexity;
+  }
   switch (classification) {
     case 'constant':
       return { power: 0, logPower: 0, isUnknown: false };
@@ -18,6 +21,10 @@ function getBaseComplexity(classification: LoopClassification): ComplexityNode {
       return { power: 1, logPower: 0, isUnknown: false };
     case 'logarithmic':
       return { power: 0, logPower: 1, isUnknown: false };
+    case 'fractional':
+      return { power: 0.5, logPower: 0, isUnknown: false };
+    case 'linear_logarithmic':
+      return { power: 1, logPower: 1, isUnknown: false };
     case 'unknown':
     default:
       return { power: 0, logPower: 0, isUnknown: true };
@@ -57,9 +64,13 @@ function formatComplexity(node: ComplexityNode): ComplexityClass {
   if (node.isUnknown) return 'Unknown';
   if (node.power === 0 && node.logPower === 0) return 'O(1)';
   if (node.power === 0 && node.logPower === 1) return 'O(log n)';
+  if (node.power === 0.5 && node.logPower === 0) return 'O(sqrt n)';
   if (node.power === 1 && node.logPower === 0) return 'O(n)';
   if (node.power === 1 && node.logPower === 1) return 'O(n log n)';
+  if (node.power === 1.5 && node.logPower === 0) return 'O(n sqrt n)';
+  if (node.power === 1 && node.logPower === 2) return 'O(n log² n)';
   if (node.power === 2 && node.logPower === 0) return 'O(n²)';
+  if (node.power === 2 && node.logPower === 1) return 'O(n² log n)';
   if (node.power >= 3 && node.logPower === 0) return 'O(n³)'; // Cap at O(n^3) per requirements
   
   // Fallbacks for edge cases (e.g. O(n^2 log n)) mapping to Unknown or something else
@@ -75,7 +86,8 @@ export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
     return {
       complexity: 'O(1)',
       confidence: 'high',
-      explanation: ['No loops detected. Complexity is O(1).']
+      explanation: ['No loops detected. Complexity is O(1).'],
+      node: { power: 0, logPower: 0, isUnknown: false }
     };
   }
 
@@ -105,12 +117,13 @@ export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
   return {
     complexity: formatComplexity(overallNode),
     confidence: overallConfidence,
-    explanation: explanations
+    explanation: explanations,
+    node: overallNode
   };
 }
 
 function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, confidence: ConfidenceLevel, explanation: string[] } {
-  const baseNode = getBaseComplexity(loop.classification);
+  const baseNode = getBaseComplexity(loop.classification, loop.customComplexity);
   const explanations: string[] = [];
   let currentConfidence = loop.confidence;
   
@@ -167,12 +180,14 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
     return { functions: results };
   }
 
+  const macroRegistry = buildMacroRegistry(tree);
   const fnNodes = tree.rootNode.descendantsOfType('function_definition');
 
+  // Pass 1: Collect valid top-level functions
+  const fnMap = new Map<string, SyntaxNode>();
+  const allFnNames: string[] = [];
+  
   for (const fnNode of fnNodes) {
-    // Skip function definitions nested inside other function definitions
-    // (e.g. lambdas that get parsed as function_definition by tree-sitter).
-    // We only process top-level and class-member functions, not lambdas.
     let isNestedFn = false;
     let parent = fnNode.parent;
     while (parent) {
@@ -185,12 +200,89 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
     if (isNestedFn) continue;
 
     const name = extractFunctionName(fnNode);
-    const loops = extractFunctionLoops(fnNode);
-    const { complexity, confidence, explanation } = inferComplexity(loops);
+    // Ignore duplicate names (overloads) for now, use the last one found
+    fnMap.set(name, fnNode);
+    if (!allFnNames.includes(name)) {
+      allFnNames.push(name);
+    }
+  }
 
-    // Append a concise summary sentence as the final explanation line
+  // Pass 2: Build Call Graph
+  const graph = new Map<string, string[]>();
+  for (const name of allFnNames) {
+    const node = fnMap.get(name)!;
+    const calls = node.descendantsOfType('call_expression');
+    const outgoing = new Set<string>();
+    
+    for (const call of calls) {
+      const functionNode = call.childForFieldName('function') || call.child(0);
+      if (functionNode && functionNode.type === 'identifier') {
+        const targetName = functionNode.text;
+        if (fnMap.has(targetName)) {
+          outgoing.add(targetName);
+        }
+      }
+    }
+    graph.set(name, Array.from(outgoing));
+  }
+
+  // Pass 3: Topological Sort with cycle detection
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+  const sorted: string[] = [];
+  const recursiveNodes = new Set<string>();
+
+  function dfs(name: string) {
+    if (visiting.has(name)) {
+      recursiveNodes.add(name);
+      return;
+    }
+    if (visited.has(name)) return;
+    
+    visiting.add(name);
+    const edges = graph.get(name) || [];
+    for (const target of edges) {
+      dfs(target);
+    }
+    visiting.delete(name);
+    visited.add(name);
+    sorted.push(name);
+  }
+
+  for (const name of allFnNames) {
+    if (!visited.has(name)) {
+      dfs(name);
+    }
+  }
+
+  // Pass 4: Bottom-up evaluation
+  const functionRegistry = new Map<string, ComplexityNode>();
+
+  for (const name of sorted) {
+    const fnNode = fnMap.get(name)!;
+    
+    if (recursiveNodes.has(name)) {
+      functionRegistry.set(name, { power: 0, logPower: 0, isUnknown: true });
+      results.push({
+        name,
+        startLine: fnNode.startPosition.row,
+        endLine: fnNode.endPosition.row,
+        complexity: 'Unknown',
+        confidence: 'low',
+        explanation: [`Function "${name}" participates in recursion. Complexity is Unknown.`]
+      });
+      continue;
+    }
+
+    const loops = extractFunctionLoops(fnNode, macroRegistry, functionRegistry);
+    const { complexity, confidence, explanation, node } = inferComplexity(loops);
+
     const summaryLine = buildSummary(name, complexity);
     const finalExplanation = [...explanation, summaryLine];
+
+    if (node) {
+      functionRegistry.set(name, node);
+    }
 
     results.push({
       name,
@@ -201,6 +293,12 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
       explanation: finalExplanation
     });
   }
+
+  // Restore original function order to match the document's structure exactly
+  results.sort((a, b) => {
+    if (a.startLine !== b.startLine) return a.startLine - b.startLine;
+    return allFnNames.indexOf(a.name) - allFnNames.indexOf(b.name);
+  });
 
   return { functions: results };
 }

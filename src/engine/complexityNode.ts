@@ -1,10 +1,11 @@
-export type ComplexityClass = 'O(1)' | 'O(log n)' | 'O(n)' | 'O(n log n)' | 'O(n²)' | 'O(n³)' | 'Unknown';
+export type ComplexityClass = 'O(1)' | 'O(log n)' | 'O(sqrt n)' | 'O(n)' | 'O(n log n)' | 'O(n sqrt n)' | 'O(n log² n)' | 'O(n²)' | 'O(n² log n)' | 'O(n³)' | 'Unknown';
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
 
 export interface ComplexityResult {
   complexity: ComplexityClass;
   confidence: ConfidenceLevel;
   explanation: string[];
+  node?: ComplexityNode;
 }
 
 /**

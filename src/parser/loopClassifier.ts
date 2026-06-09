@@ -1,7 +1,20 @@
 import { SyntaxNode } from 'web-tree-sitter';
 
-export type LoopClassification = 'constant' | 'linear' | 'logarithmic' | 'unknown';
+export type LoopClassification = 'constant' | 'linear' | 'logarithmic' | 'linear_logarithmic' | 'fractional' | 'unknown';
 export type LoopConfidence = 'high' | 'medium' | 'low';
+
+export const STL_REGISTRY: Record<string, LoopClassification> = {
+  'sort': 'linear_logarithmic',
+  'stable_sort': 'linear_logarithmic',
+  'lower_bound': 'logarithmic',
+  'upper_bound': 'logarithmic',
+  'binary_search': 'logarithmic',
+  'reverse': 'linear',
+  'nth_element': 'linear',
+  'next_permutation': 'linear',
+  'accumulate': 'linear',
+  'fill': 'linear'
+};
 
 export interface LoopClassificationResult {
   classification: LoopClassification;
@@ -52,6 +65,33 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
 
   if (!updateNode) {
     return { classification: 'unknown', confidence: 'low' };
+  }
+
+  // Detect O(sqrt n) condition:
+  // e.g., i * i <= n OR i <= sqrt(n)
+  if (conditionNode && conditionNode.type === 'binary_expression') {
+    const left = conditionNode.childForFieldName('left');
+    const right = conditionNode.childForFieldName('right');
+    const op = conditionNode.childForFieldName('operator');
+    
+    if (op && (op.type === '<=' || op.type === '<')) {
+      // Check left side for i * i
+      if (left && left.type === 'binary_expression' && left.childForFieldName('operator')?.type === '*') {
+        const l1 = left.childForFieldName('left');
+        const l2 = left.childForFieldName('right');
+        if (l1 && l2 && l1.text === l2.text) {
+          return { classification: 'fractional', confidence: 'high' };
+        }
+      }
+      
+      // Check right side for sqrt(n)
+      if (right && right.type === 'call_expression') {
+        const fn = right.childForFieldName('function') || right.child(0);
+        if (fn && fn.type === 'identifier' && fn.text === 'sqrt') {
+          return { classification: 'fractional', confidence: 'high' };
+        }
+      }
+    }
   }
 
   return analyzeUpdatePattern(updateNode, conditionNode, initializerNode);
@@ -108,14 +148,14 @@ function analyzeUpdatePattern(
 
     if (!operator) {
       const text = updateNode.text;
-      if (text.includes('*=') || text.includes('/=')) return { classification: 'logarithmic', confidence: 'high' };
+      if (text.includes('*=') || text.includes('/=') || text.includes('<<=') || text.includes('>>=')) return { classification: 'logarithmic', confidence: 'high' };
       if (text.includes('+=') || text.includes('-=')) return { classification: 'linear', confidence: 'medium' };
       // Normal assignment `i = i + 1`
       if (text.includes('*') || text.includes('/')) return { classification: 'logarithmic', confidence: 'low' };
       return { classification: 'linear', confidence: 'low' };
     }
 
-    if (operator === '*=' || operator === '/=') {
+    if (operator === '*=' || operator === '/=' || operator === '<<=' || operator === '>>=') {
       return { classification: 'logarithmic', confidence: 'high' };
     }
     if (operator === '+=' || operator === '-=') {
@@ -123,5 +163,30 @@ function analyzeUpdatePattern(
     }
   }
 
+  return { classification: 'unknown', confidence: 'low' };
+}
+
+/**
+ * Fallback classifier for raw macro strings where we lack a parsed AST body.
+ */
+export function classifyMacroString(macroText: string): LoopClassificationResult {
+  const text = macroText.replace(/\s+/g, ''); // strip whitespace for easier regex
+
+  // Logarithmic signatures
+  if (text.includes('*=') || text.includes('/=') || text.includes('<<=') || text.includes('>>=')) {
+    return { classification: 'logarithmic', confidence: 'medium' };
+  }
+  
+  // Linear signatures
+  if (text.includes('++') || text.includes('--') || text.includes('+=') || text.includes('-=')) {
+    return { classification: 'linear', confidence: 'medium' };
+  }
+
+  // Ranged-for (auto &x : v)
+  if (text.includes(':')) {
+    return { classification: 'linear', confidence: 'medium' };
+  }
+
+  // As required: Do NOT default unknown macro bodies to O(n). Return Unknown.
   return { classification: 'unknown', confidence: 'low' };
 }
