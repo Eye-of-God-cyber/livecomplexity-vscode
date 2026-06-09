@@ -5,8 +5,8 @@
     "fn": "solve",
     "code": "void solve(int n) { int lo=0,hi=n; while(lo<hi){ int mid=(lo+hi)/2; if(mid>n/2)hi=mid; else lo=mid+1; } }",
     "correct": "O(log n)",
-    "actual": "Unknown",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 2,
@@ -14,8 +14,8 @@
     "fn": "bs",
     "code": "int bs(vector<int>& a, int x){ int lo=0,hi=a.size()-1; while(lo<=hi){ int m=(lo+hi)/2; if(a[m]==x)return m; else if(a[m]<x)lo=m+1; else hi=m-1; } return -1; }",
     "correct": "O(log n)",
-    "actual": "Unknown",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 3,
@@ -23,8 +23,8 @@
     "fn": "solve",
     "code": "void solve(int n){ int lo=1,hi=n; while(lo<hi){ int mid=(lo+hi)/2; lo=mid+1; } }",
     "correct": "O(log n)",
-    "actual": "Unknown",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 4,
@@ -41,7 +41,7 @@
     "fn": "factorize",
     "code": "void factorize(long long n){ for(long long i=2;i*i<=n;i++){ while(n%i==0){ n/=i; } } }",
     "correct": "O(sqrt n)",
-    "actual": "Unknown",
+    "actual": "O(n sqrt n)",
     "pass": false
   },
   {
@@ -95,8 +95,8 @@
     "fn": "bfs",
     "code": "void bfs(int n){ vector<bool> vis(n,false); queue<int> q; q.push(0); while(!q.empty()){ int u=q.front(); q.pop(); for(int i=0;i<n;i++) if(!vis[i]){ vis[i]=true; q.push(i); } } }",
     "correct": "O(n^2)",
-    "actual": "Unknown",
-    "pass": false
+    "actual": "O(n²)",
+    "pass": true
   },
   {
     "id": 12,
@@ -149,8 +149,8 @@
     "fn": "fwUpdate",
     "code": "void fwUpdate(int i, int n){ for(;i<=n;i+=i&(-i)){} }",
     "correct": "O(log n)",
-    "actual": "O(n)",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 18,
@@ -158,8 +158,8 @@
     "fn": "fwQuery",
     "code": "int fwQuery(int i){ int s=0; for(;i>0;i-=i&(-i)) s++; return s; }",
     "correct": "O(log n)",
-    "actual": "O(n)",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 19,
@@ -167,8 +167,8 @@
     "fn": "fwBuild",
     "code": "void fwBuild(int n){ for(int i=1;i<=n;i++) for(int j=i;j<=n;j+=j&(-j)){} }",
     "correct": "O(n log n)",
-    "actual": "O(n²)",
-    "pass": false
+    "actual": "O(n log n)",
+    "pass": true
   },
   {
     "id": 20,
@@ -266,7 +266,7 @@
     "fn": "solve",
     "code": "void solve(int n){ for(int i=0;i<n;i++) for(int j=0;j<n;j++) sort(all(v)); }",
     "correct": "O(n^3 log n)",
-    "actual": "Unknown",
+    "actual": "O(n³ log n)",
     "pass": false
   },
   {
@@ -500,8 +500,8 @@
     "fn": "update",
     "code": "void update(int i, int n){ for(;i<=n;i+=i&(-i)){} }",
     "correct": "O(log n)",
-    "actual": "O(n)",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 57,
@@ -509,8 +509,8 @@
     "fn": "query",
     "code": "int query(int i){ int s=0; for(;i>0;i-=i&(-i)) s++; return s; }",
     "correct": "O(log n)",
-    "actual": "O(n)",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 58,
@@ -536,7 +536,7 @@
     "fn": "solve",
     "code": "void solve(int n){ for(int i=1;i<n;i*=2) for(int j=1;j<n;j*=2) for(int k=1;k<n;k*=2){} }",
     "correct": "O(log^3 n)",
-    "actual": "Unknown",
+    "actual": "O(log³ n)",
     "pass": false
   },
   {
@@ -599,8 +599,8 @@
     "fn": "gcd",
     "code": "int gcd(int a, int b){ while(b){ int t=a%b; a=b; b=t; } return a; }",
     "correct": "O(log n)",
-    "actual": "Unknown",
-    "pass": false
+    "actual": "O(log n)",
+    "pass": true
   },
   {
     "id": 68,
@@ -761,8 +761,8 @@
     "fn": "solve",
     "code": "int gcd(int a, int b){ while(b){ int t=a%b;a=b;b=t; } return a; }\nvoid solve(int n){ for(int i=0;i<n;i++) gcd(i,n); }",
     "correct": "O(n log n)",
-    "actual": "Unknown",
-    "pass": false
+    "actual": "O(n log n)",
+    "pass": true
   },
   {
     "id": 86,

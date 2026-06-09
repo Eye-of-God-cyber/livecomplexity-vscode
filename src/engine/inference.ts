@@ -73,6 +73,8 @@ function formatComplexity(node: ComplexityNode): ComplexityClass {
   if (node.power === 1 && node.logPower === 2) return 'O(n log² n)';
   if (node.power === 2 && node.logPower === 0) return 'O(n²)';
   if (node.power === 2 && node.logPower === 1) return 'O(n² log n)';
+  if (node.power === 2.5 && node.logPower === 0) return 'O(n² sqrt n)';
+  if (node.power === 1.5 && node.logPower === 1) return 'O(n sqrt n log n)';
   if (node.power >= 3 && node.logPower === 0) return 'O(n³)';
   if (node.power >= 3 && node.logPower >= 1) return 'O(n³ log n)';
   // Catch-all: cap to O(n³) rather than emitting Unknown for exotic combos.
