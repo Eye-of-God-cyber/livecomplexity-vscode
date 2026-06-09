@@ -56,6 +56,18 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   } else if (node.type === 'while_statement' || node.type === 'do_statement') {
     conditionNode = node.childForFieldName('condition');
+    // Tree-sitter wraps the while/do condition in a `condition_clause` node
+    // (the parenthesized condition). Unwrap it to find the actual expression
+    // by scanning children and skipping the '(' and ')' punctuation tokens.
+    if (conditionNode && conditionNode.type === 'condition_clause') {
+      for (let i = 0; i < conditionNode.childCount; i++) {
+        const ch = conditionNode.child(i);
+        if (ch && ch.type !== '(' && ch.type !== ')') {
+          conditionNode = ch;
+          break;
+        }
+      }
+    }
   }
 
   if (!updateNode) {
@@ -94,6 +106,19 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
+  // Detect binary-search convergence (while only): condition is var-op-var AND
+  // body contains midpoint computation + boundary update using that midpoint.
+  if (node.type === 'while_statement') {
+    const bodyNode = node.childForFieldName('body');
+    if (conditionNode && isBinarySearchCondition(conditionNode) && hasMidpointUpdate(bodyNode)) {
+      return { classification: 'logarithmic', confidence: 'high' };
+    }
+    // Detect Euclidean GCD: while(singleIdent) with modulo reassignment in body.
+    if (conditionNode && conditionNode.type === 'identifier' && hasModuloAssignment(bodyNode)) {
+      return { classification: 'logarithmic', confidence: 'medium' };
+    }
+  }
+
   return analyzeUpdatePattern(updateNode, conditionNode, initializerNode);
 }
 
@@ -102,6 +127,156 @@ function findBodyUpdate(bodyNode: SyntaxNode | null): SyntaxNode | null {
   const updates = bodyNode.descendantsOfType(['update_expression', 'assignment_expression', 'math_assignment_expression']);
   if (updates.length > 0) return updates[updates.length - 1]; // Use last update as conservative guess, or just first.
   return null;
+}
+
+/**
+ * Returns true when conditionNode looks like a binary-search guard:
+ *   lo < hi   lo <= hi   lo > hi   lo >= hi
+ * where both operands are identifiers (not literals).
+ */
+function isBinarySearchCondition(cond: SyntaxNode): boolean {
+  if (cond.type !== 'binary_expression') return false;
+  const op = cond.childForFieldName('operator');
+  if (!op || !['<', '<=', '>', '>='].includes(op.type)) return false;
+  const left = cond.childForFieldName('left');
+  const right = cond.childForFieldName('right');
+  return !!(left && left.type === 'identifier' && right && right.type === 'identifier');
+}
+
+/**
+ * Returns true when the loop body contains a midpoint variable assignment
+ * (e.g. `mid = (lo+hi)/2`) AND a boundary update that uses that same variable
+ * (e.g. `lo = mid+1` or `hi = mid`).
+ *
+ * The midpoint is typically declared as a local variable (init_declarator),
+ * e.g. `int mid = (lo+hi)/2`. We search both init_declarators and
+ * assignment_expressions for a RHS that is a division expression.
+ * We then verify at least one boundary assignment references that variable.
+ */
+function hasMidpointUpdate(bodyNode: SyntaxNode | null): boolean {
+  if (!bodyNode) return false;
+
+  // Step 1: find midpoint name from init_declarator (int mid = …/…) or assignment_expression (mid = …/…)
+  let midpointName: string | null = null;
+
+  // Check init_declarator: `int mid = (lo+hi)/2`
+  const initDecls = bodyNode.descendantsOfType('init_declarator');
+  for (const decl of initDecls) {
+    const value = decl.childForFieldName('value');
+    if (value && containsDivision(value)) {
+      const name = decl.childForFieldName('declarator');
+      if (name && name.type === 'identifier') {
+        midpointName = name.text;
+        break;
+      }
+    }
+  }
+
+  // Fallback: check assignment_expression: `mid = (lo+hi)/2`
+  if (!midpointName) {
+    const assignments = bodyNode.descendantsOfType('assignment_expression');
+    for (const asgn of assignments) {
+      const rhs = asgn.childForFieldName('right');
+      if (rhs && containsDivision(rhs)) {
+        const lhs = asgn.childForFieldName('left');
+        if (lhs && lhs.type === 'identifier') {
+          midpointName = lhs.text;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!midpointName) return false;
+
+  // Step 2: verify at least one assignment uses midpoint on its RHS (boundary narrowing)
+  const allAssigns = bodyNode.descendantsOfType('assignment_expression');
+  for (const asgn of allAssigns) {
+    const lhs = asgn.childForFieldName('left');
+    if (lhs && lhs.text === midpointName) continue; // skip the midpoint declaration itself
+    const rhs = asgn.childForFieldName('right');
+    if (rhs && rhs.text.includes(midpointName)) return true;
+  }
+  return false;
+}
+
+/** Returns true when node is or contains a top-level division expression. */
+function containsDivision(node: SyntaxNode): boolean {
+  if (node.type === 'binary_expression') {
+    const op = node.childForFieldName('operator');
+    if (op && op.type === '/') return true;
+  }
+  // Handle parenthesized: (lo+hi)/2
+  if (node.type === 'parenthesized_expression') {
+    const inner = node.child(1) ?? node.child(0);
+    if (inner) return containsDivision(inner);
+  }
+  return false;
+}
+
+/**
+ * Returns true when the body contains a modulo assignment (b = a % b  or  a %= b).
+ * Used for Euclidean GCD detection.
+ * Searches both init_declarator (int t = a % b) and assignment_expression (b = a % b).
+ */
+function hasModuloAssignment(bodyNode: SyntaxNode | null): boolean {
+  if (!bodyNode) return false;
+  // Check math_assignment_expression with %=
+  const mathAssigns = bodyNode.descendantsOfType('math_assignment_expression');
+  for (const a of mathAssigns) {
+    if (a.text.includes('%=')) return true;
+  }
+  // Check plain assignment where RHS contains binary % expression
+  const assigns = bodyNode.descendantsOfType('assignment_expression');
+  for (const a of assigns) {
+    const rhs = a.childForFieldName('right');
+    if (rhs && rhs.type === 'binary_expression' && rhs.childForFieldName('operator')?.type === '%') return true;
+  }
+  // Check init_declarator where value contains binary % expression (e.g. int t = a % b)
+  const initDecls = bodyNode.descendantsOfType('init_declarator');
+  for (const decl of initDecls) {
+    const value = decl.childForFieldName('value');
+    if (value && value.type === 'binary_expression' && value.childForFieldName('operator')?.type === '%') return true;
+  }
+  return false;
+}
+
+/**
+ * Returns true when the update node is a Fenwick lowbit operation:
+ *   i += i & (-i)   or   i -= i & (-i)
+ * Verified via AST: the RHS must be a binary_expression with operator '&'
+ * where one operand is a unary minus expression (possibly inside parentheses).
+ */
+function isFenwickLowbitUpdate(updateNode: SyntaxNode): boolean {
+  if (updateNode.type !== 'assignment_expression' && updateNode.type !== 'math_assignment_expression') return false;
+  const operatorNode = updateNode.childForFieldName('operator') ||
+    updateNode.children.find(c => c.type === '+=' || c.type === '-=');
+  if (!operatorNode || (operatorNode.type !== '+=' && operatorNode.type !== '-=')) return false;
+  const rhs = updateNode.childForFieldName('right');
+  if (!rhs || rhs.type !== 'binary_expression') return false;
+  const rhsOp = rhs.childForFieldName('operator');
+  if (!rhsOp || rhsOp.type !== '&') return false;
+  // One side of the & must be a unary negation (possibly wrapped in parentheses)
+  const rhsLeft = rhs.childForFieldName('left');
+  const rhsRight = rhs.childForFieldName('right');
+  return isUnaryNegation(rhsLeft) || isUnaryNegation(rhsRight);
+}
+
+/** Returns true when node is a unary minus expression, possibly inside parentheses. */
+function isUnaryNegation(node: SyntaxNode | null): boolean {
+  if (!node) return false;
+  if (node.type === 'unary_expression') {
+    const op = node.childForFieldName('operator') || node.child(0);
+    return !!(op && op.type === '-');
+  }
+  if (node.type === 'parenthesized_expression') {
+    // Unwrap: (-i) -> parenthesized -> unary_expression
+    for (let c = 0; c < node.childCount; c++) {
+      const child = node.child(c);
+      if (child && isUnaryNegation(child)) return true;
+    }
+  }
+  return false;
 }
 
 function hasConstantInitializer(initializerNode: SyntaxNode | null): boolean {
@@ -159,6 +334,10 @@ function analyzeUpdatePattern(
       return { classification: 'logarithmic', confidence: 'high' };
     }
     if (operator === '+=' || operator === '-=') {
+      // Check for Fenwick lowbit pattern: i += i & (-i)  or  i -= i & (-i)
+      if (isFenwickLowbitUpdate(updateNode)) {
+        return { classification: 'logarithmic', confidence: 'high' };
+      }
       return { classification: 'linear', confidence: 'medium' };
     }
   }

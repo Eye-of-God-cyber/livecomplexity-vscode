@@ -218,11 +218,35 @@ const CASES: Case[] = [
     code: wrap('for(int i=0;i<n;i++) { for(int j=1;j*j<=n;j++){} }'), expected: 'O(n sqrt n)' },
   { id: 76, label: 'i <= sqrt(n)',
     code: wrap('for(int i=1; i<=sqrt(n); i++) {}'), expected: 'O(sqrt n)' },
+
+  // ── Fenwick tree idiom ────────────────────────────────────────────────────
+  { id: 77, label: 'Fenwick point update i+=i&(-i) -> O(log n)',
+    code: wrap('for(;i<=n;i+=i&(-i)){}'), expected: 'O(log n)' },
+  { id: 78, label: 'Fenwick prefix query i-=i&(-i) -> O(log n)',
+    code: wrap('for(;i>0;i-=i&(-i)){}'), expected: 'O(log n)' },
+
+  // ── Binary search convergence ──────────────────────────────────────────────
+  { id: 79, label: 'Binary search while(lo<hi) with mid -> O(log n)',
+    code: wrap('int lo=0,hi=n; while(lo<hi){ int mid=(lo+hi)/2; if(mid>0)hi=mid; else lo=mid+1; }'), expected: 'O(log n)' },
+  { id: 80, label: 'Binary search while(lo<=hi) with mid -> O(log n)',
+    code: wrap('int lo=0,hi=n; while(lo<=hi){ int mid=(lo+hi)/2; if(mid>0)hi=mid-1; else lo=mid+1; }'), expected: 'O(log n)' },
+  { id: 81, label: 'Plain while(lo<hi) without mid -> NOT log (should be linear or unknown)',
+    code: wrap('int lo=0,hi=n; while(lo<hi){ lo++; }'), expected: 'O(n)' },
+
+  // ── Euclidean GCD ─────────────────────────────────────────────────────────
+  { id: 82, label: 'Euclidean GCD while(b) with modulo -> O(log n)',
+    code: 'int gcd(int a, int b){ while(b){ int t=a%b; a=b; b=t; } return a; }', expected: 'O(log n)' },
+
+  // ── Formatter edge cases ──────────────────────────────────────────────────
+  { id: 83, label: 'Triple nested log -> O(log³ n)',
+    code: wrap('for(int i=1;i<n;i*=2) for(int j=1;j<n;j*=2) for(int k=1;k<n;k*=2){}'), expected: 'O(log³ n)' },
+  { id: 84, label: 'sort in O(n²) loop -> O(n³ log n)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++) sort(all(v));'), expected: 'O(n³ log n)' },
 ];
 
 // ─── vitest suite ───────────────────────────────────────────────────────────
 
-describe('Validation Suite — 76 patterns', () => {
+describe('Validation Suite — 84 patterns', () => {
   beforeAll(async () => {
     await initParser(distDir);
   });

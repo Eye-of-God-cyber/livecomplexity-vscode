@@ -64,6 +64,8 @@ function formatComplexity(node: ComplexityNode): ComplexityClass {
   if (node.isUnknown) return 'Unknown';
   if (node.power === 0 && node.logPower === 0) return 'O(1)';
   if (node.power === 0 && node.logPower === 1) return 'O(log n)';
+  if (node.power === 0 && node.logPower === 2) return 'O(log² n)';
+  if (node.power === 0 && node.logPower >= 3) return 'O(log³ n)';
   if (node.power === 0.5 && node.logPower === 0) return 'O(sqrt n)';
   if (node.power === 1 && node.logPower === 0) return 'O(n)';
   if (node.power === 1 && node.logPower === 1) return 'O(n log n)';
@@ -71,14 +73,10 @@ function formatComplexity(node: ComplexityNode): ComplexityClass {
   if (node.power === 1 && node.logPower === 2) return 'O(n log² n)';
   if (node.power === 2 && node.logPower === 0) return 'O(n²)';
   if (node.power === 2 && node.logPower === 1) return 'O(n² log n)';
-  if (node.power >= 3 && node.logPower === 0) return 'O(n³)'; // Cap at O(n^3) per requirements
-  
-  // Fallbacks for edge cases (e.g. O(n^2 log n)) mapping to Unknown or something else
-  // The requirements specified: O(1), O(log n), O(n), O(n log n), O(n²), O(n³).
-  // Anything outside this standard set can be capped or returned as Unknown.
-  // For safety, we cap high polynomials to O(n³) or mark unknown if it's a weird combo.
-  if (node.power > 3) return 'O(n³)'; 
-  return 'Unknown';
+  if (node.power >= 3 && node.logPower === 0) return 'O(n³)';
+  if (node.power >= 3 && node.logPower >= 1) return 'O(n³ log n)';
+  // Catch-all: cap to O(n³) rather than emitting Unknown for exotic combos.
+  return 'O(n³)';
 }
 
 export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
