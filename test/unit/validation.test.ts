@@ -28,8 +28,8 @@ function run(code: string): { complexity: ComplexityClass; confidence: Confidenc
   if (!tree) return { complexity: 'Unknown', confidence: 'low' };
   const result = analyzeFunctions(tree);
   if (result.functions.length === 0) return { complexity: 'O(1)', confidence: 'high' };
-  // Return the result of the first function
-  const fn = result.functions[0];
+  let fn = result.functions.find(f => f.name === 'solve' || f.name === 'main');
+  if (!fn) fn = result.functions[0];
   return { complexity: fn.complexity, confidence: fn.confidence };
 }
 
@@ -90,7 +90,7 @@ const CASES: Case[] = [
   { id: 23, label: 'Classic nested i,j linear',
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++){}'), expected: 'O(n²)' },
   { id: 24, label: 'Nested loops over n and m',
-    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++){}'), expected: 'O(n²)' },
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++){}'), expected: 'O(nm)' as any },
   { id: 25, label: 'Bubble sort inner (j < n-i)',
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n-i;j++){}'), expected: 'O(n²)' },
   { id: 26, label: 'Selection sort (i and j from i+1)',
@@ -356,7 +356,1008 @@ const CASES: Case[] = [
   // Fix 43: pointer traversal should be unknown
   { id: 110, label: 'Fix 43: pointer traversal ptr=ptr->next -> Unknown',
     code: wrap('while(ptr!=nullptr){ ptr=ptr->next; }'), expected: 'Unknown' },
+
+  // ── Phase D1: Multi-Variable and Constant Expression Support ──────────────
+  // Case A: for(i<n) for(j<n) -> O(n²)
+  { id: 111, label: 'Multi-var Case A: for(i<n) for(j<n)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++){}'), expected: 'O(n²)' as any },
+
+  // Case B: for(i<m) for(j<m) -> O(m²)
+  { id: 112, label: 'Multi-var Case B: for(i<m) for(j<m)',
+    code: wrap('for(int i=0;i<m;i++) for(int j=0;j<m;j++){}'), expected: 'O(m²)' as any },
+
+  // Case C: for(i<n) for(j<m) -> O(nm)
+  { id: 113, label: 'Multi-var Case C: for(i<n) for(j<m)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++){}'), expected: 'O(nm)' as any },
+
+  // Case D: for(i<n) for(j<m) for(k<p) -> O(nmp)
+  { id: 114, label: 'Multi-var Case D: for(i<n) for(j<m) for(k<p)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++) for(int k=0;k<p;k++){}'), expected: 'O(nmp)' as any },
+
+  // Case E: for(i<m) sort() -> O(n² log n) (mixed symbolic + heuristic)
+  { id: 115, label: 'Multi-var Case E: for(i<m) sort(...)',
+    code: wrap('for(int i=0;i<m;i++) sort(v.begin(), v.end());'), expected: 'O(n² log n)' as any },
+
+  // Case F: for(i<n) sort() -> O(n² log n) (mixed symbolic + heuristic)
+  { id: 116, label: 'Multi-var Case F: for(i<n) sort(...)',
+    code: wrap('for(int i=0;i<n;i++) sort(v.begin(), v.end());'), expected: 'O(n² log n)' as any },
+
+  // Case G: for(i<2+3) -> O(1)
+  { id: 117, label: 'Constant Case G: for(i<2+3)',
+    code: wrap('for(int i=0;i<2+3;i++){}'), expected: 'O(1)' as any },
+
+  // Case H: for(i<sizeof(int)) -> O(1)
+  { id: 118, label: 'Constant Case H: for(i<sizeof(int))',
+    code: wrap('for(int i=0;i<sizeof(int);i++){}'), expected: 'O(1)' as any },
+
+  // Case I: for(i<n){} for(j<m){} -> O(n) (dominance limitation)
+  { id: 119, label: 'Multi-var Case I: sequential loops fallback to O(n)',
+    code: wrap('for(int i=0;i<n;i++){}\nfor(int j=0;j<m;j++){}'), expected: 'O(n)' as any },
+
+  // Case J: for(i<n) for(j<m) {} for(k<p) {} -> O(nm)
+  { id: 120, label: 'Multi-var Case J: sequential loops fallback dominance to O(nm)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++){}\nfor(int k=0;k<p;k++){}'), expected: 'O(nm)' as any },
+
+  // Case K: for(i<m) for(j<n) -> O(nm) (deterministic sort order)
+  { id: 121, label: 'Multi-var Case K: deterministic sort order O(nm)',
+    code: wrap('for(int i=0;i<m;i++) for(int j=0;j<n;j++){}'), expected: 'O(nm)' as any },
+    
+  // ─── Macro Symbolic Propagation ──────────────────────────────────────────
+  { id: 122, label: 'Macro: fo(i,n) fo(j,m) -> O(nm)',
+    code: `#define fo(i,n) for(ll i=0;i<n;i++)\nvoid f() { fo(i,n) { fo(j,m) {} } }`, expected: 'O(nm)' as any },
+  { id: 123, label: 'Macro: fo(i,n) fo(j,m) fo(k,r) -> O(nmr)',
+    code: `#define fo(i,n) for(ll i=0;i<n;i++)\nvoid f() { fo(i,n) { fo(j,m) { fo(k,r) {} } } }`, expected: 'O(nmr)' as any },
+  { id: 124, label: 'Macro: fo(i,n) fo(j,n) -> O(n²)',
+    code: `#define fo(i,n) for(ll i=0;i<n;i++)\nvoid f(ll n,ll m) { fo(i,n) { fo(j,n) {} } }`, expected: 'O(n²)' as any },
+  { id: 125, label: 'Macro: rep(i,a,b) -> O(n)',
+    code: `#define rep(i,a,b) for(ll i=a;i<b;i++)\nvoid f() { rep(i,l,r) {} }`, expected: 'O(n)' as any },
+  { id: 126, label: 'Macro: FOR(i,l,r) -> O(n)',
+    code: `#define FOR(i,l,r) for(ll i=l;i<=r;i++)\nvoid f() { FOR(i,l,r) {} }`, expected: 'O(n)' as any },
+  
+  // ─── Format Cap Regression ───────────────────────────────────────────────
+  { id: 127, label: 'Five nested identical loops scale to O(n^5)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++) for(int k=0;k<n;k++) for(int l=0;l<n;l++) for(int z=0;z<n;z++){}'), expected: 'O(n^5)' as any },
+
+  // ─── D2.1: STL Container Method Complexities ─────────────────────────────
+  { id: 128, label: 'D2.1: set.insert in O(n) loop → O(n log n)',
+    code: wrap('set<int> s;\nfor(int i=0;i<n;i++) s.insert(a[i]);'), expected: 'O(n log n)' as any },
+
+  { id: 129, label: 'D2.1: map.find in O(n) loop → O(n log n)',
+    code: wrap('map<int,int> mp;\nfor(int i=0;i<n;i++) mp.find(a[i]);'), expected: 'O(n log n)' as any },
+
+  { id: 130, label: 'D2.1: priority_queue.push in O(n) loop → O(n log n)',
+    code: wrap('priority_queue<int> pq;\nfor(int i=0;i<n;i++) pq.push(a[i]);'), expected: 'O(n log n)' as any },
+
+  { id: 131, label: 'D2.1: priority_queue.pop in O(n) loop → O(n log n)',
+    code: wrap('priority_queue<int> pq;\nfor(int i=0;i<n;i++) pq.pop();'), expected: 'O(n log n)' as any },
+
+  { id: 132, label: 'D2.1: queue.push in O(n) loop → O(n) [no log regression]',
+    code: wrap('queue<int> q;\nfor(int i=0;i<n;i++) q.push(a[i]);'), expected: 'O(n)' as any },
+
+  { id: 133, label: 'D2.1: stack.push in O(n) loop → O(n) [no log regression]',
+    code: wrap('stack<int> st;\nfor(int i=0;i<n;i++) st.push(a[i]);'), expected: 'O(n)' as any },
+
+  { id: 134, label: 'D2.1: multiset.insert in O(n) loop → O(n log n)',
+    code: wrap('multiset<int> ms;\nfor(int i=0;i<n;i++) ms.insert(a[i]);'), expected: 'O(n log n)' as any },
+
+  { id: 135, label: 'D2.1: vector.push_back in O(n) loop → O(n) [no log regression]',
+    code: wrap('vector<int> v;\nfor(int i=0;i<n;i++) v.push_back(a[i]);'), expected: 'O(n)' as any },
+
+  { id: 136, label: 'D2.1: sort + set.insert mix → O(n log n) dominance',
+    code: wrap('set<int> s;\nsort(a, a+n);\nfor(int i=0;i<n;i++) s.insert(a[i]);'), expected: 'O(n log n)' as any },
+
+  { id: 137, label: 'D2.1: typedef alias set.insert → O(n log n)',
+    code: 'typedef set<int> SI;\nvoid f(int n, int* a) { SI s;\nfor(int i=0;i<n;i++) s.insert(a[i]); }', expected: 'O(n log n)' as any },
+
+  { id: 138, label: 'D2.1: C++20 set.contains in O(n) loop → O(n log n)',
+    code: wrap('set<int> s;\nfor(int i=0;i<n;i++) s.contains(a[i]);'), expected: 'O(n log n)' as any },
+
+  // ─── D2.2: Graph Traversal & Summation Rules ─────────────────────────────
+  { id: 139, label: 'D2.2: BFS (queue + while(!q.empty()) + for_range_loop) → O(V+E)',
+    code: `void bfs(int n) {
+  queue<int> q;
+  q.push(0);
+  while(!q.empty()) {
+    int u = q.front(); q.pop();
+    for(auto v : adj[u]) { q.push(v); }
+  }
+}`, expected: 'O(V+E)' as any },
+
+  { id: 140, label: 'D2.2: Iterative DFS (stack + while(!st.empty()) + for_range_loop) → O(V+E)',
+    code: `void dfs(int n) {
+  stack<int> st;
+  st.push(0);
+  while(!st.empty()) {
+    int u = st.top(); st.pop();
+    for(auto v : adj[u]) { st.push(v); }
+  }
+}`, expected: 'O(V+E)' as any },
+
+  { id: 141, label: 'D2.2: Deque traversal (deque + while(!dq.empty()) + for_range_loop) → O(V+E)',
+    code: `void bfs2(int n) {
+  deque<int> dq;
+  dq.push_back(0);
+  while(!dq.empty()) {
+    int u = dq.front(); dq.pop_front();
+    for(auto v : adj[u]) { dq.push_back(v); }
+  }
+}`, expected: 'O(V+E)' as any },
+
+  { id: 142, label: 'D2.2: Tree traversal (queue + for_range_loop children) → O(V+E)',
+    code: `void bfsTree(int root) {
+  queue<int> q;
+  q.push(root);
+  while(!q.empty()) {
+    int u = q.front(); q.pop();
+    for(auto child : tree[u]) { q.push(child); }
+  }
+}`, expected: 'O(V+E)' as any },
+
+  { id: 143, label: 'D2.2: Queue loop WITHOUT for_range_loop → O(n) [no graph detection]',
+    code: `void process(int n) {
+  queue<int> q;
+  while(!q.empty()) {
+    int u = q.front(); q.pop();
+  }
+}`, expected: 'O(n)' as any },
+
+  { id: 144, label: 'D2.2: Non-queue nested while+for_range_loop → O(n²) [no graph detection]',
+    code: wrap('int cnt = n;\nwhile(cnt > 0) { cnt--;\nfor(auto v : adj[cnt]) {} }'), expected: 'O(n²)' as any },
+
+  { id: 145, label: 'D2.2: Queue + for_statement (NOT for_range_loop) → O(n²) [no graph detection]',
+    code: `void f(int n) {
+  queue<int> q;
+  while(!q.empty()) {
+    for(int i = 0; i < n; i++) {}
+  }
+}`, expected: 'O(n²)' as any },
+
+  { id: 146, label: 'D2.2: Queue + sort (NOT for_range_loop) → no graph detection, sort multiplied',
+    code: `void f(int n, vector<int>& v) {
+  queue<int> q;
+  while(!q.empty()) {
+    sort(v.begin(), v.end());
+  }
+}`, expected: 'O(n² log n)' as any },
+
+  // ── D2.3: Dijkstra & Priority-Queue Graph Algorithms ───────────────────────
+
+  { id: 147, label: 'D2.3: Dijkstra (pq.push) → O((V+E) log V)', code: `
+void dijkstra() {
+  priority_queue<pair<int,int>> pq;
+  pq.push({0, src});
+  while(!pq.empty()) {
+    auto cur = pq.top();
+    pq.pop();
+    for(auto edge : adj[cur.second]) {
+      pq.push({dist + edge.w, edge.v});
+    }
+  }
+}`, expected: 'O((V+E) log V)' as any },
+
+  { id: 148, label: 'D2.3: Prim (pq.emplace) → O((V+E) log V)', code: `
+void prim() {
+  priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+  pq.emplace(0, src);
+  while(!pq.empty()) {
+    auto [w, u] = pq.top();
+    pq.pop();
+    for(auto [nw, v] : adj[u]) {
+      pq.emplace(nw, v);
+    }
+  }
+}`, expected: 'O((V+E) log V)' as any },
+
+  { id: 149, label: 'D2.3: min-heap (greater<>) → O((V+E) log V)', code: `
+void solve() {
+  priority_queue<int, vector<int>, greater<int>> pq;
+  pq.push(0);
+  while(!pq.empty()) {
+    int u = pq.top();
+    pq.pop();
+    for(auto v : adj[u]) {
+      pq.push(v);
+    }
+  }
+}`, expected: 'O((V+E) log V)' as any },
+
+  { id: 150, label: 'D2.3: priority_queue without for_range_loop → existing behavior (no graph detection)', code: `
+void process() {
+  priority_queue<int> pq;
+  for(int i=0;i<n;i++) pq.push(a[i]);
+  while(!pq.empty()) {
+    int x = pq.top();
+    pq.pop();
+  }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 151, label: 'D2.3: priority_queue + for(int i<n) inside → multiplicative (no graph detection)', code: `
+void process() {
+  priority_queue<int> pq;
+  pq.push(0);
+  while(!pq.empty()) {
+    pq.pop();
+    for(int i=0;i<n;i++) {
+      pq.push(i);
+    }
+  }
+}`, expected: 'O(n² log n)' as any },
+
+  { id: 152, label: 'D2.3: Regression — BFS queue still emits O(V+E)', code: `
+void bfs() {
+  queue<int> q;
+  q.push(src);
+  while(!q.empty()) {
+    int u = q.front();
+    q.pop();
+    for(auto v : adj[u]) {
+      q.push(v);
+    }
+  }
+}`, expected: 'O(V+E)' as any },
+
+  { id: 153, label: 'D2.3: pq.top() inside Dijkstra — no double counting', code: `
+void dijkstra() {
+  priority_queue<pair<int,int>> pq;
+  pq.push({0, src});
+  while(!pq.empty()) {
+    auto [d, u] = pq.top();
+    pq.pop();
+    for(auto [w, v] : adj[u]) {
+      if(d + w < dist[v]) {
+        pq.push({d + w, v});
+      }
+    }
+  }
+}`, expected: 'O((V+E) log V)' as any },
+
+  { id: 154, label: 'D2.3: pq.top() standalone in O(n) loop → O(n)', code: `
+void getMax() {
+  priority_queue<int> pq;
+  for(int i=0;i<n;i++) {
+    int x = pq.top();
+  }
+}`, expected: 'O(n)' as any },
+
+  { id: 155, label: 'D2.3: typedef alias priority_queue → O((V+E) log V)', code: `
+void dijkstra() {
+  typedef priority_queue<pair<int,int>> PQ;
+  PQ pq;
+  pq.push({0, src});
+  while(!pq.empty()) {
+    pq.pop();
+    for(auto edge : adj[u]) {
+      pq.push(edge);
+    }
+  }
+}`, expected: 'O((V+E) log V)' as any },
+
+  { id: 156, label: 'D2.3: using alias priority_queue → O((V+E) log V)', code: `
+void dijkstra() {
+  using PQ = priority_queue<pair<int,int>>;
+  PQ pq;
+  pq.push({0, src});
+  while(!pq.empty()) {
+    pq.pop();
+    for(auto v : adj[u]) {
+      pq.push(v);
+    }
+  }
+}`, expected: 'O((V+E) log V)' as any },
+
+  // ── D3.1: Bitmask & Exponential Complexity ─────────────────────────────────
+
+  { id: 157, label: 'D3.1: 1<<n bitmask loop → O(2ⁿ)', code: `
+void solve() {
+  for(int mask=0; mask<(1<<n); mask++) {
+  }
+}`, expected: 'O(2ⁿ)' as any },
+
+  { id: 158, label: 'D3.1: 1LL<<n bitmask loop → O(2ⁿ)', code: `
+void solve() {
+  for(int mask=0; mask<(1LL<<n); mask++) {
+  }
+}`, expected: 'O(2ⁿ)' as any },
+
+  { id: 159, label: 'D3.1: bitmask outer + linear inner → O(n·2ⁿ)', code: `
+void solve() {
+  for(int mask=0; mask<(1<<n); mask++) {
+    for(int i=0; i<n; i++) {
+    }
+  }
+}`, expected: 'O(n·2ⁿ)' as any },
+
+  { id: 160, label: 'D3.1: linear outer + bitmask(m) inner → O(n·2ᵐ)', code: `
+void solve() {
+  for(int i=0; i<n; i++) {
+    for(int mask=0; mask<(1<<m); mask++) {
+    }
+  }
+}`, expected: 'O(n·2ᵐ)' as any },
+
+  { id: 161, label: 'D3.1: bitmask(n) + bitmask(m) nested → O(2ⁿ·2ᵐ)', code: `
+void solve() {
+  for(int mask=0; mask<(1<<n); mask++) {
+    for(int mask2=0; mask2<(1<<m); mask2++) {
+    }
+  }
+}`, expected: 'O(2ⁿ·2ᵐ)' as any },
+
+  { id: 162, label: 'D3.1: bitmask + set.insert (log) → O(2ⁿ log n)', code: `
+void solve() {
+  set<int> s;
+  for(int mask=0; mask<(1<<n); mask++) {
+    s.insert(mask);
+  }
+}`, expected: 'O(2ⁿ log n)' as any },
+
+  { id: 163, label: 'D3.1: bitmask(n) + bitmask(n) same var → O(2ⁿ·2ⁿ) no simplification', code: `
+void solve() {
+  for(int mask=0; mask<(1<<n); mask++) {
+    for(int s=0; s<(1<<n); s++) {
+    }
+  }
+}`, expected: 'O(2ⁿ·2ⁿ)' as any },
+
+  { id: 164, label: 'D3.1: Regression — plain for(i<n) still O(n)', code: `
+void solve() {
+  for(int i=0; i<n; i++) {
+  }
+}`, expected: 'O(n)' as any },
+
+  { id: 165, label: 'D3.1: Regression — for(mask<16) constant bound still O(1)', code: `
+void solve() {
+  for(int mask=0; mask<16; mask++) {
+  }
+}`, expected: 'O(1)' as any },
+
+  { id: 166, label: 'D3.1: Guard — k<<n (non-literal left) → no exponential detection', code: `
+void solve() {
+  for(int mask=0; mask<(k<<n); mask++) {
+  }
+}`, expected: 'O(n)' as any },
+
+  { id: 167, label: 'D3.1: Double-parenthesized ((1<<n)) → O(2ⁿ)', code: `
+void solve() {
+  for(int mask=0; mask<((1<<n)); mask++) {
+  }
+}`, expected: 'O(2ⁿ)' as any },
+
+  { id: 168, label: 'D3.1: Double-parenthesized ((1LL<<n)) → O(2ⁿ)', code: `
+void solve() {
+  for(int mask=0; mask<((1LL<<n)); mask++) {
+  }
+}`, expected: 'O(2ⁿ)' as any },
+
+  // ── D3.2: Disjoint Set Union (DSU) ───────────────────────────────────────
+
+  { id: 169, label: 'D3.2: Recursive path compression → O(1)', code: `
+int find(int x) {
+    if(parent[x] == x) return x;
+    return parent[x] = find(parent[x]);
+}`, expected: 'O(1)' as any },
+
+  { id: 170, label: 'D3.2: Union calling recognized recursive find → O(1)', code: `
+int find(int x) {
+    if(parent[x] == x) return x;
+    return parent[x] = find(parent[x]);
+}
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if(a != b) parent[b] = a;
+}`, expected: 'O(1)' as any },
+
+  { id: 171, label: 'D3.2: Loop performing n unions → O(n)', code: `
+int find(int x) {
+    if(parent[x] == x) return x;
+    return parent[x] = find(parent[x]);
+}
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if(a != b) parent[b] = a;
+}
+void solve() {
+    for(int i=0; i<n; i++) {
+        unite(u[i], v[i]);
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 172, label: 'D3.2: Iterative path halving → O(1)', code: `
+void solve() {
+    while(parent[x] != x) {
+        parent[x] = parent[parent[x]];
+        x = parent[x];
+    }
+}`, expected: 'O(1)' as any },
+
+  { id: 173, label: 'D3.2: Guard — Plain pointer chasing → O(n)', code: `
+void solve() {
+    while(parent[x] != x) {
+        x = parent[x];
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 174, label: 'D3.2: Guard — Generic array pointer chasing → O(n)', code: `
+void solve() {
+    while(cur != -1) {
+        cur = next_node[cur];
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 175, label: 'D3.2: Guard — Memoized recursion → Unknown', code: `
+int dp(int x) {
+    if (memo[x] != -1) return memo[x];
+    return memo[x] = dp(x - 1) + dp(x - 2);
+}`, expected: 'Unknown' as any },
+
+  { id: 176, label: 'D3.2: Guard — Classic recursive DFS → Unknown', code: `
+void dfs(int u) {
+    vis[u] = true;
+    for(int v : adj[u]) {
+        if(!vis[v]) dfs(v);
+    }
+}`, expected: 'Unknown' as any },
+
+  // ── Phase D3.3: Function Parameter Type Tracking ────────────────────────────
+
+  { id: 177, label: 'D3.3: parameter reference set<int>&', code: `
+void solve(set<int>& s) {
+    s.insert(x);
+}`, expected: 'O(log n)' as any },
+
+  { id: 178, label: 'D3.3: parameter reference map<int,int>&', code: `
+void solve(map<int,int>& mp) {
+    mp.find(x);
+}`, expected: 'O(log n)' as any },
+
+  { id: 179, label: 'D3.3: parameter reference priority_queue<int>&', code: `
+void solve(priority_queue<int>& pq) {
+    pq.push(x);
+}`, expected: 'O(log n)' as any },
+
+  { id: 180, label: 'D3.3: parameter typedef alias MAP&', code: `
+typedef map<int,int> MAP;
+void solve(MAP& mp) {
+    mp.find(x);
+}`, expected: 'O(log n)' as any },
+
+  { id: 181, label: 'D3.3: parameter using alias MAP&', code: `
+using MAP = map<int,int>;
+void solve(MAP& mp) {
+    mp.find(x);
+}`, expected: 'O(log n)' as any },
+
+  { id: 182, label: 'D3.3: Parameter shadows global variable', code: `
+set<int> mp; // global set
+void solve(map<int,int>& mp) {
+    mp.find(x); // should be map (O(log n))
+}`, expected: 'O(log n)' as any },
+
+  { id: 183, label: 'D3.3: Local variable shadows parameter', code: `
+void solve(map<int,int>& mp) {
+    unordered_map<int,int> mp;
+    mp.find(x); // should be unordered_map (O(1))
+}`, expected: 'O(1)' as any },
+
+  { id: 184, label: 'D3.3: Primitive parameter regression guard', code: `
+void solve(int n) {
+    n++;
+}`, expected: 'O(1)' as any },
+
+  // ── Phase D3.4: map::operator[] Recognition ───────────────────────────────
+
+  { id: 185, label: 'D3.4: map::operator[] mp[x]++', code: `
+map<int,int> mp;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        mp[i]++;
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 186, label: 'D3.4: map::operator[] ++mp[x]', code: `
+map<int,int> mp;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        ++mp[i];
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 187, label: 'D3.4: map::operator[] mp[x] += v', code: `
+map<int,int> mp;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        mp[i] += 5;
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 188, label: 'D3.4: map::operator[] assignment auto t = mp[x]', code: `
+map<int,int> mp;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        auto t = mp[i];
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 189, label: 'D3.4: unordered_map::operator[] mp[x]++', code: `
+unordered_map<int,int> ump;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        ump[i]++;
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 190, label: 'D3.4: Regression guard — arr[x]++ remains O(n)', code: `
+int arr[100];
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        arr[i]++;
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 191, label: 'D3.4: Regression guard — vector[x]++ remains O(n)', code: `
+vector<int> v;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        v[i]++;
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 192, label: 'D3.4: Regression guard — parent[x] DSU pointer chasing', code: `
+int parent[100];
+void solve(int n) {
+    int x = n;
+    while(parent[x] != x) {
+        x = parent[x];
+    }
+}`, expected: 'O(n)' as any },
+
+  { id: 193, label: 'D3.4: Parameter tracking interaction mp[x]++', code: `
+void solve(int n, map<int,int>& mp) {
+    for(int i=0; i<n; i++) {
+        mp[i]++;
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 194, label: 'D3.4: Typedef alias map operator[]', code: `
+typedef map<int,int> MAP;
+MAP mp;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        mp[i]++;
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 195, label: 'D3.4: Using alias unordered_map operator[]', code: `
+using UMAP = unordered_map<int,int>;
+UMAP ump;
+void solve(int n) {
+    for(int i=0; i<n; i++) {
+        ump[i]++;
+    }
+}`, expected: 'O(n)' as any },
+
+  // ── Phase D4.1: Memoization & DP Recognition ─────────────────────────────
+
+  { id: 196, label: 'D4.1: memo[x] != -1 guard + return + self-call write', code: `
+int memo[100005];
+int solve(int n) {
+    if (n <= 1) return 1;
+    if (memo[n] != -1) return memo[n];
+    return memo[n] = solve(n - 1);
+}`, expected: 'O(n)' as any },
+
+  { id: 197, label: 'D4.1: memo[x] != 0 sentinel variant', code: `
+int memo[100005];
+int f(int x) {
+    if (memo[x] != 0) return memo[x];
+    memo[x] = f(x - 1);
+    return memo[x];
+}`, expected: 'O(n)' as any },
+
+  { id: 198, label: 'D4.1: dp.count(x) unordered_map guard', code: `
+unordered_map<int,int> dp;
+int solve(int x) {
+    if (dp.count(x)) return dp[x];
+    return dp[x] = solve(x - 1);
+}`, expected: 'O(n)' as any },
+
+  { id: 199, label: 'D4.1: return memo[x] = self(...) inline write', code: `
+long long memo[100005];
+long long f(int x) {
+    if (memo[x] != -1) return memo[x];
+    return memo[x] = f(x - 1);
+}`, expected: 'O(n)' as any },
+
+  { id: 200, label: 'D4.1: Guard — DFS with vis[u] must remain Unknown', code: `
+void dfs(int u) {
+    if (vis[u]) return;
+    vis[u] = true;
+    for (auto v : adj[u]) dfs(v);
+}`, expected: 'Unknown' as any },
+
+  { id: 201, label: 'D4.1: Guard — backtracking visited[] must remain Unknown', code: `
+void backtrack(int idx) {
+    if (idx == n) return;
+    for (int i = 0; i < n; i++) {
+        if (visited[i]) continue;
+        visited[i] = true;
+        backtrack(idx + 1);
+        visited[i] = false;
+    }
+}`, expected: 'Unknown' as any },
+
+  { id: 202, label: 'D4.1: Guard — generic recursion no memo must remain Unknown', code: `
+int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}`, expected: 'Unknown' as any },
+
+  { id: 203, label: 'D4.1: Guard — memo[x] = constant (not self-call) must remain Unknown', code: `
+int memo[100005];
+int f(int x) {
+    if (memo[x] != -1) return memo[x];
+    memo[x] = 5;
+    f(x - 1);
+    return memo[x];
+}`, expected: 'Unknown' as any },
+
+  { id: 204, label: 'D4.1: Guard — memo[x] = otherFunction() must remain Unknown', code: `
+int memo[100005];
+int compute(int x);
+int f(int x) {
+    if (memo[x] != -1) return memo[x];
+    f(x - 2);
+    memo[x] = compute(x - 1);
+    return memo[x];
+}`, expected: 'Unknown' as any },
+
+  { id: 205, label: 'D4.2: 2D memo[i][j] — now recognized as O(n²)', code: `
+int memo[100][100];
+int f(int i, int j) {
+    if (memo[i][j] != -1) return memo[i][j];
+    return memo[i][j] = f(i - 1, j);
+}`, expected: 'O(n²)' as any },
+
+  { id: 206, label: 'D4.1: Guard — recursive binary search now recognized as O(log n) by D4.6', code: `
+int bsearch(int* arr, int lo, int hi, int target) {
+    if (lo > hi) return -1;
+    int mid = (lo + hi) / 2;
+    if (arr[mid] == target) return mid;
+    if (arr[mid] < target) return bsearch(arr, mid + 1, hi, target);
+    return bsearch(arr, lo, mid - 1, target);
+}`, expected: 'O(log n)' as any },
+
+  { id: 207, label: 'D4.1: Guard — merge sort must remain Unknown', code: `
+void mergeSort(int* arr, int l, int r) {
+    if (l >= r) return;
+    int mid = (l + r) / 2;
+    mergeSort(arr, l, mid);
+    mergeSort(arr, mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 208, label: 'D4.1: Guard — truthiness if(memo[x]) must remain Unknown', code: `
+int memo[100005];
+int f(int x) {
+    if (memo[x]) return memo[x];
+    memo[x] = f(x - 1);
+    return memo[x];
+}`, expected: 'Unknown' as any },
+
+  // ── Phase D4.2: Multi-Dimensional Memoized Recursion Recognition ──────────────
+
+  { id: 209, label: 'D4.2: 2D dp[i][j] != -1 guard + return + self-call write', code: `
+int dp[105][105];
+int solve(int i, int j) {
+    if (dp[i][j] != -1) return dp[i][j];
+    return dp[i][j] = solve(i - 1, j);
+}`, expected: 'O(n²)' as any },
+
+  { id: 210, label: 'D4.2: 3D memo[i][j][k] != -1 + return + self-call write', code: `
+int memo[50][50][50];
+int f(int i, int j, int k) {
+    if (memo[i][j][k] != -1) return memo[i][j][k];
+    return memo[i][j][k] = f(i - 1, j, k);
+}`, expected: 'O(n³)' as any },
+
+  { id: 211, label: 'D4.2: 2D memo[a][b] != 0 sentinel variant', code: `
+int memo[105][105];
+int solve(int a, int b) {
+    if (memo[a][b] != 0) return memo[a][b];
+    return memo[a][b] = solve(a - 1, b);
+}`, expected: 'O(n²)' as any },
+
+  { id: 212, label: 'D4.2: 2D write separate from return', code: `
+int dp[105][105];
+int solve(int i, int j) {
+    if (dp[i][j] != -1) return dp[i][j];
+    dp[i][j] = solve(i, j - 1);
+    return dp[i][j];
+}`, expected: 'O(n²)' as any },
+
+  { id: 213, label: 'D4.2: Regression — visited[i][j] DFS must remain Unknown', code: `
+void dfs(int i, int j) {
+    if (visited[i][j]) return;
+    visited[i][j] = true;
+    dfs(i - 1, j);
+}`, expected: 'Unknown' as any },
+
+  { id: 214, label: 'D4.2: Regression — grid[r][c] == 0 must remain Unknown', code: `
+void dfs(int r, int c) {
+    if (grid[r][c] == 0) return;
+    grid[r][c] = 0;
+    dfs(r - 1, c);
+}`, expected: 'Unknown' as any },
+
+  { id: 215, label: 'D4.2: Regression — dist[i][j] > relaxation must remain Unknown', code: `
+void relax(int i, int j) {
+    if (dist[i][j] > dist[i - 1][j] + 1) {
+        dist[i][j] = dist[i - 1][j] + 1;
+        relax(i - 1, j);
+    }
+}`, expected: 'Unknown' as any },
+
+  { id: 216, label: 'D4.2: Regression — 2D write with helper not self must remain Unknown', code: `
+int dp[105][105];
+int helper(int i, int j);
+int f(int i, int j) {
+    if (dp[i][j] != -1) return dp[i][j];
+    f(i - 1, j);
+    dp[i][j] = helper(i, j);
+    return dp[i][j];
+}`, expected: 'Unknown' as any },
+
+  { id: 217, label: 'D4.2: Regression — 4D dp exceeds scope must remain Unknown', code: `
+int dp[10][10][10][10];
+int f(int a, int b, int c, int d) {
+    if (dp[a][b][c][d] != -1) return dp[a][b][c][d];
+    return dp[a][b][c][d] = f(a - 1, b, c, d);
+}`, expected: 'Unknown' as any },
+
+  // ── Phase D4.5: Sparse Table Outer Loop Recognition ──────────────────────────────────
+
+  { id: 218, label: 'D4.5: Sparse table build — (1<<j)<=n outer + i<n inner → O(n log n)', code: `
+void buildST(int n) {
+    for (int j = 1; (1 << j) <= n; j++) {
+        for (int i = 0; i < n; i++) {
+            st[i][j] = 0;
+        }
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 219, label: 'D4.5: Sparse table — j starts at 0 variant → O(n log n)', code: `
+void buildST(int n) {
+    for (int j = 0; (1 << j) <= n; j++) {
+        for (int i = 0; i < n; i++) {
+            st[i][j] = 0;
+        }
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 220, label: 'D4.5: Sparse table — no parentheses around shift 1<<j<=n → O(n log n)', code: `
+void buildST(int n) {
+    for (int j = 1; 1 << j <= n; j++) {
+        for (int i = 0; i < n; i++) {
+            st[i][j] = 0;
+        }
+    }
+}`, expected: 'O(n log n)' as any },
+
+  { id: 221, label: 'D4.5: Regression — binary lifting j<LOG (linear×linear) must not trigger D4.5', code: `
+void preprocess(int n) {
+    for (int j = 1; j < LOG; j++) {
+        for (int v = 0; v < n; v++) {
+            up[v][j] = up[up[v][j-1]][j-1];
+        }
+    }
+}`, expected: 'O(nLOG)' as any },
+
+  { id: 222, label: 'D4.5: Regression — bitmask DP mask<(1<<n) must remain O(2ⁿ)', code: `
+void f(int n) {
+    for (int mask = 0; mask < (1 << n); mask++) {
+        dp[mask] = 0;
+    }
+}`, expected: 'O(2ⁿ)' as any },
+
+  { id: 223, label: 'D4.5: Regression — normal nested loops must remain O(nm)', code: `
+void f(int n, int m) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            a[i][j] = 0;
+        }
+    }
+}`, expected: 'O(nm)' as any },
+
+  { id: 224, label: 'D4.5: Regression — single Fenwick loop i+=i&(-i) is O(log n) not O(n log n)', code: `
+void update(int n) {
+    for (int i = 1; i <= n; i += i & (-i)) {
+        bit[i]++;
+    }
+}`, expected: 'O(log n)' as any },
+
+  // ── D4.6: Recursive Binary Search ──────────────────────────────────────────
+
+  { id: 225, label: 'D4.6: Classic recursive binary search → O(log n)', code: `
+int solve(int* a, int lo, int hi, int target) {
+    if (lo > hi) return -1;
+    int mid = (lo + hi) / 2;
+    if (a[mid] == target) return mid;
+    if (a[mid] < target) return solve(a, mid + 1, hi, target);
+    return solve(a, lo, mid - 1, target);
+}`, expected: 'O(log n)' as any },
+
+  { id: 226, label: 'D4.6: Compact if-else binary search → O(log n)', code: `
+int solve(int* a, int lo, int hi, int v) {
+    if (lo > hi) return -1;
+    int mid = (lo + hi) / 2;
+    if (a[mid] == v) return mid;
+    else if (a[mid] < v) return solve(a, mid + 1, hi, v);
+    else return solve(a, lo, mid - 1, v);
+}`, expected: 'O(log n)' as any },
+
+  { id: 227, label: 'D4.6: Recursive lower_bound style → O(log n)', code: `
+int solve(int* a, int lo, int hi, int val) {
+    if (lo >= hi) return lo;
+    int mid = (lo + hi) / 2;
+    if (a[mid] < val) return solve(a, mid + 1, hi, val);
+    return solve(a, lo, mid, val);
+}`, expected: 'O(log n)' as any },
+
+  { id: 228, label: 'D4.6: Recursive upper_bound style → O(log n)', code: `
+int solve(int lo, int hi, int val) {
+    if (lo >= hi) return lo;
+    int mid = (lo + hi) / 2;
+    if (check(mid) >= val) return solve(lo, mid, val);
+    return solve(mid + 1, hi, val);
+}`, expected: 'O(log n)' as any },
+
+  { id: 229, label: 'D4.6: Persistent segment tree update (if/else, 1 call per branch) → O(log n)', code: `
+int solve(int prev, int l, int r, int pos, int val) {
+    if (l == r) { return newNode(val); }
+    int mid = (l + r) / 2;
+    int nd = newNode(0);
+    if (pos <= mid) {
+        nd = solve(prev, l, mid, pos, val);
+    } else {
+        nd = solve(prev, mid + 1, r, pos, val);
+    }
+    return nd;
+}`, expected: 'O(log n)' as any },
+
+  { id: 230, label: 'D4.6: Idiomatic early-return binary search → O(log n)', code: `
+int solve(int lo, int hi) {
+    if (lo > hi) return -1;
+    int mid = (lo + hi) / 2;
+    if (ok(mid)) return solve(lo, mid - 1);
+    return solve(mid + 1, hi);
+}`, expected: 'O(log n)' as any },
+
+  // ── D4.6: Regression guards ────────────────────────────────────────────────
+
+  { id: 231, label: 'D4.6: Regression — merge sort must remain Unknown', code: `
+void solve(int* a, int l, int r) {
+    if (l >= r) return;
+    int mid = (l + r) / 2;
+    solve(a, l, mid);
+    solve(a, mid + 1, r);
+    merge(a, l, mid, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 232, label: 'D4.6: Regression — segment tree BUILD must remain Unknown', code: `
+void solve(int node, int l, int r) {
+    if (l == r) { tree[node] = arr[l]; return; }
+    int mid = (l + r) / 2;
+    solve(2 * node, l, mid);
+    solve(2 * node + 1, mid + 1, r);
+    tree[node] = tree[2*node] + tree[2*node+1];
+}`, expected: 'Unknown' as any },
+
+  { id: 233, label: 'D4.6: Regression — seg tree query with return f()+f() must remain Unknown', code: `
+int solve(int node, int l, int r, int ql, int qr) {
+    if (ql > r || qr < l) return 0;
+    if (ql <= l && r <= qr) return tree[node];
+    int mid = (l + r) / 2;
+    if (qr <= mid) return solve(2*node, l, mid, ql, qr);
+    if (ql > mid) return solve(2*node+1, mid+1, r, ql, qr);
+    return solve(2*node, l, mid, ql, qr) + solve(2*node+1, mid+1, r, ql, qr);
+}`, expected: 'Unknown' as any },
+
+  { id: 234, label: 'D4.6: Regression — fibonacci must remain Unknown', code: `
+int solve(int n) {
+    if (n <= 1) return n;
+    return solve(n - 1) + solve(n - 2);
+}`, expected: 'Unknown' as any },
+
+  { id: 235, label: 'D4.6: Regression — quickSort must remain Unknown', code: `
+void solve(int* a, int l, int r) {
+    if (l >= r) return;
+    int p = partition(a, l, r);
+    solve(a, l, p - 1);
+    solve(a, p + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 236, label: 'D4.6: Endpoint guard — mid*2 arg must remain Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    if (ok(mid)) return solve(l, mid - 1);
+    return solve(mid * 2, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 237, label: 'D4.6: Endpoint guard — mid+k (non-literal) must remain Unknown', code: `
+int solve(int l, int r, int k) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    if (ok(mid)) return solve(l, mid - 1);
+    return solve(mid + k, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 238, label: 'D4.6: Endpoint guard — foo(mid) wrapped call must remain Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    if (ok(mid)) return solve(l, mid - 1);
+    return solve(foo(mid), r);
+}`, expected: 'Unknown' as any },
+
+  { id: 239, label: 'D4.6: Endpoint guard — l+2 offset arg must remain Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    if (ok(mid)) return solve(l + 2, mid);
+    return solve(mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 240, label: 'D4.6: Identifier guard — mid2 is a local alias, not a param → Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    int mid2 = mid;
+    if (ok(mid)) return solve(l, mid - 1);
+    return solve(mid, mid2);
+}`, expected: 'Unknown' as any },
+
+  // ── D4.6: Strict identifier whitelist regression ───────────────────────────
+
+  { id: 241, label: 'D4.6: Identifier guard — foo is not a param → Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    if (ok(mid)) return solve(l, mid - 1);
+    return solve(foo, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 242, label: 'D4.6: Identifier guard — alias is not a param → Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    int alias = l;
+    if (ok(mid)) return solve(alias, mid);
+    return solve(mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 243, label: 'D4.6: Identifier guard — tmp and tmp2 both non-params → Unknown', code: `
+int solve(int l, int r) {
+    if (l >= r) return l;
+    int mid = (l + r) / 2;
+    int tmp = l, tmp2 = r;
+    if (ok(mid)) return solve(tmp, mid);
+    return solve(mid + 1, tmp2);
+}`, expected: 'Unknown' as any },
+
+  { id: 244, label: 'D4.6: Pointer param accepted — solve(a, mid+1, hi, target) → O(log n)', code: `
+int solve(int* a, int lo, int hi, int target) {
+    if (lo > hi) return -1;
+    int mid = (lo + hi) / 2;
+    if (a[mid] == target) return mid;
+    if (a[mid] < target) return solve(a, mid + 1, hi, target);
+    return solve(a, lo, mid - 1, target);
+}`, expected: 'O(log n)' as any },
+
 ];
+
+
 
 // ─── vitest suite ───────────────────────────────────────────────────────────
 

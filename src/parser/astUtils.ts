@@ -1,6 +1,13 @@
 import { SyntaxNode, Tree } from 'web-tree-sitter';
-import { classifyLoop, classifyMacroString, LoopClassification, LoopConfidence, STL_REGISTRY } from './loopClassifier';
+import { classifyLoop, classifyMacroString, LoopClassification, LoopConfidence, STL_REGISTRY, STL_MEMBER_REGISTRY } from './loopClassifier';
 import { ComplexityNode } from '../engine/complexityNode';
+import { parseOneOff } from './treeSitter';
+import { buildTypeContext, mergeTypeContexts, TypeContext } from './typeTracker';
+
+export interface MacroRegistryEntry {
+  bodyText: string;
+  boundParamIndex?: number;
+}
 
 export interface ExtractedFunction {
   name: string;
@@ -21,6 +28,7 @@ export interface ExtractedLoop {
    * Used by the inference engine to detect step-dependent (harmonic) nested loops.
    */
   iteratorVar?: string;
+  boundVar?: string;
   /**
    * If set, this loop's step increment is the named variable from an enclosing loop.
    * e.g. `j += i` where `i` is an outer loop's iterator → stepDependentOn = 'i'.
@@ -44,8 +52,8 @@ export interface AnalysisResult {
  * Extracts a dynamic registry of loop macros defined in the file.
  * Returns a map of macro identifier (e.g. 'fo') -> raw macro string (e.g. 'for(int i=0;i<n;i++)').
  */
-export function buildMacroRegistry(tree: Tree): Map<string, string> {
-  const registry = new Map<string, string>();
+export function buildMacroRegistry(tree: Tree): Map<string, MacroRegistryEntry> {
+  const registry = new Map<string, MacroRegistryEntry>();
   if (!tree || !tree.rootNode) return registry;
 
   const defs = tree.rootNode.descendantsOfType(['preproc_function_def', 'preproc_def']);
@@ -72,7 +80,30 @@ export function buildMacroRegistry(tree: Tree): Map<string, string> {
     }
 
     if (argText.startsWith('for') || argText.startsWith('while')) {
-      registry.set(nameNode.text, argText);
+      let boundParamIndex: number | undefined = undefined;
+      const paramsNode = def.childForFieldName('parameters');
+      if (paramsNode) {
+        const dummyCode = `void _dummy() { ${argText} {} }`;
+        const dummyTree = parseOneOff(dummyCode);
+        const loopNode = dummyTree?.rootNode.descendantsOfType('for_statement')[0];
+        if (loopNode) {
+          const result = classifyLoop(loopNode);
+          if (result.boundVar) {
+            let paramIdx = 0;
+            for (let i = 0; i < paramsNode.childCount; i++) {
+              const p = paramsNode.child(i);
+              if (p && p.type === 'identifier') {
+                if (p.text === result.boundVar) {
+                  boundParamIndex = paramIdx;
+                  break;
+                }
+                paramIdx++;
+              }
+            }
+          }
+        }
+      }
+      registry.set(nameNode.text, { bodyText: argText, boundParamIndex });
     }
   }
   return registry;
@@ -215,13 +246,19 @@ function findChildOfType(node: SyntaxNode, type: string): SyntaxNode | null {
  */
 export function extractFunctionLoops(
   fnNode: SyntaxNode, 
-  macroRegistry?: Map<string, string>,
-  functionRegistry?: Map<string, ComplexityNode>
+  macroRegistry?: Map<string, MacroRegistryEntry>,
+  functionRegistry?: Map<string, ComplexityNode>,
+  globalTypeContext?: TypeContext
 ): ExtractedLoop[] {
+  // Build a function-local TypeContext and merge with the global one.
+  // Local declarations shadow global ones (local wins on conflict).
+  const localTypeContext = buildTypeContext(fnNode);
+  const typeContext = mergeTypeContexts(globalTypeContext, localTypeContext);
+  // typeContext is used for STL member method interception (D2.1+).
   const LOOP_TYPES = ['for_statement', 'for_range_loop', 'while_statement', 'do_statement'] as const;
   
   // We also intercept function_definition and call_expression to check against the macro registry.
-  const searchTypes = [...LOOP_TYPES, 'function_definition', 'call_expression'];
+  const searchTypes = [...LOOP_TYPES, 'function_definition', 'call_expression', 'subscript_expression'];
   const loopNodes = fnNode.descendantsOfType(searchTypes);
 
   const loopMap = new Map<number, ExtractedLoop>();
@@ -250,42 +287,126 @@ export function extractFunctionLoops(
       continue;
     }
 
-    // Check if this node is a macro invocation, STL call, or user-defined call
+    // Check if this node is a macro invocation, standalone STL call, member STL call, or user-defined call
     let isMacro = false;
     let isStl = false;
+    let isStlMember = false;
     let isUserCall = false;
-    let macroBody = '';
+    let isMapOp = false;
+    let name = '';
     let stlName = '';
+    let stlMemberClassification: LoopClassification = 'constant';
+    let mapOpClassification: LoopClassification = 'constant';
     let userCallName = '';
     
     if (node.type === 'function_definition' || node.type === 'call_expression') {
-      const name = extractFunctionNameOrCallIdentifier(node);
+      name = extractFunctionNameOrCallIdentifier(node);
       if (macroRegistry && macroRegistry.has(name)) {
         isMacro = true;
-        macroBody = macroRegistry.get(name)!;
       } else if (node.type === 'call_expression' && STL_REGISTRY[name]) {
         isStl = true;
         stlName = name;
       } else if (node.type === 'call_expression' && functionRegistry && functionRegistry.has(name)) {
         isUserCall = true;
         userCallName = name;
+      } else if (node.type === 'call_expression') {
+        // ── D2.1: STL member method interception ──────────────────────────────
+        // Fires when the call is a field_expression: `object.method(args)`
+        const funcNode = node.childForFieldName('function');
+        if (funcNode && funcNode.type === 'field_expression') {
+          const objectIdent = funcNode.childForFieldName('argument');
+          const fieldIdent  = funcNode.childForFieldName('field');
+          if (objectIdent && fieldIdent) {
+            const resolvedType = typeContext.variables.get(objectIdent.text);
+            if (resolvedType) {
+              const key = `${resolvedType}::${fieldIdent.text}`;
+              if (STL_MEMBER_REGISTRY[key] !== undefined) {
+                isStlMember = true;
+                stlMemberClassification = STL_MEMBER_REGISTRY[key];
+              }
+            }
+          }
+        }
+        if (!isStlMember) {
+          continue; // Not a registered macro, STL algorithm, member call, or known user call
+        }
       } else {
-        continue; // Not a registered macro, STL algorithm, or known user call, skip this node
+        continue;
       }
+    } else if (node.type === 'subscript_expression') {
+      const arrName = node.childForFieldName('argument')?.text;
+      if (arrName) {
+        const canonicalType = typeContext.variables.get(arrName);
+        if (canonicalType === 'map') {
+          isMapOp = true;
+          mapOpClassification = 'logarithmic';
+        } else if (canonicalType === 'unordered_map') {
+          isMapOp = true;
+          mapOpClassification = 'constant';
+        }
+      }
+      if (!isMapOp) continue;
     }
 
-    const type = (node.type === 'for_statement' || node.type === 'for_range_loop' || (isMacro && macroBody.startsWith('for'))) ? 'for' : (isUserCall || isStl ? 'call' : 'while');
+    const type = (node.type === 'for_statement' || node.type === 'for_range_loop' || (isMacro)) ? 'for' : (isUserCall || isStl || isStlMember || isMapOp ? 'call' : 'while');
     
     let classification: LoopClassification | 'custom';
     let confidence: LoopConfidence;
     let customComplexity: ComplexityNode | undefined;
+    let boundVar: string | undefined;
     
     if (isMacro) {
-      const result = classifyMacroString(macroBody);
+      const macroMeta = macroRegistry!.get(name)!;
+      const result = classifyMacroString(macroMeta.bodyText);
       classification = result.classification;
       confidence = result.confidence;
+
+      if (macroMeta.boundParamIndex !== undefined) {
+        if (node.type === 'call_expression') {
+          const argsNode = node.childForFieldName('arguments');
+          if (argsNode) {
+            let argIdx = 0;
+            for (let i = 0; i < argsNode.childCount; i++) {
+              const p = argsNode.child(i);
+              if (p && p.type !== '(' && p.type !== ')' && p.type !== ',') {
+                if (argIdx === macroMeta.boundParamIndex) {
+                  if (p.type === 'identifier') {
+                    boundVar = p.text;
+                  }
+                  break;
+                }
+                argIdx++;
+              }
+            }
+          }
+        } else if (node.type === 'function_definition') {
+          const decl = node.childForFieldName('declarator');
+          if (decl) {
+            const params = decl.childForFieldName('parameters');
+            if (params) {
+              let argIdx = 0;
+              for (let i = 0; i < params.childCount; i++) {
+                const p = params.child(i);
+                if (p && p.type !== '(' && p.type !== ')' && p.type !== ',') {
+                  if (argIdx === macroMeta.boundParamIndex) {
+                    boundVar = p.text;
+                    break;
+                  }
+                  argIdx++;
+                }
+              }
+            }
+          }
+        }
+      }
     } else if (isStl) {
       classification = STL_REGISTRY[stlName];
+      confidence = 'high';
+    } else if (isStlMember) {
+      classification = stlMemberClassification;
+      confidence = 'medium';
+    } else if (isMapOp) {
+      classification = mapOpClassification;
       confidence = 'high';
     } else if (isUserCall) {
       classification = 'custom';
@@ -295,12 +416,33 @@ export function extractFunctionLoops(
       const result = classifyLoop(node);
       classification = result.classification;
       confidence = result.confidence;
+      boundVar = result.boundVar;
+
+      // ── D2.2: Graph traversal upgrade ─────────────────────────────────────
+      // After normal classification, check if this while_statement is actually
+      // a BFS/DFS graph traversal. All four conditions must hold simultaneously:
+      //   1. while_statement
+      //   2. condition = !container.empty()
+      //   3. container type ∈ {queue, stack, deque}  (via TypeContext)
+      //   4. body contains a for_range_loop  (adjacency-list iteration)
+      // Any failure → silently keep the existing classification.
+      if (node.type === 'while_statement' && isGraphTraversalWhile(node, typeContext)) {
+        classification = 'graph_traversal';
+        confidence = 'medium';
+      } else if (node.type === 'while_statement' && isDijkstraWhile(node, typeContext)) {
+        // ── D2.3: Priority-queue graph traversal (Dijkstra / Prim) ────────────────
+        // Container must be priority_queue (not queue/stack/deque).
+        // Produces O((V+E) log V), not O(V+E).
+        // The two checks are mutually exclusive by the container type guard.
+        classification = 'graph_log_traversal';
+        confidence = 'medium';
+      }
     }
 
     // Extract the iterator variable for 'for' loops so the inference engine
     // can detect step-dependent (harmonic) relationships with child loops.
     let iteratorVar: string | undefined;
-    if (!isMacro && !isStl && !isUserCall && node.type === 'for_statement') {
+    if (!isMacro && !isStl && !isStlMember && !isUserCall && node.type === 'for_statement') {
       iteratorVar = getForIteratorVar(node) ?? undefined;
     }
 
@@ -313,6 +455,7 @@ export function extractFunctionLoops(
       childLoops: [],
       customComplexity,
       iteratorVar,
+      boundVar,
     };
 
     loopMap.set(node.id, extractedLoop);
@@ -338,6 +481,10 @@ export function extractFunctionLoops(
           break;
         }
         if (current.type === 'call_expression' && STL_REGISTRY[name]) {
+          parentLoopId = current.id;
+          break;
+        }
+        if (current.type === 'call_expression' && isRegisteredStlMember(current, typeContext)) {
           parentLoopId = current.id;
           break;
         }
@@ -631,3 +778,124 @@ function extractFunctionNameOrCallIdentifier(node: SyntaxNode): string {
   }
   return '<anonymous>';
 }
+
+/**
+ * Returns true if `callNode` is a call_expression whose function is a
+ * field_expression resolving to a key in STL_MEMBER_REGISTRY via the TypeContext.
+ * Used during the parent-walk to correctly scope nested STL member calls.
+ */
+function isRegisteredStlMember(callNode: SyntaxNode, ctx: TypeContext): boolean {
+  const funcNode = callNode.childForFieldName('function');
+  if (!funcNode || funcNode.type !== 'field_expression') return false;
+  const objectIdent = funcNode.childForFieldName('argument');
+  const fieldIdent  = funcNode.childForFieldName('field');
+  if (!objectIdent || !fieldIdent) return false;
+  const resolvedType = ctx.variables.get(objectIdent.text);
+  if (!resolvedType) return false;
+  return STL_MEMBER_REGISTRY[`${resolvedType}::${fieldIdent.text}`] !== undefined;
+}
+
+// ─── Graph Traversal Detection (D2.2) ────────────────────────────────────────
+
+/**
+ * Returns true if `whileNode` matches the BFS/DFS graph traversal signature:
+ *   container ∈ {queue, stack, deque} + !x.empty() + for_range_loop body.
+ * Produces O(V+E).
+ */
+function isGraphTraversalWhile(whileNode: SyntaxNode, ctx: TypeContext): boolean {
+  return _isGraphWhile(whileNode, ctx, ['queue', 'stack', 'deque']);
+}
+
+// ─── Dijkstra / Priority-Queue Traversal Detection (D2.3) ────────────────────
+
+/**
+ * Returns true if `whileNode` matches the Dijkstra/priority-queue graph
+ * traversal signature:
+ *   container = priority_queue + !pq.empty() + for_range_loop body.
+ * Produces O((V+E) log V).
+ * Mutually exclusive with isGraphTraversalWhile by the container type guard.
+ */
+function isDijkstraWhile(whileNode: SyntaxNode, ctx: TypeContext): boolean {
+  return _isGraphWhile(whileNode, ctx, ['priority_queue']);
+}
+
+// ─── Shared graph-while detection core ───────────────────────────────────────
+
+/**
+ * Core implementation shared by isGraphTraversalWhile and isDijkstraWhile.
+ *
+ * All four conditions must hold simultaneously:
+ *   1. Condition is `!x.empty()` (exact AST shape — unary ! wrapping call_expression).
+ *   2. Method field name is exactly "empty".
+ *   3. Variable `x` TypeContext-resolves to one of `allowedTypes`.
+ *   4. Body contains a for_range_loop with no intervening for/while/do loop
+ *      between it and the outer while (ancestor walk using .id comparison).
+ *
+ * Any single failure returns false silently, preserving the existing classification.
+ */
+function _isGraphWhile(
+  whileNode: SyntaxNode,
+  ctx: TypeContext,
+  allowedTypes: string[]
+): boolean {
+  // ── 1. Extract condition ──────────────────────────────────────────────────
+  let condNode = whileNode.childForFieldName('condition');
+  if (!condNode) return false;
+
+  // Unwrap condition_clause: `(expr)` → inner expr
+  if (condNode.type === 'condition_clause') {
+    for (let i = 0; i < condNode.childCount; i++) {
+      const ch = condNode.child(i);
+      if (ch && ch.type !== '(' && ch.type !== ')') {
+        condNode = ch;
+        break;
+      }
+    }
+  }
+
+  // ── 2. Condition must be `!x.empty()` ────────────────────────────────────
+  if (condNode.type !== 'unary_expression') return false;
+  const unaryOp = condNode.child(0);
+  if (!unaryOp || unaryOp.text !== '!') return false;
+
+  const innerCall = condNode.child(1);
+  if (!innerCall || innerCall.type !== 'call_expression') return false;
+
+  const callFunc = innerCall.childForFieldName('function');
+  if (!callFunc || callFunc.type !== 'field_expression') return false;
+
+  const containerIdent = callFunc.childForFieldName('argument');
+  const methodIdent    = callFunc.childForFieldName('field');
+  if (!containerIdent || !methodIdent) return false;
+  if (methodIdent.text !== 'empty') return false;
+
+  // ── 3. Container type must be in allowedTypes ─────────────────────────────
+  const resolvedType = ctx.variables.get(containerIdent.text);
+  if (!resolvedType) return false;
+  if (!allowedTypes.includes(resolvedType)) return false;
+
+  // ── 4. Body must contain a for_range_loop at direct depth ────────────────
+  // A range loop is "direct" if no for/while/do appears in the ancestor chain
+  // between it and the outer while node (.id comparison avoids wrapper aliasing).
+  const body = whileNode.childForFieldName('body');
+  if (!body) return false;
+
+  const allRangeLoops = body.descendantsOfType('for_range_loop');
+  const directRangeLoops = allRangeLoops.filter(rl => {
+    let cur: SyntaxNode | null = rl.parent;
+    while (cur && cur.id !== whileNode.id) {
+      if (
+        cur.type === 'for_statement'   ||
+        cur.type === 'for_range_loop'  ||
+        cur.type === 'while_statement' ||
+        cur.type === 'do_statement'
+      ) {
+        return false;
+      }
+      cur = cur.parent;
+    }
+    return true;
+  });
+  return directRangeLoops.length > 0;
+}
+

@@ -1,6 +1,6 @@
 import { SyntaxNode } from 'web-tree-sitter';
 
-export type LoopClassification = 'constant' | 'linear' | 'logarithmic' | 'linear_logarithmic' | 'fractional' | 'unknown';
+export type LoopClassification = 'constant' | 'linear' | 'logarithmic' | 'linear_logarithmic' | 'fractional' | 'graph_traversal' | 'graph_log_traversal' | 'exponential' | 'unknown';
 export type LoopConfidence = 'high' | 'medium' | 'low';
 
 export const STL_REGISTRY: Record<string, LoopClassification> = {
@@ -16,9 +16,90 @@ export const STL_REGISTRY: Record<string, LoopClassification> = {
   'fill': 'linear'
 };
 
+/**
+ * Registry for STL container member method complexities.
+ * Keys are "ContainerType::methodName" (resolved via TypeContext).
+ * Only includes methods with non-trivial (non-O(1)) or explicitly O(1) semantics
+ * that the inference engine needs to distinguish from plain loop bodies.
+ *
+ * Omissions (intentional):
+ *   - unordered_map / unordered_set methods: O(1) avg — no log factor to add.
+ *   - size(), empty(): O(1) — irrelevant to complexity analysis.
+ */
+export const STL_MEMBER_REGISTRY: Record<string, LoopClassification> = {
+  // ─── set — O(log n) ────────────────────────────────────────────────────────
+  'set::insert':          'logarithmic',
+  'set::erase':           'logarithmic',
+  'set::find':            'logarithmic',
+  'set::count':           'logarithmic',
+  'set::lower_bound':     'logarithmic',
+  'set::upper_bound':     'logarithmic',
+  'set::contains':        'logarithmic',   // C++20
+
+  // ─── multiset — O(log n) ───────────────────────────────────────────────────
+  'multiset::insert':     'logarithmic',
+  'multiset::erase':      'logarithmic',
+  'multiset::find':       'logarithmic',
+  'multiset::count':      'logarithmic',
+  'multiset::contains':   'logarithmic',   // C++20
+
+  // ─── map — O(log n) ────────────────────────────────────────────────────────
+  'map::insert':          'logarithmic',
+  'map::erase':           'logarithmic',
+  'map::find':            'logarithmic',
+  'map::count':           'logarithmic',
+  'map::lower_bound':     'logarithmic',
+  'map::upper_bound':     'logarithmic',
+  'map::contains':        'logarithmic',   // C++20
+
+  // ─── multimap — O(log n) ───────────────────────────────────────────────────
+  'multimap::insert':     'logarithmic',
+  'multimap::erase':      'logarithmic',
+  'multimap::find':       'logarithmic',
+  'multimap::count':      'logarithmic',
+
+  // ─── priority_queue — O(log n) push/pop/emplace; O(1) top ─────────────────
+  'priority_queue::push':    'logarithmic',
+  'priority_queue::pop':     'logarithmic',
+  'priority_queue::emplace': 'logarithmic',  // C++ emplace — same cost as push
+  'priority_queue::top':     'constant',     // peek at max/min element — O(1)
+
+  // ─── queue — O(1); listed explicitly so push/pop are never misclassified ───
+  'queue::push':          'constant',
+  'queue::pop':           'constant',
+  'queue::front':         'constant',
+  'queue::back':          'constant',
+
+  // ─── stack — O(1) ──────────────────────────────────────────────────────────
+  'stack::push':          'constant',
+  'stack::pop':           'constant',
+  'stack::top':           'constant',
+
+  // ─── deque — O(1) amortized ────────────────────────────────────────────────
+  'deque::push_back':     'constant',
+  'deque::push_front':    'constant',
+  'deque::pop_back':      'constant',
+  'deque::pop_front':     'constant',
+
+  // ─── vector — O(1) amortized ───────────────────────────────────────────────
+  'vector::push_back':    'constant',
+  'vector::pop_back':     'constant',
+
+  // ─── unordered containers — O(1) avg (explicitly constant) ────────────────
+  'unordered_set::insert':    'constant',
+  'unordered_set::erase':     'constant',
+  'unordered_set::find':      'constant',
+  'unordered_set::contains':  'constant',  // C++20
+  'unordered_map::insert':    'constant',
+  'unordered_map::erase':     'constant',
+  'unordered_map::find':      'constant',
+  'unordered_map::contains':  'constant',  // C++20
+};
+
 export interface LoopClassificationResult {
   classification: LoopClassification;
   confidence: LoopConfidence;
+  boundVar?: string;
 }
 
 
@@ -140,7 +221,82 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
-  return analyzeUpdatePattern(updateNode, conditionNode, initializerNode);
+  // ── D3.1: Bitmask / exponential bound detection ──────────────────────────────────────
+  // Fires ONLY when all three conditions hold simultaneously:
+  //   1. for_statement with an update_expression (mask++)
+  //   2. condition RHS is (1 << varName), (1LL << varName), (2 << varName), etc.
+  //   3. left side of << is a number_literal (not a variable like k)
+  // Any failure silently falls through to the existing linear classification.
+  if (
+    node.type === 'for_statement' &&
+    updateNode !== null &&
+    updateNode.type === 'update_expression' &&
+    conditionNode !== null &&
+    conditionNode.type === 'binary_expression'
+  ) {
+    const bitmaskVar = extractBitmaskVar(conditionNode);
+    if (bitmaskVar) {
+      return { classification: 'exponential', confidence: 'high', boundVar: bitmaskVar };
+    }
+  }
+
+  // ── D4.5: Sparse Table Outer Loop Detection ──────────────────────────────────────
+  // Fires when the for-loop condition is of the form (1 << j) <= n  with j++.
+  // A loop of this shape iterates exactly floor(log2(n)) + 1 times — provably
+  // logarithmic regardless of the loop body, by arithmetic invariant.
+  //
+  // All six structural conditions must hold simultaneously (see isSparseTableOuterLoop).
+  // Any failure falls through to the existing linear classification below.
+  // Placed AFTER D3.1 (which requires op=`<`) so the two branches are mutually exclusive.
+  if (
+    node.type === 'for_statement' &&
+    updateNode !== null &&
+    updateNode.type === 'update_expression' &&
+    conditionNode !== null
+  ) {
+    if (isSparseTableOuterLoop(conditionNode)) {
+      return { classification: 'logarithmic', confidence: 'high', boundVar: getBoundVariable(conditionNode) };
+    }
+  }
+
+  // ── D3.2: Iterative Path Halving ───────────────────────────────────────────
+  // Detects loops like: while(parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; }
+  // Looks for the exact structural path halving assignment in the loop body.
+  if (node.type === 'while_statement') {
+    const bodyNode = node.childForFieldName('body');
+    if (bodyNode && isPathHalvingBody(bodyNode)) {
+      return { classification: 'constant', confidence: 'medium' };
+    }
+  }
+
+  const result = analyzeUpdatePattern(updateNode, conditionNode, initializerNode);
+  if (result.classification === 'linear') {
+    const boundVar = getBoundVariable(conditionNode);
+    if (boundVar) result.boundVar = boundVar;
+  }
+  return result;
+}
+
+function getBoundVariable(conditionNode: SyntaxNode | null): string | undefined {
+  if (!conditionNode) return undefined;
+  if (conditionNode.type === 'condition_clause') {
+    for (let i = 0; i < conditionNode.childCount; i++) {
+      const ch = conditionNode.child(i);
+      if (ch && ch.type !== '(' && ch.type !== ')') {
+        conditionNode = ch;
+        break;
+      }
+    }
+  }
+
+  if (conditionNode.type === 'binary_expression') {
+    const op = conditionNode.childForFieldName('operator')?.type;
+    if (op === '<' || op === '<=') {
+      const right = conditionNode.childForFieldName('right');
+      if (right && right.type === 'identifier') return right.text;
+    }
+  }
+  return undefined;
 }
 
 function findBodyUpdate(bodyNode: SyntaxNode | null): SyntaxNode | null {
@@ -338,19 +494,107 @@ function isNegationOf(node: SyntaxNode, varName: string): boolean {
   return false;
 }
 
+function isSafeConstantExpression(node: SyntaxNode | null): boolean {
+  if (!node) return false;
+
+  switch (node.type) {
+    case 'number_literal':
+    case 'sizeof_expression':
+      return true;
+    case 'parenthesized_expression':
+      return isSafeConstantExpression(node.child(1) ?? node.child(0));
+    case 'unary_expression': {
+      const op = node.childForFieldName('operator')?.type;
+      if (op === '+' || op === '-') {
+        return isSafeConstantExpression(node.childForFieldName('argument'));
+      }
+      return false;
+    }
+    case 'binary_expression': {
+      const op = node.childForFieldName('operator')?.type;
+      if (['+', '-', '*', '/', '%'].includes(op || '')) {
+        return isSafeConstantExpression(node.childForFieldName('left')) &&
+               isSafeConstantExpression(node.childForFieldName('right'));
+      }
+      return false;
+    }
+    default:
+      return false;
+  }
+}
+
+// ─── D3.1: Bitmask / Exponential Bound Extraction ────────────────────────────────────────
+
+/**
+ * Returns the exponent variable name if the condition's right-hand side is a
+ * bit-shift expression of the form  `(1 << n)`, `1LL << n`, `2 << n`, etc.
+ *
+ * Matching rules (all must hold):
+ *   - Condition operator must be `<`.
+ *   - RHS unwrapped through any number of parentheses must be a `binary_expression`.
+ *   - The inner operator must be `<<`.
+ *   - The left operand of `<<` must be a `number_literal` (handles `1`, `1LL`, `2`, `2LL`).
+ *   - The right operand of `<<` must be an `identifier` (the exponent variable).
+ *
+ * If any condition fails, returns undefined and the caller falls through
+ * to the existing classification path — guaranteeing zero regressions.
+ */
+export function extractBitmaskVar(conditionNode: SyntaxNode): string | undefined {
+  if (conditionNode.type !== 'binary_expression') return undefined;
+
+  // Condition operator must be < (mask < (1<<n))
+  const condOp = conditionNode.childForFieldName('operator');
+  if (!condOp || condOp.type !== '<') return undefined;
+
+  let rhs = conditionNode.childForFieldName('right');
+  if (!rhs) return undefined;
+
+  // Unwrap all layers of parenthesized_expression: ((1 << n)) → (1 << n) → 1 << n
+  while (rhs.type === 'parenthesized_expression') {
+    let inner: SyntaxNode | null = null;
+    for (let i = 0; i < rhs.childCount; i++) {
+      const ch = rhs.child(i);
+      if (ch && ch.type !== '(' && ch.type !== ')') {
+        inner = ch;
+        break;
+      }
+    }
+    if (!inner) return undefined;
+    rhs = inner;
+  }
+
+  // RHS must be a binary_expression with << operator
+  if (rhs.type !== 'binary_expression') return undefined;
+  const shiftOp = rhs.childForFieldName('operator');
+  if (!shiftOp || shiftOp.type !== '<<') return undefined;
+
+  const shiftLeft  = rhs.childForFieldName('left');
+  const shiftRight = rhs.childForFieldName('right');
+
+  // Left of << must be a numeric literal: 1, 1LL, 2, 2LL, etc.
+  // Tree-sitter parses `1LL` as number_literal with text "1LL".
+  // Identifiers like `k`, `mask` must be rejected here.
+  if (!shiftLeft || shiftLeft.type !== 'number_literal') return undefined;
+
+  // Right of << must be a plain identifier (the exponent variable)
+  if (!shiftRight || shiftRight.type !== 'identifier') return undefined;
+
+  return shiftRight.text;
+}
+
 function hasConstantInitializer(initializerNode: SyntaxNode | null): boolean {
   if (!initializerNode) return false;
   
   const initDeclarator = initializerNode.descendantsOfType('init_declarator')[0];
   if (initDeclarator) {
     const value = initDeclarator.childForFieldName('value');
-    if (value && value.type === 'number_literal') return true;
+    if (value && isSafeConstantExpression(value)) return true;
   }
   
   const assignmentExpr = initializerNode.descendantsOfType('assignment_expression')[0];
   if (assignmentExpr) {
     const right = assignmentExpr.childForFieldName('right');
-    if (right && right.type === 'number_literal') return true;
+    if (right && isSafeConstantExpression(right)) return true;
   }
 
   return false;
@@ -366,8 +610,7 @@ function analyzeUpdatePattern(
       const rightNode = conditionNode.childForFieldName('right');
       const leftNode = conditionNode.childForFieldName('left');
       
-      const hasConstantBound = (rightNode && rightNode.type === 'number_literal') || 
-                               (leftNode && leftNode.type === 'number_literal');
+      const hasConstantBound = isSafeConstantExpression(rightNode) || isSafeConstantExpression(leftNode);
       
       if (hasConstantBound && hasConstantInitializer(initializerNode)) {
         return { classification: 'constant', confidence: 'high' };
@@ -484,4 +727,119 @@ export function classifyMacroString(macroText: string): LoopClassificationResult
 
   // As required: Do NOT default unknown macro bodies to O(n). Return Unknown.
   return { classification: 'unknown', confidence: 'low' };
+}
+
+// ─── D3.2: Path Halving Helper ───────────────────────────────────────────────
+
+/**
+ * Safely identifies DSU iterative path halving assignments.
+ * Matches ANY assignment in the loop body of the form:
+ *   parent[x] = parent[parent[x]]
+ * All 3 array identifiers must match, and the innermost index must match the LHS index.
+ */
+function isPathHalvingBody(bodyNode: SyntaxNode): boolean {
+  const assignments = bodyNode.descendantsOfType('assignment_expression');
+  for (const assign of assignments) {
+    const leftText = assign.childForFieldName('left')?.text.replace(/\s+/g, '');
+    let rightNode = assign.childForFieldName('right');
+    
+    // Unwrap parenthesis if any
+    while (rightNode && rightNode.type === 'parenthesized_expression') {
+      let inner: SyntaxNode | null = null;
+      for (let i = 0; i < rightNode.childCount; i++) {
+        const ch = rightNode.child(i);
+        if (ch && ch.type !== '(' && ch.type !== ')') {
+          inner = ch;
+          break;
+        }
+      }
+      if (!inner) break;
+      rightNode = inner;
+    }
+    
+    const rightText = rightNode?.text.replace(/\s+/g, '');
+    if (leftText && rightText) {
+      // Find array A and index B from A[B]
+      const match = leftText.match(/^([a-zA-Z0-9_]+)\[(.*)\]$/);
+      if (match) {
+        const A = match[1];
+        const B = match[2];
+        const expectedRight = `${A}[${A}[${B}]]`;
+        if (rightText === expectedRight) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// ─── D4.5: Sparse Table Outer Loop Fingerprint ───────────────────────────────────────────
+
+/**
+ * Returns true when the for-loop condition is a sparse-table-style shift guard:
+ *
+ *   (1 << j) <= n
+ *
+ * This is structurally unique: the power-of-two expression is on the LEFT of `<=`
+ * and the bound identifier is on the RIGHT.  It is the exact opposite of the D3.1
+ * bitmask pattern (`mask < (1 << n)`) and is mutually exclusive with it by operator.
+ *
+ * Required structure (ALL seven must hold):
+ *
+ *   1. conditionNode is binary_expression
+ *   2. outer operator is `<=`  (NOT `<` — that is D3.1's domain)
+ *   3. right operand of `<=` is an identifier  (the upper-bound variable, e.g. n)
+ *   4. left operand of `<=`, after optional single-level parenthesis unwrap, is
+ *      a binary_expression
+ *   5. inner operator is `<<`
+ *   6. left of `<<` is number_literal  (the power-of-two base; typically 1)
+ *   7. right of `<<` is identifier      (the exponent / loop variable, e.g. j)
+ *
+ * Guarantees:
+ *   - No name-based heuristics. No string matching. No regex.
+ *   - Returns false for any non-conforming structure — all existing classifications
+ *     are preserved.
+ *   - Mutually exclusive with extractBitmaskVar() which requires outer op `<`
+ *     with shift on the RHS. D4.5 requires outer op `<=` with shift on the LHS.
+ */
+export function isSparseTableOuterLoop(conditionNode: SyntaxNode | null): boolean {
+  if (!conditionNode || conditionNode.type !== 'binary_expression') return false;
+
+  // Condition 2: outer operator must be `<=`
+  const outerOp = conditionNode.childForFieldName('operator');
+  if (!outerOp || outerOp.type !== '<=') return false;
+
+  // Condition 3: right operand must be an identifier (bound variable, e.g. n)
+  const outerRight = conditionNode.childForFieldName('right');
+  if (!outerRight || outerRight.type !== 'identifier') return false;
+
+  // Conditions 4–7: left operand, unwrap one optional level of parentheses
+  let outerLeft = conditionNode.childForFieldName('left');
+  if (!outerLeft) return false;
+  if (outerLeft.type === 'parenthesized_expression') {
+    // Unwrap: (1 << j) → the inner binary_expression
+    let inner: SyntaxNode | null = null;
+    for (let i = 0; i < outerLeft.childCount; i++) {
+      const ch = outerLeft.child(i);
+      if (ch && ch.type !== '(' && ch.type !== ')') { inner = ch; break; }
+    }
+    if (!inner) return false;
+    outerLeft = inner;
+  }
+
+  // Condition 4: after unwrap, must be a binary_expression
+  if (outerLeft.type !== 'binary_expression') return false;
+
+  // Condition 5: inner operator must be `<<`
+  const shiftOp = outerLeft.childForFieldName('operator');
+  if (!shiftOp || shiftOp.type !== '<<') return false;
+
+  // Condition 6: left of `<<` must be a number_literal (e.g. 1, 1LL, 2)
+  const shiftLeft = outerLeft.childForFieldName('left');
+  if (!shiftLeft || shiftLeft.type !== 'number_literal') return false;
+
+  // Condition 7: right of `<<` must be an identifier (the loop / exponent variable)
+  const shiftRight = outerLeft.childForFieldName('right');
+  if (!shiftRight || shiftRight.type !== 'identifier') return false;
+
+  return true;
 }

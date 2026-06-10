@@ -1,4 +1,4 @@
-export type ComplexityClass = 'O(1)' | 'O(log n)' | 'O(log² n)' | 'O(log³ n)' | 'O(sqrt n)' | 'O(n)' | 'O(n log n)' | 'O(n sqrt n)' | 'O(n log² n)' | 'O(n log log n)' | 'O(n²)' | 'O(n² log n)' | 'O(n² sqrt n)' | 'O(n sqrt n log n)' | 'O(n³)' | 'O(n³ log n)' | 'Unknown';
+export type ComplexityClass = string;
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
 
 export interface ComplexityResult {
@@ -18,6 +18,10 @@ export interface ComplexityNode {
   logPower: number;
   loglogPower: number;  // 0 = absent, 1 = O(... log log n)
   isUnknown: boolean;
+  linearVars?: string[]; // variables extracted from loop bound — e.g. ['m', 'V'] (D1+)
+  isGraphSum?:    boolean;  // true → format as O(V+E) (D2.2+)
+  isGraphSumLog?: boolean;  // true → format as O((V+E) log V) (D2.3+)
+  expVars?: string[];        // per-variable 2^x entries — e.g. ['n'] → 2ⁿ, ['n','m'] → 2ⁿ·2ᵐ (D3.1+)
 }
 
 /**
