@@ -630,7 +630,7 @@ export function extractFunctionLoops(
           !extractedLoop.stepDependentOn &&
           childAstNode &&
           (childAstNode.type === 'while_statement' || childAstNode.type === 'do_statement') &&
-          parentAstNode?.type === 'for_statement'
+          (parentAstNode?.type === 'for_statement' || parentAstNode?.type === 'while_statement')
         ) {
           if (isAmortizedInner(childAstNode, parentAstNode)) {
             extractedLoop.isAmortized = true;

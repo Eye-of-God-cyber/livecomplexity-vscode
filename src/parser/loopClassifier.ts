@@ -203,7 +203,7 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
       if (left && left.type === 'binary_expression' && left.childForFieldName('operator')?.type === '*') {
         const l1 = left.childForFieldName('left');
         const l2 = left.childForFieldName('right');
-        const unwrap = (n: any) => n && n.type === 'cast_expression' ? (n.child(1) || n) : n;
+        const unwrap = (n: any) => n && n.type === 'cast_expression' ? n.childForFieldName('value') || n.child(n.childCount - 1) || n : n;
         if (l1 && l2 && unwrap(l1).text === unwrap(l2).text) {
           return { classification: 'fractional', confidence: 'high' };
         }
