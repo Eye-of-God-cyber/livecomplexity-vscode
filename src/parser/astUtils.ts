@@ -1320,6 +1320,35 @@ function countWrites(name: string, declId: number, fnNode: SyntaxNode): number {
   return count;
 }
 
+function countSymbolicWrites(name: string, declId: number, fnNode: SyntaxNode): number {
+  let count = 0;
+
+  for (const id of fnNode.descendantsOfType('init_declarator')) {
+    const decl = id.childForFieldName('declarator');
+    if (!decl) continue;
+    let ident: SyntaxNode | null = decl.type === 'identifier' ? decl : decl.descendantsOfType('identifier')[0] ?? null;
+    if (ident && ident.text === name && ident.id === declId) {
+      const rhs = id.childForFieldName('value');
+      if (rhs && rhs.type !== 'number_literal') count++;
+    }
+  }
+
+  for (const a of fnNode.descendantsOfType('assignment_expression')) {
+    const op  = a.childForFieldName('operator');
+    if (!op || op.type !== '=') continue;
+    const lhs = a.childForFieldName('left');
+    if (lhs && lhs.type === 'identifier' && lhs.text === name) {
+      const resolvedLhs = resolveDeclarationNode(lhs, fnNode);
+      if (resolvedLhs && resolvedLhs.id === declId) {
+         const rhs = a.childForFieldName('right');
+         if (rhs && rhs.type !== 'number_literal') count++;
+      }
+    }
+  }
+
+  return count;
+}
+
 /**
  * Builds the Canonical Symbol Registry for a single function analysis.
  *
@@ -1395,12 +1424,76 @@ function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
     // Self-alias guard.
     if (lhsDeclId === targetDeclId) continue;
 
-    // Exactly one write to LHS.
-    if (countWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
+    // Exactly one symbolic write to LHS.
+    if (countSymbolicWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
 
     // LHS must not be mutated anywhere.
     if (isMutated(lhsName, fnNode, fnDefMap)) continue;
 
+    aliasMap.set(lhsDeclId, targetDeclId);
+  }
+
+  for (const assign of fnNode.descendantsOfType('assignment_expression')) {
+    const op = assign.childForFieldName('operator');
+    if (!op || op.type !== '=') continue; // must be exactly '='
+
+    let lhsScopeNode: SyntaxNode | null = assign.parent;
+    let inScope = false;
+    while (lhsScopeNode) {
+      if (lhsScopeNode.type === 'function_definition' || lhsScopeNode.type === 'lambda_expression') {
+        if (lhsScopeNode.id === fnNode.id) inScope = true;
+        break;
+      }
+      lhsScopeNode = lhsScopeNode.parent;
+    }
+    if (!inScope) continue;
+
+    const lhs = assign.childForFieldName('left');
+    if (!lhs || lhs.type !== 'identifier') continue;
+    const lhsName = lhs.text;
+
+    // LHS resolves to a declaration
+    const lhsDecl = resolveDeclarationNode(lhs, fnNode);
+    if (!lhsDecl) continue;
+    const lhsDeclId = lhsDecl.id;
+
+    // Exactly one symbolic write exists
+    if (countSymbolicWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
+
+    // LHS must not be mutated anywhere
+    if (isMutated(lhsName, fnNode, fnDefMap)) continue;
+
+    const rhs = assign.childForFieldName('right');
+    if (!rhs) continue;
+
+    let targetDeclId: number;
+    if (rhs.type === 'identifier') {
+      const targetDecl = resolveDeclarationNode(rhs, fnNode);
+      if (!targetDecl) continue;
+      targetDeclId = targetDecl.id;
+    } else if (rhs.type === 'binary_expression') {
+      const opRhs = rhs.childForFieldName('operator');
+      if (!opRhs || (opRhs.type !== '+' && opRhs.type !== '/')) continue;
+      if (opRhs.type === '/') {
+        const right = rhs.childForFieldName('right');
+        if (!right || right.type !== 'number_literal') continue;
+      }
+      const compoundNodes = extractCompoundBoundNodes(rhs);
+      if (!compoundNodes || compoundNodes.length === 0) continue;
+      if (compoundNodes.some(n => n.type !== 'identifier')) continue;
+      targetDeclId = rhs.id;
+    } else if (rhs.type === 'cast_expression') {
+      const unwrap = (n: any) => n && n.type === 'cast_expression' ? (n.child(1) || n) : n;
+      const castInner = unwrap(rhs);
+      if (!castInner || castInner.type !== 'identifier') continue;
+      const targetDecl = resolveDeclarationNode(castInner, fnNode);
+      if (!targetDecl) continue;
+      targetDeclId = targetDecl.id;
+    } else {
+      continue;
+    }
+
+    if (lhsDeclId === targetDeclId) continue;
     aliasMap.set(lhsDeclId, targetDeclId);
   }
 
