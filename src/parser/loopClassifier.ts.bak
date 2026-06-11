@@ -1,4 +1,4 @@
-import { SyntaxNode } from 'web-tree-sitter';
+﻿import { SyntaxNode } from 'web-tree-sitter';
 
 export type LoopClassification = 'constant' | 'linear' | 'logarithmic' | 'linear_logarithmic' | 'fractional' | 'graph_traversal' | 'graph_log_traversal' | 'exponential' | 'unknown';
 export type LoopConfidence = 'high' | 'medium' | 'low';
@@ -23,11 +23,11 @@ export const STL_REGISTRY: Record<string, LoopClassification> = {
  * that the inference engine needs to distinguish from plain loop bodies.
  *
  * Omissions (intentional):
- *   - unordered_map / unordered_set methods: O(1) avg — no log factor to add.
- *   - size(), empty(): O(1) — irrelevant to complexity analysis.
+ *   - unordered_map / unordered_set methods: O(1) avg â€” no log factor to add.
+ *   - size(), empty(): O(1) â€” irrelevant to complexity analysis.
  */
 export const STL_MEMBER_REGISTRY: Record<string, LoopClassification> = {
-  // ─── set — O(log n) ────────────────────────────────────────────────────────
+  // â”€â”€â”€ set â€” O(log n) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'set::insert':          'logarithmic',
   'set::erase':           'logarithmic',
   'set::find':            'logarithmic',
@@ -36,14 +36,14 @@ export const STL_MEMBER_REGISTRY: Record<string, LoopClassification> = {
   'set::upper_bound':     'logarithmic',
   'set::contains':        'logarithmic',   // C++20
 
-  // ─── multiset — O(log n) ───────────────────────────────────────────────────
+  // â”€â”€â”€ multiset â€” O(log n) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'multiset::insert':     'logarithmic',
   'multiset::erase':      'logarithmic',
   'multiset::find':       'logarithmic',
   'multiset::count':      'logarithmic',
   'multiset::contains':   'logarithmic',   // C++20
 
-  // ─── map — O(log n) ────────────────────────────────────────────────────────
+  // â”€â”€â”€ map â€” O(log n) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'map::insert':          'logarithmic',
   'map::erase':           'logarithmic',
   'map::find':            'logarithmic',
@@ -52,40 +52,40 @@ export const STL_MEMBER_REGISTRY: Record<string, LoopClassification> = {
   'map::upper_bound':     'logarithmic',
   'map::contains':        'logarithmic',   // C++20
 
-  // ─── multimap — O(log n) ───────────────────────────────────────────────────
+  // â”€â”€â”€ multimap â€” O(log n) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'multimap::insert':     'logarithmic',
   'multimap::erase':      'logarithmic',
   'multimap::find':       'logarithmic',
   'multimap::count':      'logarithmic',
 
-  // ─── priority_queue — O(log n) push/pop/emplace; O(1) top ─────────────────
+  // â”€â”€â”€ priority_queue â€” O(log n) push/pop/emplace; O(1) top â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'priority_queue::push':    'logarithmic',
   'priority_queue::pop':     'logarithmic',
-  'priority_queue::emplace': 'logarithmic',  // C++ emplace — same cost as push
-  'priority_queue::top':     'constant',     // peek at max/min element — O(1)
+  'priority_queue::emplace': 'logarithmic',  // C++ emplace â€” same cost as push
+  'priority_queue::top':     'constant',     // peek at max/min element â€” O(1)
 
-  // ─── queue — O(1); listed explicitly so push/pop are never misclassified ───
+  // â”€â”€â”€ queue â€” O(1); listed explicitly so push/pop are never misclassified â”€â”€â”€
   'queue::push':          'constant',
   'queue::pop':           'constant',
   'queue::front':         'constant',
   'queue::back':          'constant',
 
-  // ─── stack — O(1) ──────────────────────────────────────────────────────────
+  // â”€â”€â”€ stack â€” O(1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'stack::push':          'constant',
   'stack::pop':           'constant',
   'stack::top':           'constant',
 
-  // ─── deque — O(1) amortized ────────────────────────────────────────────────
+  // â”€â”€â”€ deque â€” O(1) amortized â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'deque::push_back':     'constant',
   'deque::push_front':    'constant',
   'deque::pop_back':      'constant',
   'deque::pop_front':     'constant',
 
-  // ─── vector — O(1) amortized ───────────────────────────────────────────────
+  // â”€â”€â”€ vector â€” O(1) amortized â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'vector::push_back':    'constant',
   'vector::pop_back':     'constant',
 
-  // ─── unordered containers — O(1) avg (explicitly constant) ────────────────
+  // â”€â”€â”€ unordered containers â€” O(1) avg (explicitly constant) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'unordered_set::insert':    'constant',
   'unordered_set::erase':     'constant',
   'unordered_set::find':      'constant',
@@ -120,15 +120,15 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     initializerNode = node.childForFieldName('initializer');
     updateNode = node.childForFieldName('update');
 
-    // FIX 2 — Missing condition guard:
+    // FIX 2 â€” Missing condition guard:
     // A for_statement with no condition field (e.g. `for(i=0;;i++)`) is semantically
-    // equivalent to `for(;;)` — it is an infinite loop. Return unknown immediately
+    // equivalent to `for(;;)` â€” it is an infinite loop. Return unknown immediately
     // so we do not confidently classify it as linear.
     if (updateNode !== null && conditionNode === null) {
       return { classification: 'unknown', confidence: 'low' };
     }
 
-    // FIX 3 — comma_expression update handling:
+    // FIX 3 â€” comma_expression update handling:
     // Two-pointer and similar idioms use `l++, r--` in the update clause, which
     // tree-sitter parses as a comma_expression. Unwrap to the first operand so
     // the classifier can identify the increment pattern.
@@ -165,7 +165,7 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
   }
 
   // Task 2: Support call_expression conditions such as while(!q.empty()).
-  // These are container-driven queue loops — classify as linear by default,
+  // These are container-driven queue loops â€” classify as linear by default,
   // bypassing the missing-update check (since they usually just do q.pop() which isn't an assignment).
   if (node.type === 'while_statement' || node.type === 'do_statement') {
     if (conditionNode && isCallExpressionCondition(conditionNode)) {
@@ -221,7 +221,7 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
-  // ── D3.1: Bitmask / exponential bound detection ──────────────────────────────────────
+  // â”€â”€ D3.1: Bitmask / exponential bound detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Fires ONLY when all three conditions hold simultaneously:
   //   1. for_statement with an update_expression (mask++)
   //   2. condition RHS is (1 << varName), (1LL << varName), (2 << varName), etc.
@@ -240,9 +240,9 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
-  // ── D4.5: Sparse Table Outer Loop Detection ──────────────────────────────────────
+  // â”€â”€ D4.5: Sparse Table Outer Loop Detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Fires when the for-loop condition is of the form (1 << j) <= n  with j++.
-  // A loop of this shape iterates exactly floor(log2(n)) + 1 times — provably
+  // A loop of this shape iterates exactly floor(log2(n)) + 1 times â€” provably
   // logarithmic regardless of the loop body, by arithmetic invariant.
   //
   // All six structural conditions must hold simultaneously (see isSparseTableOuterLoop).
@@ -259,7 +259,7 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
-  // ── D3.2: Iterative Path Halving ───────────────────────────────────────────
+  // â”€â”€ D3.2: Iterative Path Halving â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Detects loops like: while(parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; }
   // Looks for the exact structural path halving assignment in the loop body.
   if (node.type === 'while_statement') {
@@ -269,11 +269,7 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
-  // D4.9: pass bodyNode and isForLoopUpdate so analyzeUpdatePattern can apply
-  // the Sub-feature E conditional-execution guard and the initializer guard.
-  const bodyNode = node.childForFieldName('body');
-  const isForLoopUpdate = (node.type === 'for_statement') && (node.childForFieldName('update') !== null);
-  const result = analyzeUpdatePattern(updateNode, conditionNode, initializerNode, bodyNode, isForLoopUpdate);
+  const result = analyzeUpdatePattern(updateNode, conditionNode, initializerNode);
   if (result.classification === 'linear') {
     const boundVar = getBoundVariable(conditionNode);
     if (boundVar) result.boundVar = boundVar;
@@ -310,101 +306,6 @@ function findBodyUpdate(bodyNode: SyntaxNode | null): SyntaxNode | null {
   return null;
 }
 
-// ─── D4.9 Sub-feature E: Unconditional Execution Guard ──────────────────────
-//
-// Returns true iff `updateNode` is a direct statement of `bodyNode` —
-// i.e. NOT nested inside any if_statement, else_clause, switch_statement,
-// or additional compound_statement block. Only direct children of the body
-// compound_statement are proven to execute on every loop iteration.
-//
-// Applied ONLY to multiplicative/inductive patterns. Linear (i++) is unaffected.
-function isUnconditionalBodyStatement(updateNode: SyntaxNode, bodyNode: SyntaxNode | null): boolean {
-  if (!bodyNode) return false;
-  const directParent = updateNode.parent;
-  if (!directParent) return false;
-  // Case 1: updateNode is directly inside the compound_statement body.
-  if (directParent.id === bodyNode.id) return true;
-  // Case 2: updateNode is wrapped in an expression_statement that is a
-  // direct child of the compound_statement body (the standard C++ form).
-  if (directParent.type === 'expression_statement' && directParent.parent?.id === bodyNode.id) return true;
-  // All other cases: nested inside if_statement, else, switch, nested block, etc.
-  return false;
-}
-
-// ─── D4.9 Initializer Guard ──────────────────────────────────────────────────
-//
-// For multiplicative induction the mathematical proof requires i₀ > 0.
-// ONLY number_literal > 0 is accepted as a proven positive initializer.
-// All other forms (identifiers, parameters, expressions, aliases) are rejected.
-function hasPositiveLiteralInitializer(initializerNode: SyntaxNode | null): boolean {
-  if (!initializerNode) return false;
-  const initDeclarator = initializerNode.descendantsOfType('init_declarator')[0];
-  if (initDeclarator) {
-    const value = initDeclarator.childForFieldName('value');
-    return !!(value && value.type === 'number_literal' && Number(value.text) > 0);
-  }
-  const assignmentExpr = initializerNode.descendantsOfType('assignment_expression')[0];
-  if (assignmentExpr) {
-    const right = assignmentExpr.childForFieldName('right');
-    return !!(right && right.type === 'number_literal' && Number(right.text) > 0);
-  }
-  return false;
-}
-
-// ─── D4.9 Sub-features B & C: Structural plain-assignment recognizers ────────
-//
-// Replaces the weak text.includes('*') fallback.
-// Returns a result only when ALL structural proofs hold.
-// Returns null → caller falls through to its own logic.
-//
-// Recognised (logarithmic, high):
-//   B:  i = i * C      (C is number_literal > 1, LHS text == inner-LHS text)
-//   B': i = i << C     (C is number_literal >= 1)
-//   C:  i = i + i      (three-way text-identity)
-//
-// Rejected → null:
-//   i = i * k          (k is identifier)
-//   i = foo(i)         (call_expression RHS)
-//   i = i * 1          (multiplier <= 1)
-function classifyPlainAssignmentUpdate(
-  updateNode: SyntaxNode
-): LoopClassificationResult | null {
-  const lhs = updateNode.childForFieldName('left');
-  const rhs = updateNode.childForFieldName('right');
-  if (!lhs || !rhs) return null;
-  if (lhs.type !== 'identifier') return null;
-  if (rhs.type !== 'binary_expression') return null;
-
-  const innerOp    = rhs.childForFieldName('operator')?.type;
-  const innerLeft  = rhs.childForFieldName('left');
-  const innerRight = rhs.childForFieldName('right');
-  if (!innerOp || !innerLeft || !innerRight) return null;
-
-  // B: i = i * C
-  if (innerOp === '*') {
-    if (innerLeft.type !== 'identifier' || innerLeft.text !== lhs.text) return null;
-    if (innerRight.type !== 'number_literal' || Number(innerRight.text) <= 1) return null;
-    return { classification: 'logarithmic', confidence: 'high' };
-  }
-
-  // B': i = i << C
-  if (innerOp === '<<') {
-    if (innerLeft.type !== 'identifier' || innerLeft.text !== lhs.text) return null;
-    if (innerRight.type !== 'number_literal' || Number(innerRight.text) < 1) return null;
-    return { classification: 'logarithmic', confidence: 'high' };
-  }
-
-  // C: i = i + i
-  if (innerOp === '+') {
-    if (innerLeft.type !== 'identifier' || innerLeft.text !== lhs.text) return null;
-    if (innerRight.type !== 'identifier' || innerRight.text !== lhs.text) return null;
-    return { classification: 'logarithmic', confidence: 'high' };
-  }
-
-  return null;
-}
-
-
 /**
  * Returns true when conditionNode looks like a binary-search guard:
  *   lo < hi   lo <= hi   lo > hi   lo >= hi
@@ -432,7 +333,7 @@ function isBinarySearchCondition(cond: SyntaxNode): boolean {
 function hasMidpointUpdate(bodyNode: SyntaxNode | null): boolean {
   if (!bodyNode) return false;
 
-  // Step 1: find midpoint name from init_declarator (int mid = …/…) or assignment_expression (mid = …/…)
+  // Step 1: find midpoint name from init_declarator (int mid = â€¦/â€¦) or assignment_expression (mid = â€¦/â€¦)
   let midpointName: string | null = null;
 
   // Check init_declarator: `int mid = (lo+hi)/2`
@@ -527,7 +428,7 @@ function hasModuloAssignment(bodyNode: SyntaxNode | null): boolean {
  * 3. One side of '&' must be a plain identifier that matches the LHS (update variable).
  * 4. The other side of '&' must be a unary negation of the same identifier.
  *
- * This prevents false positives like  x += y & (-y)  where x ≠ y.
+ * This prevents false positives like  x += y & (-y)  where x â‰  y.
  */
 function isFenwickLowbitUpdate(updateNode: SyntaxNode): boolean {
   if (updateNode.type !== 'assignment_expression' && updateNode.type !== 'math_assignment_expression') return false;
@@ -584,7 +485,7 @@ function isNegationOf(node: SyntaxNode, varName: string): boolean {
     return false;
   }
   if (node.type === 'parenthesized_expression') {
-    // (-varName) — parenthesized unary
+    // (-varName) â€” parenthesized unary
     for (let c = 0; c < node.childCount; c++) {
       const ch = node.child(c);
       if (ch && isNegationOf(ch, varName)) return true;
@@ -622,7 +523,7 @@ function isSafeConstantExpression(node: SyntaxNode | null): boolean {
   }
 }
 
-// ─── D3.1: Bitmask / Exponential Bound Extraction ────────────────────────────────────────
+// â”€â”€â”€ D3.1: Bitmask / Exponential Bound Extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Returns the exponent variable name if the condition's right-hand side is a
@@ -636,7 +537,7 @@ function isSafeConstantExpression(node: SyntaxNode | null): boolean {
  *   - The right operand of `<<` must be an `identifier` (the exponent variable).
  *
  * If any condition fails, returns undefined and the caller falls through
- * to the existing classification path — guaranteeing zero regressions.
+ * to the existing classification path â€” guaranteeing zero regressions.
  */
 export function extractBitmaskVar(conditionNode: SyntaxNode): string | undefined {
   if (conditionNode.type !== 'binary_expression') return undefined;
@@ -648,7 +549,7 @@ export function extractBitmaskVar(conditionNode: SyntaxNode): string | undefined
   let rhs = conditionNode.childForFieldName('right');
   if (!rhs) return undefined;
 
-  // Unwrap all layers of parenthesized_expression: ((1 << n)) → (1 << n) → 1 << n
+  // Unwrap all layers of parenthesized_expression: ((1 << n)) â†’ (1 << n) â†’ 1 << n
   while (rhs.type === 'parenthesized_expression') {
     let inner: SyntaxNode | null = null;
     for (let i = 0; i < rhs.childCount; i++) {
@@ -683,32 +584,34 @@ export function extractBitmaskVar(conditionNode: SyntaxNode): string | undefined
 
 function hasConstantInitializer(initializerNode: SyntaxNode | null): boolean {
   if (!initializerNode) return false;
+  
   const initDeclarator = initializerNode.descendantsOfType('init_declarator')[0];
   if (initDeclarator) {
     const value = initDeclarator.childForFieldName('value');
     if (value && isSafeConstantExpression(value)) return true;
   }
+  
   const assignmentExpr = initializerNode.descendantsOfType('assignment_expression')[0];
   if (assignmentExpr) {
     const right = assignmentExpr.childForFieldName('right');
     if (right && isSafeConstantExpression(right)) return true;
   }
+
   return false;
 }
 
 function analyzeUpdatePattern(
-  updateNode: SyntaxNode,
-  conditionNode: SyntaxNode | null,
-  initializerNode: SyntaxNode | null,
-  bodyNode: SyntaxNode | null,
-  isForLoopUpdate: boolean
+  updateNode: SyntaxNode, 
+  conditionNode: SyntaxNode | null, 
+  initializerNode: SyntaxNode | null
 ): LoopClassificationResult {
-  // ── update_expression: i++, i--, ++i, --i ──────────────────────────────────
   if (updateNode.type === 'update_expression') {
     if (conditionNode && conditionNode.type === 'binary_expression') {
       const rightNode = conditionNode.childForFieldName('right');
-      const leftNode  = conditionNode.childForFieldName('left');
+      const leftNode = conditionNode.childForFieldName('left');
+      
       const hasConstantBound = isSafeConstantExpression(rightNode) || isSafeConstantExpression(leftNode);
+      
       if (hasConstantBound && hasConstantInitializer(initializerNode)) {
         return { classification: 'constant', confidence: 'high' };
       }
@@ -717,136 +620,61 @@ function analyzeUpdatePattern(
   }
 
   if (updateNode.type === 'assignment_expression' || updateNode.type === 'math_assignment_expression') {
-    const operatorNode =
-      updateNode.childForFieldName('operator') ||
-      updateNode.children.find(c => c.type === '+=' || c.type === '-=' || c.type === '*=' || c.type === '/=');
+    const operatorNode = updateNode.childForFieldName('operator') || updateNode.children.find(c => c.type === '+=' || c.type === '-=' || c.type === '*=' || c.type === '/=');
     const operator = operatorNode ? operatorNode.type : null;
 
-    // ── operator '=' branch: structural plain-assignment recognizers ───────────
-    // D4.9 Sub-features B & C handle i=i*C, i=i<<C, i=i+i.
-    // Removes the old text.includes('*') / text.includes('<<') heuristics entirely.
     if (!operator || operator === '=') {
-      // Sub-feature E: conditional execution guard.
-      if (!isForLoopUpdate && !isUnconditionalBodyStatement(updateNode, bodyNode)) {
+      const text = updateNode.text;
+      if (text.includes('*=') || text.includes('<<=')||text.includes('>>=')) return { classification: 'logarithmic', confidence: 'high' };
+      // Task 3: /= in text fallback â€” only log if RHS looks like a literal
+      if (text.includes('/=')) {
+        const rhs = updateNode.childForFieldName('right');
+        if (rhs && rhs.type === 'number_literal' && Number(rhs.text) > 1) return { classification: 'logarithmic', confidence: 'high' };
+        return { classification: 'linear', confidence: 'medium' };
+      }
+      if (text.includes('+=') || text.includes('-=')) return { classification: 'linear', confidence: 'medium' };
+      // Normal assignment `i = i + 1` or `x = x / 2`
+      if (text.includes('/')) {
+        // Only classify as logarithmic if the RHS of the assignment is a division by a constant > 1
+        const rhs = updateNode.childForFieldName('right');
+        if (rhs && rhs.type === 'binary_expression' && rhs.childForFieldName('operator')?.type === '/') {
+          const divRhs = rhs.childForFieldName('right');
+          if (divRhs && divRhs.type === 'number_literal' && Number(divRhs.text) > 1) {
+            // Only classify as logarithmic if the LHS variable participates in the numerator
+            const lhsNode = updateNode.childForFieldName('left');
+            const divLhsNode = rhs.childForFieldName('left');
+            if (lhsNode && divLhsNode && divLhsNode.text.includes(lhsNode.text)) {
+              return { classification: 'logarithmic', confidence: 'low' };
+            }
+          }
+        }
         return { classification: 'unknown', confidence: 'low' };
       }
+      if (text.includes('*')) return { classification: 'logarithmic', confidence: 'low' };
 
-      // Try structural recognizers (Sub-features B & C).
-      const mulResult = classifyPlainAssignmentUpdate(updateNode);
-      if (mulResult) return mulResult;
-
-      // Remaining structural checks.
+      // Pointer or field traversal: e.g. x = x->next or x = x.child
       const rhs = updateNode.childForFieldName('right');
-
-      if (rhs && rhs.type === 'binary_expression') {
-        const innerOp    = rhs.childForFieldName('operator')?.type;
-        const innerLeft  = rhs.childForFieldName('left');
-        const innerRight = rhs.childForFieldName('right');
-
-        // i = i / C
-        if (innerOp === '/') {
-          const lhsNode = updateNode.childForFieldName('left');
-          if (
-            lhsNode && innerLeft && innerRight &&
-            innerLeft.type === 'identifier' && innerLeft.text === lhsNode.text &&
-            innerRight.type === 'number_literal' && Number(innerRight.text) > 1
-          ) {
-            return { classification: 'logarithmic', confidence: 'low' };
-          }
-          return { classification: 'unknown', confidence: 'low' };
-        }
-
-        // i = i >> C
-        if (innerOp === '>>') {
-          const lhsNode = updateNode.childForFieldName('left');
-          if (
-            lhsNode && innerLeft && innerRight &&
-            innerLeft.type === 'identifier' && innerLeft.text === lhsNode.text &&
-            innerRight.type === 'number_literal' && Number(innerRight.text) >= 1
-          ) {
-            return { classification: 'logarithmic', confidence: 'high' };
-          }
-          return { classification: 'unknown', confidence: 'low' };
-        }
-
-        // i = i * k (variable), i = i + j (j≠i), i = i << k (variable):
-        // Cannot prove logarithmic OR linear — return Unknown.
-        if (innerOp === '*' || innerOp === '+' || innerOp === '<<') {
-          return { classification: 'unknown', confidence: 'low' };
-        }
-      }
-
-      // Pointer or field traversal: x = x->next, x = x.child
-      if (rhs && (rhs.type === 'field_expression' || rhs.type === 'pointer_expression')) {
+      if (rhs && (rhs.type === 'field_expression' || rhs.text.includes('->'))) {
         return { classification: 'unknown', confidence: 'low' };
       }
 
       return { classification: 'linear', confidence: 'low' };
     }
 
-    // ── D4.9 Sub-feature A: *=, <<=, >>= require number_literal RHS > 1 ───────
-    //
-    // BUG FIXED: Previously ALL *=/<<=/>>=  returned logarithmic regardless of RHS.
-    //   i *= k  →  logarithmic, high  ← FALSE POSITIVE (now fixed)
-    //
-    // AFTER D4.9:
-    //   i *= 2   → logarithmic, high  ✅
-    //   i <<= 1  → logarithmic, high  ✅
-    //   i >>= 1  → logarithmic, high  ✅
-    //   i *= k   → Unknown            ✅ (FIXED)
-    //   i *= 0   → Unknown            ✅
-    //   i *= 1   → Unknown            ✅
-    //   i <<= 0  → Unknown            ✅
     if (operator === '*=' || operator === '<<=' || operator === '>>=') {
-      // Sub-feature E: conditional execution guard.
-      if (!isForLoopUpdate && !isUnconditionalBodyStatement(updateNode, bodyNode)) {
-        return { classification: 'unknown', confidence: 'low' };
-      }
-      const rhs = updateNode.childForFieldName('right');
-      if (!rhs || rhs.type !== 'number_literal') {
-        return { classification: 'unknown', confidence: 'low' };
-      }
-      const rhsValue = Number(rhs.text);
-      if (operator === '*=') {
-        // *= 1 is a no-op; *= 0 collapses i to 0. Both → Unknown.
-        if (rhsValue <= 1) return { classification: 'unknown', confidence: 'low' };
-        // Initializer guard: i₀ must be a proven positive literal.
-        if (!hasPositiveLiteralInitializer(initializerNode)) {
-          return { classification: 'unknown', confidence: 'low' };
-        }
-      } else {
-        // <<= and >>=: shift amount must be >= 1. Shift by 0 is identity (no-op).
-        if (rhsValue < 1) return { classification: 'unknown', confidence: 'low' };
-      }
       return { classification: 'logarithmic', confidence: 'high' };
     }
-
-    // /= is only logarithmic when the divisor is a literal constant > 1.
+    // Task 3: /= is only logarithmic when the divisor is a literal constant > 1.
+    // e.g. i /= 2 â†’ O(log n).  i /= k â†’ O(n) (variable divisor, treat as linear).
     if (operator === '/=') {
-      if (!isForLoopUpdate && !isUnconditionalBodyStatement(updateNode, bodyNode)) {
-        return { classification: 'unknown', confidence: 'low' };
-      }
       const rhs = updateNode.childForFieldName('right');
       if (rhs && rhs.type === 'number_literal' && Number(rhs.text) > 1) {
         return { classification: 'logarithmic', confidence: 'high' };
       }
       return { classification: 'linear', confidence: 'medium' };
     }
-
     if (operator === '+=' || operator === '-=') {
-      // ── D4.9 Sub-feature D: i += i (self-doubling) ────────────────────────
-      if (operator === '+=') {
-        const lhs = updateNode.childForFieldName('left');
-        const rhs = updateNode.childForFieldName('right');
-        if (lhs && rhs && lhs.type === 'identifier' && rhs.type === 'identifier' && rhs.text === lhs.text) {
-          if (!isForLoopUpdate && !isUnconditionalBodyStatement(updateNode, bodyNode)) {
-            return { classification: 'unknown', confidence: 'low' };
-          }
-          // Mathematical proof: i += i ≡ i *= 2 — one doubling per iteration.
-          return { classification: 'logarithmic', confidence: 'high' };
-        }
-      }
-      // Fenwick lowbit pattern: i += i & (-i)  or  i -= i & (-i)
+      // Check for Fenwick lowbit pattern: i += i & (-i)  or  i -= i & (-i)
       if (isFenwickLowbitUpdate(updateNode)) {
         return { classification: 'logarithmic', confidence: 'high' };
       }
@@ -859,7 +687,7 @@ function analyzeUpdatePattern(
 
 /**
  * Returns true when the while-condition is a call_expression or a unary NOT of a
- * call_expression — the canonical queue/stack-empty loop pattern:
+ * call_expression â€” the canonical queue/stack-empty loop pattern:
  *   while(!q.empty())   while(q.size())   while(!stk.empty())
  * We accept any method call or free call as the condition.
  */
@@ -901,7 +729,7 @@ export function classifyMacroString(macroText: string): LoopClassificationResult
   return { classification: 'unknown', confidence: 'low' };
 }
 
-// ─── D3.2: Path Halving Helper ───────────────────────────────────────────────
+// â”€â”€â”€ D3.2: Path Halving Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Safely identifies DSU iterative path halving assignments.
@@ -944,7 +772,7 @@ function isPathHalvingBody(bodyNode: SyntaxNode): boolean {
   return false;
 }
 
-// ─── D4.5: Sparse Table Outer Loop Fingerprint ───────────────────────────────────────────
+// â”€â”€â”€ D4.5: Sparse Table Outer Loop Fingerprint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Returns true when the for-loop condition is a sparse-table-style shift guard:
@@ -958,7 +786,7 @@ function isPathHalvingBody(bodyNode: SyntaxNode): boolean {
  * Required structure (ALL seven must hold):
  *
  *   1. conditionNode is binary_expression
- *   2. outer operator is `<=`  (NOT `<` — that is D3.1's domain)
+ *   2. outer operator is `<=`  (NOT `<` â€” that is D3.1's domain)
  *   3. right operand of `<=` is an identifier  (the upper-bound variable, e.g. n)
  *   4. left operand of `<=`, after optional single-level parenthesis unwrap, is
  *      a binary_expression
@@ -968,7 +796,7 @@ function isPathHalvingBody(bodyNode: SyntaxNode): boolean {
  *
  * Guarantees:
  *   - No name-based heuristics. No string matching. No regex.
- *   - Returns false for any non-conforming structure — all existing classifications
+ *   - Returns false for any non-conforming structure â€” all existing classifications
  *     are preserved.
  *   - Mutually exclusive with extractBitmaskVar() which requires outer op `<`
  *     with shift on the RHS. D4.5 requires outer op `<=` with shift on the LHS.
@@ -984,11 +812,11 @@ export function isSparseTableOuterLoop(conditionNode: SyntaxNode | null): boolea
   const outerRight = conditionNode.childForFieldName('right');
   if (!outerRight || outerRight.type !== 'identifier') return false;
 
-  // Conditions 4–7: left operand, unwrap one optional level of parentheses
+  // Conditions 4â€“7: left operand, unwrap one optional level of parentheses
   let outerLeft = conditionNode.childForFieldName('left');
   if (!outerLeft) return false;
   if (outerLeft.type === 'parenthesized_expression') {
-    // Unwrap: (1 << j) → the inner binary_expression
+    // Unwrap: (1 << j) â†’ the inner binary_expression
     let inner: SyntaxNode | null = null;
     for (let i = 0; i < outerLeft.childCount; i++) {
       const ch = outerLeft.child(i);
@@ -1015,3 +843,4 @@ export function isSparseTableOuterLoop(conditionNode: SyntaxNode | null): boolea
 
   return true;
 }
+

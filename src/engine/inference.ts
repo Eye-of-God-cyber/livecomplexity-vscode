@@ -46,10 +46,305 @@ function getBaseComplexity(classification: LoopClassification | 'custom', custom
   }
 }
 
+// ─── D4.7: Sum-of-complexities algebra helpers ────────────────────────────────
+//
+// These five helpers implement the mergeAndReduce algorithm that underlies both
+// addNode (sequential composition) and the extended maxNode (dominance with Sum
+// Node inputs). They are pure functions with no side-effects.
+//
+// API contract:
+//   flattenSum       — extracts Scalar Node list from any node (flattens Sum Nodes)
+//   canonicalVarSet  — returns a sorted comma-joined key for linearVars
+//   structurallyEqual — deep structural equality for Scalar Nodes (no string formatting)
+//   strictlyDominates — true iff X asymptotically dominates Y over the same variable set
+//   mergeAndReduce   — eliminates dominated/duplicate terms; returns Scalar or Sum Node
+
+/**
+ * Returns the flat list of Scalar Nodes contained in `node`.
+ * - If node is a Sum Node: returns node.sumTerms (already flat by invariant).
+ * - If node is a Scalar Node: returns [node].
+ * Precondition: node.sumTerms elements are never Sum Nodes themselves (invariant).
+ */
+function flattenSum(node: ComplexityNode): ComplexityNode[] {
+  return (node.sumTerms && node.sumTerms.length > 0) ? node.sumTerms : [node];
+}
+
+/**
+ * Returns a canonical multiset string key for the linearVars of a Scalar Node.
+ * - Sorts the variable names alphabetically.
+ * - Duplicates are preserved (e.g., ['n', 'n', 'm'] -> 'm,n,n').
+ * - If linearVars is missing but the node has polynomial degree, defaults to implicit 'n'.
+ */
+function getCanonicalMultiset(node: ComplexityNode): string {
+  if (node.linearVars && node.linearVars.length > 0) {
+    return [...node.linearVars].sort().join(',');
+  }
+  if (node.power > 0 || node.logPower > 0 || node.loglogPower > 0) {
+    const count = Math.max(1, Math.floor(node.power));
+    return Array(count).fill('n').join(',');
+  }
+  return '';
+}
+
+/**
+ * Returns the set of unique variables used by a Scalar Node.
+ * - Used for dominance checks (e.g., checking if one node's variables are a subset of another's).
+ */
+function getUniqueVars(node: ComplexityNode): Set<string> {
+  if (node.power === 0 && node.logPower === 0 && node.loglogPower === 0 && !node.isGraphSum && !node.isGraphSumLog) {
+    return new Set();
+  }
+  if (node.linearVars && node.linearVars.length > 0) {
+    return new Set(node.linearVars);
+  }
+  return new Set(['n']); // implicit default variable
+}
+
+/**
+ * Structural equality for two Scalar Nodes.
+ * Two Scalar Nodes are equal iff every field that affects their complexity class
+ * is identical. This comparison is purely structural — it does NOT use formatted
+ * strings or any string-based heuristics.
+ *
+ * Returns false if either node is a Sum Node (Sum Nodes are never directly compared
+ * — mergeAndReduce works on their constituent Scalar Nodes).
+ */
+function structurallyEqual(a: ComplexityNode, b: ComplexityNode): boolean {
+  if (a.sumTerms || b.sumTerms) return false; // Sum Nodes: not directly comparable
+  if (a.isUnknown !== b.isUnknown) return false;
+  if (a.isUnknown && b.isUnknown) return true; // both Unknown
+  if (a.isGraphSum !== b.isGraphSum) return false;
+  if (a.isGraphSumLog !== b.isGraphSumLog) return false;
+  if (a.power !== b.power) return false;
+  if (a.logPower !== b.logPower) return false;
+  if (a.loglogPower !== b.loglogPower) return false;
+  // expVars: canonical sorted comparison
+  const aExp = (a.expVars ?? []).slice().sort().join(',');
+  const bExp = (b.expVars ?? []).slice().sort().join(',');
+  if (aExp !== bExp) return false;
+  // linearVars: sorted multiset comparison
+  if (getCanonicalMultiset(a) !== getCanonicalMultiset(b)) return false;
+  return true;
+}
+
+/**
+ * Returns true iff Scalar Node X strictly asymptotically dominates Scalar Node Y.
+ *
+ * "Strictly dominates" means X grows faster than Y as input size → ∞ over the same
+ * variable set. A tie (same class) returns false. Incommensurable variables return false.
+ *
+ * Rules (in order):
+ *  1. Unknown nodes never dominate or are dominated.
+ *  2. Exponential dominates any polynomial. Two exponentials: no strict dominance asserted
+ *     (we cannot order 2ⁿ vs 2ᵐ without knowing n vs m).
+ *  3. Graph nodes (isGraphSum / isGraphSumLog) are treated as incommensurable with all
+ *     polynomial nodes (Decision 1: no heuristic assumption about V,E vs n).
+ *     isGraphSumLog dominates isGraphSum (O((V+E)logV) > O(V+E) — same graph domain).
+ *  4. For two polynomial Scalar Nodes: strict dominance requires the SAME canonical
+ *     variable set. Different variable sets → incommensurable → return false.
+ *  5. Same variable set: compare power, then logPower, then loglogPower strictly.
+ */
+function strictlyDominates(x: ComplexityNode, y: ComplexityNode): boolean {
+  // Rule 1: Unknown
+  if (x.isUnknown || y.isUnknown) return false;
+
+  // Shared flag computation
+  const xIsExp = !!(x.expVars && x.expVars.length > 0);
+  const yIsExp = !!(y.expVars && y.expVars.length > 0);
+  const xIsGraph = !!(x.isGraphSum || x.isGraphSumLog);
+  const yIsGraph = !!(y.isGraphSum || y.isGraphSumLog);
+
+  // Rule 2: O(1) special case.
+  // A pure constant node (power=0, logPower=0, loglogPower=0, no special flags, no expVars)
+  // has no variable dependency. Any non-constant Scalar Node X (power>0 OR logPower>0 OR
+  // loglogPower>0 OR graph OR exp) strictly dominates O(1), regardless of variable sets.
+  const yIsConstant = !yIsGraph && !yIsExp && y.power === 0 && y.logPower === 0 && y.loglogPower === 0;
+  const xIsConstant = !xIsGraph && !xIsExp && x.power === 0 && x.logPower === 0 && x.loglogPower === 0;
+  if (xIsConstant) return false; // O(1) dominates nothing
+  if (yIsConstant) return true;  // anything non-constant dominates O(1)
+
+  // Rule 3: Exponential vs polynomial
+  if (xIsExp && !yIsExp) return true;  // exponential dominates polynomial
+  if (!xIsExp && yIsExp) return false;
+  if (xIsExp && yIsExp) return false;  // both exponential: incommensurable
+
+  // Rule 4: Graph nodes — incommensurable with polynomial; isGraphSumLog > isGraphSum
+  if (xIsGraph && !yIsGraph) return false; // graph vs polynomial: incommensurable
+  if (!xIsGraph && yIsGraph) return false; // polynomial vs graph: incommensurable
+  if (xIsGraph && yIsGraph) {
+    // Both graph: isGraphSumLog dominates isGraphSum
+    if (x.isGraphSumLog && y.isGraphSum) return true;
+    return false; // same type (isGraphSum==isGraphSum or isGraphSumLog==isGraphSumLog)
+  }
+
+  // Rule 5: Variable domain comparison.
+  // X can only strictly dominate Y if Y's variables are a subset of X's variables.
+  // E.g., O(n^2) and O(n) share {n}. O(nm) {n,m} dominates O(n) {n}.
+  // But O(n) {n} cannot dominate O(m) {m} or O(nm) {n,m}.
+  const varsX = getUniqueVars(x);
+  const varsY = getUniqueVars(y);
+  const isSubset = (sub: Set<string>, sup: Set<string>) => [...sub].every(v => sup.has(v));
+  
+  const sameVars = varsX.size === varsY.size && isSubset(varsX, varsY);
+  if (sameVars) {
+    // Exact same domain — compare degree strictly
+    if (x.power > y.power) return true;
+    if (x.power < y.power) return false;
+    if (x.logPower > y.logPower) return true;
+    if (x.logPower < y.logPower) return false;
+    if (x.loglogPower > y.loglogPower) return true;
+    return false; // pure tie
+  }
+
+  if (isSubset(varsY, varsX)) {
+    // Y operates on a strict subset of X's variables.
+    // X dominates Y only if its degree is strictly higher.
+    // (If degree is equal, e.g., O(nm) vs O(n^2), neither dominates).
+    if (x.power > y.power) return true;
+    if (x.power < y.power) return false;
+    if (x.logPower > y.logPower) return true;
+    if (x.logPower < y.logPower) return false;
+    if (x.loglogPower > y.loglogPower) return true;
+    return false;
+  }
+
+  // varsX is a strict subset of varsY, or they are disjoint. X cannot dominate Y.
+  return false;
+}
+
+/**
+ * D4.7 core: Reduces a list of Scalar Nodes to the minimal set of mutually
+ * incommensurable, non-dominated, deduplicated terms. Returns a Scalar Node when
+ * only one term survives, or a Sum Node otherwise.
+ *
+ * Algorithm:
+ *  1. Guard: if any input term is Unknown → return Unknown immediately.
+ *  2. Flatten: expand any Sum Node inputs (defensive; precondition is they are Scalar).
+ *  3. Eliminate dominated: for every pair (X, Y), if strictlyDominates(X,Y), remove Y.
+ *     Repeat until stable (iterative fixpoint; terminates because the list shrinks).
+ *  4. Deduplicate: remove structurally identical survivors.
+ *  5. Sort survivors in canonical order:
+ *       (a) isGraphSumLog before isGraphSum before exponential before polynomial
+ *       (b) descending power, descending logPower, descending loglogPower
+ *       (c) ascending canonical linearVars key as final tie-break
+ *  6. Return: single survivor → Scalar Node; multiple → Sum Node { sumTerms: survivors }.
+ *
+ * Correctness property: the result is always an upper bound of the true complexity.
+ * Proof: a term Y is removed only when ∃ surviving X with strictlyDominates(X,Y)=true,
+ * meaning f_X asymptotically absorbs f_Y. The remaining terms are incommensurable.
+ */
+function mergeAndReduce(terms: ComplexityNode[]): ComplexityNode {
+  // Step 1: Unknown propagation
+  if (terms.some(t => t.isUnknown)) {
+    return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
+  }
+
+  // Step 2: Flatten (defensive — callers should only pass Scalar Nodes)
+  const flat: ComplexityNode[] = [];
+  for (const t of terms) {
+    if (t.sumTerms && t.sumTerms.length > 0) {
+      flat.push(...t.sumTerms);
+    } else {
+      flat.push(t);
+    }
+  }
+
+  // Step 3: Eliminate dominated terms (iterative fixpoint)
+  let survivors = [...flat];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    outer: for (let i = 0; i < survivors.length; i++) {
+      for (let j = 0; j < survivors.length; j++) {
+        if (i === j) continue;
+        if (strictlyDominates(survivors[i], survivors[j])) {
+          survivors.splice(j, 1);
+          changed = true;
+          break outer;
+        }
+      }
+    }
+  }
+
+  // Step 4: Deduplicate structurally equal survivors
+  const deduped: ComplexityNode[] = [];
+  for (const s of survivors) {
+    if (!deduped.some(d => structurallyEqual(d, s))) {
+      deduped.push(s);
+    }
+  }
+
+  // Step 5: Canonical sort
+  deduped.sort((a, b) => {
+    // (a) Graph log > graph > exponential > polynomial
+    const aRank = a.isGraphSumLog ? 4 : a.isGraphSum ? 3 : (a.expVars && a.expVars.length > 0) ? 2 : 1;
+    const bRank = b.isGraphSumLog ? 4 : b.isGraphSum ? 3 : (b.expVars && b.expVars.length > 0) ? 2 : 1;
+    if (aRank !== bRank) return bRank - aRank; // descending rank
+    // (b) Descending power, logPower, loglogPower
+    if (a.power !== b.power) return b.power - a.power;
+    if (a.logPower !== b.logPower) return b.logPower - a.logPower;
+    if (a.loglogPower !== b.loglogPower) return b.loglogPower - a.loglogPower;
+    // (c) Ascending canonical linearVars multiset key as final tie-break
+    return getCanonicalMultiset(a).localeCompare(getCanonicalMultiset(b));
+  });
+
+  // Step 6: Return
+  if (deduped.length === 0) {
+    // All terms cancelled (e.g., only O(1) terms that were dominated) — return O(1)
+    return { power: 0, logPower: 0, loglogPower: 0, isUnknown: false };
+  }
+  if (deduped.length === 1) return deduped[0];
+  return { power: 0, logPower: 0, loglogPower: 0, isUnknown: false, sumTerms: deduped };
+}
+
+/**
+ * D4.7: addNode — sequential composition.
+ *
+ * Semantic: A and B are INDEPENDENT, SEQUENTIAL computations.
+ * The total complexity is O(W_A + W_B).
+ *
+ * Mathematical basis: For non-negative functions, max(f,g) = Θ(f+g). When f and g
+ * are incommensurable (different variable sets), neither max alone is a correct
+ * representation — the Sum Node preserves the information about both contributions.
+ * When one strictly dominates the other (same variable set, higher degree), the
+ * dominated term is absorbed and the result is a Scalar Node.
+ *
+ * Call sites: M1 only — inferComplexity's sequential loop aggregation.
+ *
+ * MUST NOT be used at M3/M4/M5 (dominance-in-same-loop-body contexts).
+ */
+function addNode(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
+  if (a.isUnknown || b.isUnknown) {
+    return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
+  }
+  return mergeAndReduce([...flattenSum(a), ...flattenSum(b)]);
+}
+
 function multiplyNodes(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
   if (a.isUnknown || b.isUnknown) {
     return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
   }
+
+  // D4.7: Sum × Sum guard. Structurally unreachable from the current AST pipeline
+  // (a call_expression baseNode with sumTerms is always a leaf — it has no childLoops,
+  // so analyzeLoopHierarchy returns before reaching multiplyNodes). If it ever fires
+  // due to a future change, Unknown is the safe conservative result.
+  if (a.sumTerms && b.sumTerms) {
+    return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
+  }
+
+  // D4.7: Scalar × Sum (and symmetric Sum × Scalar): distribute by the distributive law.
+  // O(s) × O(T₁ + T₂ + …) = O(s·T₁ + s·T₂ + …). Exact — no approximation.
+  if (a.sumTerms && a.sumTerms.length > 0) {
+    // Sum on left — treat symmetrically (multiplication is commutative).
+    return multiplyNodes(b, a);
+  }
+  if (b.sumTerms && b.sumTerms.length > 0) {
+    // Scalar × Sum: distribute. Each b.sumTerms[i] is a Scalar Node (invariant).
+    const distributed = b.sumTerms.map(t => multiplyNodes(a, t));
+    return mergeAndReduce(distributed);
+  }
+
   // Graph-sum nodes are never multiplied — the inner loop is already counted.
   // isGraphSumLog (O((V+E) log V)) takes priority over isGraphSum (O(V+E)).
   if (a.isGraphSumLog || b.isGraphSumLog) {
@@ -79,10 +374,35 @@ function multiplyNodes(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
   };
 }
 
+/**
+ * maxNode — dominance selection.
+ *
+ * Semantic: A and B are complexity contributions from the SAME computational context
+ * (e.g. competing inner loops in the same loop body, or alternative branches).
+ * We select the dominant one. NOT a sequential sum — using addNode here would
+ * double-count work that happens in the same iterations.
+ *
+ * Call sites: M2 (sibling accumulation), M3 (harmonic), M4 (harmonic vs independent),
+ *             M5 (amortized vs independent).
+ *
+ * D4.7 extension: when either operand is a Sum Node, delegates to mergeAndReduce.
+ * mergeAndReduce eliminates dominated terms and preserves incommensurable ones.
+ * Mathematical justification: max(f,g) = Θ(f+g) for non-negative functions, so
+ * the merge-and-reduce result is always a correct upper bound.
+ *
+ * MUST NOT be used at M1 (sequential aggregation) — use addNode there.
+ */
 function maxNode(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
   if (a.isUnknown || b.isUnknown) {
     return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
   }
+  // D4.7: If either operand is a Sum Node, route through mergeAndReduce.
+  // This handles the case where a child function (via functionRegistry) returned a
+  // Sum Node, and it is now being compared with another child or with the outer base.
+  if ((a.sumTerms && a.sumTerms.length > 0) || (b.sumTerms && b.sumTerms.length > 0)) {
+    return mergeAndReduce([...flattenSum(a), ...flattenSum(b)]);
+  }
+  // Both Scalar Nodes — existing dominance logic unchanged.
   // isGraphSumLog (O((V+E) log V), power=1 logPower=1) and
   // isGraphSum (O(V+E), power=1 logPower=0) use standard power/logPower dominance.
   if (a.isGraphSumLog && b.isGraphSumLog) return a;
@@ -113,8 +433,22 @@ function mergeConfidence(a: ConfidenceLevel, b: ConfidenceLevel): ConfidenceLeve
   return 'high';
 }
 
-function formatComplexity(node: ComplexityNode): ComplexityClass {
+function formatComplexity(node: ComplexityNode, preserveVars: boolean = false): ComplexityClass {
   if (node.isUnknown) return 'Unknown';
+
+  // D4.7: Sum Node formatting — checked before all Scalar paths.
+  // Each term in sumTerms is a Scalar Node; formatComplexity recurse cannot loop.
+  // Terms are already in canonical order (mergeAndReduce Step 5) so output is
+  // deterministic: same ComplexityNode always produces the same string.
+  // We pass preserveVars=true so that individual terms like O(m) are not forced to O(n).
+  if (node.sumTerms && node.sumTerms.length > 0) {
+    const parts = node.sumTerms.map(t => {
+      const s = formatComplexity(t, true);
+      // Strip outer 'O(' and ')' to get the inner expression for joining.
+      return s.startsWith('O(') ? s.slice(2, -1) : s;
+    });
+    return 'O(' + parts.join(' + ') + ')';
+  }
 
   // D2.2 / D2.3: Graph traversal summation — checked before all polynomial formatting.
   // isGraphSumLog (Dijkstra, O((V+E) log V)) must be checked before isGraphSum (BFS/DFS, O(V+E))
@@ -135,8 +469,9 @@ function formatComplexity(node: ComplexityNode): ComplexityClass {
   
   // If the entire complexity is just a single linear factor, force fallback to 'O(n)'
   // to perfectly preserve single-loop test expectations like test 16: for(i<m) -> O(n).
-  // Symbolic formatting only triggers when there are MULTIPLE explicit variables multiplying.
-  const isSingleVariable = explicitVars.length === 1 && Math.floor(node.power) === 1;
+  // Symbolic formatting only triggers when there are MULTIPLE explicit variables multiplying,
+  // OR when we are inside a Sum Node (preserveVars is true) and need to distinguish n vs m.
+  const isSingleVariable = !preserveVars && explicitVars.length === 1 && Math.floor(node.power) === 1;
   
   // Backward compatibility fast-paths for pure 'n', OR when we abort symbolic formatting
   if (!isFullySymbolic || explicitVars.length === 0 || explicitVars.every(v => v === 'n') || isSingleVariable) {
@@ -305,7 +640,10 @@ export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
       }
     }
 
-    overallNode = maxNode(overallNode, node);
+    // D4.7: addNode (not maxNode) for sequential aggregation (M1).
+    // addNode correctly emits O(n+m) for incommensurable sequential loops instead
+    // of silently dropping one variable. See proof in implementation_plan.md.
+    overallNode = addNode(overallNode, node);
     overallConfidence = mergeConfidence(overallConfidence, confidence);
     explanations.push(...explanation);
   }

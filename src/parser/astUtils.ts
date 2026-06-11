@@ -261,6 +261,11 @@ export function extractFunctionLoops(
   const searchTypes = [...LOOP_TYPES, 'function_definition', 'call_expression', 'subscript_expression'];
   const loopNodes = fnNode.descendantsOfType(searchTypes);
 
+  // ── D4.8: Canonical Symbol Registry ─────────────────────────────────────────
+  // Build an alias map for this function analysis only. Lifetime: this call frame.
+  // Maps DeclarationID -> CanonicalDeclarationID. Never serialized or reused.
+  const aliasMap = buildAliasRegistry(fnNode);
+
   const loopMap = new Map<number, ExtractedLoop>();
   const loopParentMap = new Map<number, number | null>();
 
@@ -417,6 +422,16 @@ export function extractFunctionLoops(
       classification = result.classification;
       confidence = result.confidence;
       boundVar = result.boundVar;
+
+      // ── D4.8: Canonicalize boundVar via the alias registry ────────────────
+      // If the loop bound variable has a proven alias to another declaration,
+      // replace it with the canonical name before it enters ExtractedLoop.
+      // This is pure string replacement at the exact information-loss point.
+      // No heuristics. No guessing. Structural proof only.
+      if (boundVar) {
+        const conditionNode = node.childForFieldName('condition');
+        boundVar = canonicalizeVar(boundVar, conditionNode, fnNode, aliasMap);
+      }
 
       // ── D2.2: Graph traversal upgrade ─────────────────────────────────────
       // After normal classification, check if this while_statement is actually
@@ -899,3 +914,475 @@ function _isGraphWhile(
   return directRangeLoops.length > 0;
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// D4.8: CANONICAL SYMBOL REGISTRY
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Philosophy: declaration identity, not string identity.
+//
+// An alias A -> B exists iff ALL of the following structural proofs hold:
+//   1. A has exactly one provable write (init_declarator only in D4.8).
+//   2. The write's RHS is a bare identifier only.
+//   3. A is never the subject of an update_expression (++, --).
+//   4. A is never the subject of a compound assignment (+=, -=, *=, /=, ...).
+//   5. A is never passed via & address-of.
+//   6. A is never passed via >> (cin >> a).
+//   7. A is never passed to a function whose param is `int&` or where
+//      the signature is unavailable (conservative rejection).
+//   8. RHS B must resolve lexically to a prior declaration.
+//
+// If any proof fails → reject alias → treat A as an independent variable.
+//
+// Lifetime: AliasMap is created inside extractFunctionLoops, used locally,
+// never returned, never serialized. Garbage-collected on function return.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Analysis-local alias registry. Maps DeclarationID -> CanonicalDeclarationID. */
+type AliasMap = Map<number, number>;
+
+/**
+ * Lexically resolves an identifier node to the declarator SyntaxNode that
+ * introduced it into scope within `fnNode`.
+ *
+ * Handles:
+ *   - Block scope (compound_statement, prior siblings)
+ *   - Nested compound statements (walks up multiple levels)
+ *   - Function/lambda parameter lists
+ *   - For-loop initialisers (int i = 0)
+ *
+ * Never crosses the `fnNode` boundary.
+ * Returns the identifier node that IS the declarator, or null.
+ */
+function resolveDeclarationNode(
+  ident: SyntaxNode,
+  fnNode: SyntaxNode
+): SyntaxNode | null {
+  const targetName = ident.text;
+  let current: SyntaxNode | null = ident;
+
+  while (current) {
+    if (current.id === fnNode.id) break;
+
+    const parent: SyntaxNode | null = current.parent;
+    if (!parent) break;
+
+    // ── 1. Block scope: scan prior siblings for declarations ─────────────────
+    if (
+      parent.type === 'compound_statement' ||
+      parent.type === 'translation_unit' ||
+      parent.type === 'declaration_list'
+    ) {
+      for (let i = 0; i < parent.childCount; i++) {
+        const sibling = parent.child(i);
+        if (!sibling) continue;
+        if (sibling.id === current.id) break; // stop at current — no forward refs
+
+        if (sibling.type === 'declaration') {
+          const found = findDeclaredIdentifier(sibling, targetName);
+          if (found) return found;
+        }
+      }
+    }
+
+    // ── 2. For-statement initialiser ─────────────────────────────────────────
+    if (parent.type === 'for_statement') {
+      const init = parent.childForFieldName('initializer');
+      if (init && init.type === 'declaration') {
+        const found = findDeclaredIdentifier(init, targetName);
+        if (found) return found;
+      }
+    }
+
+    // ── 3. Function / lambda parameter list ──────────────────────────────────
+    if (
+      parent.type === 'function_definition' ||
+      parent.type === 'lambda_expression'
+    ) {
+      let paramList: SyntaxNode | null = null;
+      if (parent.type === 'function_definition') {
+        const decl = parent.childForFieldName('declarator');
+        paramList = decl?.childForFieldName('parameters') ?? null;
+      } else {
+        paramList = parent.childForFieldName('parameters') ?? null;
+      }
+
+      if (paramList) {
+        for (let i = 0; i < paramList.childCount; i++) {
+          const p = paramList.child(i);
+          if (!p || p.type !== 'parameter_declaration') continue;
+          const declNode = p.childForFieldName('declarator');
+          if (!declNode) continue;
+          if (declNode.type === 'identifier' && declNode.text === targetName) return declNode;
+          // Handle reference/pointer declarators wrapping an identifier
+          if (declNode.type !== 'identifier') {
+            const inner = declNode.descendantsOfType('identifier')[0];
+            if (inner && inner.text === targetName) return inner;
+          }
+        }
+      }
+      // Stop at any function/lambda scope boundary.
+      if (parent.id !== fnNode.id) break;
+    }
+
+    current = parent;
+  }
+
+  return null;
+}
+
+/**
+ * Searches a `declaration` node for an `init_declarator` whose declarator
+ * identifier matches `targetName`. Returns the identifier SyntaxNode or null.
+ */
+function findDeclaredIdentifier(
+  declNode: SyntaxNode,
+  targetName: string
+): SyntaxNode | null {
+  const initDecls = declNode.descendantsOfType('init_declarator');
+  for (const id of initDecls) {
+    const declarator = id.childForFieldName('declarator');
+    if (!declarator) continue;
+    if (declarator.type === 'identifier' && declarator.text === targetName) return declarator;
+    if (declarator.type !== 'identifier') {
+      const inner = declarator.descendantsOfType('identifier')[0];
+      if (inner && inner.text === targetName) return inner;
+    }
+  }
+  return null;
+}
+
+/**
+ * Follows the alias chain from `startId` to its canonical declaration ID.
+ * Uses a visited Set<number> for cycle detection (defence-in-depth).
+ * Guarantees termination for any input. If a cycle is detected, returns
+ * `startId` (safe conservative fallback).
+ */
+function resolveCanonical(startId: number, aliasMap: AliasMap): number {
+  const visited = new Set<number>();
+  let current = startId;
+  while (aliasMap.has(current)) {
+    if (visited.has(current)) return startId; // Cycle detected — return original.
+    visited.add(current);
+    current = aliasMap.get(current)!;
+  }
+  return current;
+}
+
+/**
+ * Returns true if the identifier named `name` with Declaration ID `declId`
+ * is mutated anywhere in `fnNode`.
+ *
+ * Mutations checked:
+ *   - update_expression    (m++, ++m, m--, --m)
+ *   - compound assignment  (m += k, m -= k, m *= k, ...)
+ *   - address-of           (&m)
+ *   - stream extraction    (cin >> m)
+ *   - mutable ref argument (foo(m) where param is int& or signature unknown)
+ */
+function isMutated(
+  name: string,
+  fnNode: SyntaxNode,
+  fnDefMap: Map<string, SyntaxNode>
+): boolean {
+  const allIdents = fnNode.descendantsOfType('identifier').filter(id => id.text === name);
+
+  for (const id of allIdents) {
+    const p = id.parent;
+    if (!p) continue;
+
+    // update_expression: m++, ++m, m--, --m
+    if (p.type === 'update_expression') return true;
+
+    // compound assignment: m += k, m *= k, etc.
+    if (p.type === 'assignment_expression') {
+      const lhs = p.childForFieldName('left');
+      const op  = p.childForFieldName('operator');
+      if (lhs && lhs.id === id.id && op && op.type !== '=') return true;
+    }
+
+    // address-of: &m
+    if (p.type === 'unary_expression') {
+      const opNode = p.childForFieldName('operator') ?? p.child(0);
+      if (opNode && opNode.text === '&') return true;
+    }
+
+    // stream extraction: cin >> m
+    if (p.type === 'binary_expression') {
+      const op = p.childForFieldName('operator');
+      if (op && op.type === '>>') {
+        const right = p.childForFieldName('right');
+        if (right && right.id === id.id) return true;
+      }
+    }
+
+    // function call argument
+    if (p.type === 'argument_list') {
+      const callNode = p.parent;
+      if (!callNode || callNode.type !== 'call_expression') continue;
+      const funcIdent = callNode.childForFieldName('function');
+      const calleeName = funcIdent?.type === 'identifier' ? funcIdent.text : null;
+      if (!calleeName) return true; // unknown callee — conservative reject
+
+      const calleeDef = fnDefMap.get(calleeName);
+      if (!calleeDef) return true; // signature unavailable — conservative reject
+
+      const argIndex = getArgumentIndex(p, id);
+      if (argIndex === -1) return true;
+
+      const paramDecl = getParameterAt(calleeDef, argIndex);
+      if (!paramDecl) return true;
+
+      if (!isProvenImmutableParam(paramDecl)) return true;
+    }
+  }
+
+  return false;
+}
+
+/** Returns the 0-based index of `identNode` within an argument_list. Returns -1 if not found. */
+function getArgumentIndex(argListNode: SyntaxNode, identNode: SyntaxNode): number {
+  let idx = 0;
+  for (let i = 0; i < argListNode.childCount; i++) {
+    const ch = argListNode.child(i);
+    if (!ch || ch.type === '(' || ch.type === ')' || ch.type === ',') continue;
+    if (ch.id === identNode.id) return idx;
+    idx++;
+  }
+  return -1;
+}
+
+/** Returns the parameter_declaration at position `index` in a function_definition. */
+function getParameterAt(fnDefNode: SyntaxNode, index: number): SyntaxNode | null {
+  const decl = fnDefNode.childForFieldName('declarator');
+  const params = decl?.childForFieldName('parameters');
+  if (!params) return null;
+  let idx = 0;
+  for (let i = 0; i < params.childCount; i++) {
+    const p = params.child(i);
+    if (!p || p.type !== 'parameter_declaration') continue;
+    if (idx === index) return p;
+    idx++;
+  }
+  return null;
+}
+
+/**
+ * Returns true if a parameter_declaration is provably immutable from the caller's
+ * perspective:
+ *   - by value `int x`        → safe
+ *   - `const int x`           → safe
+ *   - `const int& x`          → safe (const reference)
+ *   - `int& x`                → UNSAFE (mutable reference)
+ *   - `int* x`                → UNSAFE (pointer)
+ */
+function isProvenImmutableParam(paramDecl: SyntaxNode): boolean {
+  const typeNode = paramDecl.childForFieldName('type');
+  const declNode = paramDecl.childForFieldName('declarator');
+  if (!typeNode) return false;
+
+  // Pointer declarator → always reject.
+  if (declNode && declNode.type === 'pointer_declarator') return false;
+
+  // Reference declarator → safe only if const-qualified.
+  if (declNode && declNode.type === 'reference_declarator') {
+    if (typeNode.text.startsWith('const ')) return true;
+    for (let i = 0; i < typeNode.childCount; i++) {
+      const ch = typeNode.child(i);
+      if (ch && ch.type === 'type_qualifier' && ch.text === 'const') return true;
+    }
+    return false; // mutable reference — reject.
+  }
+
+  return true; // by-value — safe.
+}
+
+/**
+ * Builds a map of function name -> function_definition node for all functions
+ * in the same translation unit. Used to look up callee signatures in isMutated.
+ */
+function buildFunctionDefMap(fnNode: SyntaxNode): Map<string, SyntaxNode> {
+  const map = new Map<string, SyntaxNode>();
+  let root: SyntaxNode = fnNode;
+  while (root.parent) root = root.parent;
+
+  const allFns = root.descendantsOfType('function_definition');
+  for (const fn of allFns) {
+    const decl = fn.childForFieldName('declarator');
+    if (!decl) continue;
+    const idents = decl.descendantsOfType('identifier');
+    if (idents.length > 0) map.set(idents[0].text, fn);
+  }
+  return map;
+}
+
+/**
+ * Counts provable write operations to the identifier named `name` in `fnNode`.
+ *
+ * Counts:
+ *   - init_declarator with a value (int m = n;) — counted precisely by DeclID.
+ *   - plain `=` assignment_expression where LHS spells `name` — counted
+ *     conservatively (without DeclID check, to err on the side of rejection).
+ */
+function countWrites(name: string, declId: number, fnNode: SyntaxNode): number {
+  let count = 0;
+
+  // init_declarator writes — use DeclID for precision.
+  for (const id of fnNode.descendantsOfType('init_declarator')) {
+    const decl = id.childForFieldName('declarator');
+    if (!decl) continue;
+    let ident: SyntaxNode | null = decl.type === 'identifier' ? decl : decl.descendantsOfType('identifier')[0] ?? null;
+    if (ident && ident.text === name && ident.id === declId) count++;
+  }
+
+  // Plain `=` assignment writes — conservative (text match only).
+  for (const a of fnNode.descendantsOfType('assignment_expression')) {
+    const op  = a.childForFieldName('operator');
+    if (!op || op.type !== '=') continue;
+    const lhs = a.childForFieldName('left');
+    if (lhs && lhs.type === 'identifier' && lhs.text === name) count++;
+  }
+
+  return count;
+}
+
+/**
+ * Builds the Canonical Symbol Registry for a single function analysis.
+ *
+ * Lifetime guarantee: Map exists only within the extractFunctionLoops call frame.
+ * Never returned. Never serialized. GC'd when call returns.
+ *
+ * Only processes init_declarator with bare-identifier RHS (D4.8 scope).
+ * Plain `m = n;` assignments are NOT aliased (writeCount > 1 due to conservative
+ * counting — safe rejection).
+ */
+function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
+  const aliasMap: AliasMap = new Map();
+  const fnDefMap = buildFunctionDefMap(fnNode);
+
+  for (const initDecl of fnNode.descendantsOfType('init_declarator')) {
+    // Skip declarations inside nested lambdas or inner function_definitions.
+    let scopeNode: SyntaxNode | null = initDecl.parent;
+    let inScope = false;
+    while (scopeNode) {
+      if (scopeNode.type === 'function_definition' || scopeNode.type === 'lambda_expression') {
+        if (scopeNode.id === fnNode.id) inScope = true;
+        break;
+      }
+      scopeNode = scopeNode.parent;
+    }
+    if (!inScope) continue;
+
+    // Extract LHS declarator identifier.
+    const lhsDecl = initDecl.childForFieldName('declarator');
+    if (!lhsDecl) continue;
+    let lhsIdent: SyntaxNode | null =
+      lhsDecl.type === 'identifier'
+        ? lhsDecl
+        : lhsDecl.descendantsOfType('identifier')[0] ?? null;
+    if (!lhsIdent) continue;
+
+    const lhsDeclId = lhsIdent.id;
+    const lhsName   = lhsIdent.text;
+
+    // RHS must be a bare identifier — all other forms are rejected.
+    const rhs = initDecl.childForFieldName('value');
+    if (!rhs || rhs.type !== 'identifier') continue;
+
+    // Lexically resolve RHS to its declaration.
+    const targetDecl = resolveDeclarationNode(rhs, fnNode);
+    if (!targetDecl) continue;
+
+    const targetDeclId = targetDecl.id;
+
+    // Self-alias guard.
+    if (lhsDeclId === targetDeclId) continue;
+
+    // Exactly one write to LHS.
+    if (countWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
+
+    // LHS must not be mutated anywhere.
+    if (isMutated(lhsName, fnNode, fnDefMap)) continue;
+
+    aliasMap.set(lhsDeclId, targetDeclId);
+  }
+
+  return aliasMap;
+}
+
+/**
+ * Canonicalizes `rawVar` (the loop boundVar string) by resolving it through
+ * the alias registry. Returns the canonical variable name, or `rawVar` if
+ * no alias is proven or if resolution cannot be completed structurally.
+ *
+ * This is the sole injection point of D4.8 into the existing pipeline.
+ * No other function in the pipeline changes.
+ */
+function canonicalizeVar(
+  rawVar: string,
+  condNode: SyntaxNode | null,
+  fnNode: SyntaxNode,
+  aliasMap: AliasMap
+): string {
+  if (aliasMap.size === 0) return rawVar;
+
+  // Locate the bound identifier in the condition expression.
+  const condIdent = findConditionBoundIdent(rawVar, condNode);
+  if (!condIdent) return rawVar;
+
+  // Lexically resolve to its declaration.
+  const declNode = resolveDeclarationNode(condIdent, fnNode);
+  if (!declNode) return rawVar;
+
+  // Follow alias chain.
+  const canonicalId = resolveCanonical(declNode.id, aliasMap);
+  if (canonicalId === declNode.id) return rawVar;
+
+  // Retrieve canonical declaration text.
+  const canonicalNode = findNodeById(fnNode, canonicalId);
+  if (!canonicalNode) return rawVar;
+
+  return canonicalNode.text;
+}
+
+/**
+ * Finds the identifier in a loop condition that is the bound variable
+ * (RHS of `<` or `<=` expression). Handles condition_clause wrapping.
+ */
+function findConditionBoundIdent(
+  rawVar: string,
+  condNode: SyntaxNode | null
+): SyntaxNode | null {
+  if (!condNode) return null;
+
+  let expr = condNode;
+  if (expr.type === 'condition_clause') {
+    for (let i = 0; i < expr.childCount; i++) {
+      const ch = expr.child(i);
+      if (ch && ch.type !== '(' && ch.type !== ')') { expr = ch; break; }
+    }
+  }
+
+  if (expr.type !== 'binary_expression') return null;
+  const op = expr.childForFieldName('operator')?.type;
+  if (op !== '<' && op !== '<=') return null;
+
+  const right = expr.childForFieldName('right');
+  if (right && right.type === 'identifier' && right.text === rawVar) return right;
+  return null;
+}
+
+/**
+ * Depth-first search within `node` for a SyntaxNode with `.id === targetId`.
+ * Bounded to the subtree rooted at `node`.
+ */
+function findNodeById(node: SyntaxNode, targetId: number): SyntaxNode | null {
+  if (node.id === targetId) return node;
+  for (let i = 0; i < node.childCount; i++) {
+    const ch = node.child(i);
+    if (!ch) continue;
+    const found = findNodeById(ch, targetId);
+    if (found) return found;
+  }
+  return null;
+}

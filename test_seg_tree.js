@@ -37,37 +37,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var treeSitter_1 = require("./src/parser/treeSitter");
+var inference_1 = require("./src/engine/inference");
 var path_1 = require("path");
+var segTreeQueryCode = "\nint query(int v, int tl, int tr, int l, int r) {\n    if (l > r) \n        return 0;\n    if (l == tl && r == tr) {\n        return t[v];\n    }\n    int tm = (tl + tr) / 2;\n    return query(v*2, tl, tm, l, min(r, tm))\n         + query(v*2+1, tm+1, tr, max(l, tm+1), r);\n}\n";
+var segTreeQueryCode2 = "\nint query(int node, int start, int end, int l, int r) {\n    if (r < start || end < l) {\n        return 0;\n    }\n    if (l <= start && end <= r) {\n        return tree[node];\n    }\n    int mid = (start + end) / 2;\n    int p1 = query(2 * node, start, mid, l, r);\n    int p2 = query(2 * node + 1, mid + 1, end, l, r);\n    return p1 + p2;\n}\n";
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var code, tree, root, params, _i, params_1, p, i, typeNode, declNode, i;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var codes, idx, tree, result;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0: return [4 /*yield*/, (0, treeSitter_1.initParser)((0, path_1.resolve)('./dist'))];
                 case 1:
-                    _a.sent();
-                    code = "\ntypedef map<int,int> MAP;\nusing UMAP = unordered_map<int,int>;\n\nvoid solve1(std::map<int,int>& mp) {}\nvoid solve2(const priority_queue<int>& pq) {}\nvoid solve3(set<int>& s) {}\nvoid solve4(MAP& m1, const UMAP& m2) {}\n";
-                    tree = (0, treeSitter_1.parseOneOff)(code);
-                    root = tree.rootNode;
-                    params = root.descendantsOfType('parameter_declaration');
-                    for (_i = 0, params_1 = params; _i < params_1.length; _i++) {
-                        p = params_1[_i];
-                        console.log("Parameter:", p.text);
-                        console.log("  Children:");
-                        for (i = 0; i < p.childCount; i++) {
-                            console.log("    [".concat(i, "] ").concat(p.child(i).type, " : ").concat(p.child(i).text));
-                        }
-                        typeNode = p.childForFieldName('type');
-                        console.log("  Type Node field:", typeNode === null || typeNode === void 0 ? void 0 : typeNode.type, typeNode === null || typeNode === void 0 ? void 0 : typeNode.text);
-                        declNode = p.childForFieldName('declarator');
-                        console.log("  Declarator Node field:", declNode === null || declNode === void 0 ? void 0 : declNode.type, declNode === null || declNode === void 0 ? void 0 : declNode.text);
-                        if (declNode) {
-                            console.log("  Declarator children:");
-                            for (i = 0; i < declNode.childCount; i++) {
-                                console.log("    [".concat(i, "] ").concat(declNode.child(i).type, " : ").concat(declNode.child(i).text));
-                            }
-                        }
-                        console.log("----");
+                    _b.sent();
+                    codes = [segTreeQueryCode, segTreeQueryCode2];
+                    for (idx = 0; idx < codes.length; idx++) {
+                        tree = (0, treeSitter_1.parseOneOff)(codes[idx]);
+                        result = (0, inference_1.analyzeFunctions)(tree);
+                        console.log('=== Test ' + (idx + 1) + ' ===');
+                        console.log('Complexity:', (_a = result.functions[0]) === null || _a === void 0 ? void 0 : _a.complexity);
                     }
                     return [2 /*return*/];
             }

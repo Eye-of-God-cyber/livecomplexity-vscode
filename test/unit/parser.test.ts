@@ -239,9 +239,11 @@ describe('C++ Parser and AST Utilities', () => {
   });
 
   it('should detect missing update clause with body update', () => {
+    // for(int i=1; i<n;) { i *= 2; } — i₀=1 > 0 proven, update is unconditional body statement.
+    // D4.9: classified as logarithmic only when the structural proof is complete.
     const code = `
       void test() {
-        for(int i=0; i<n;) {
+        for(int i=1; i<n;) {
           i *= 2;
         }
       }

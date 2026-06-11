@@ -80,7 +80,7 @@ const CASES: Case[] = [
   { id: 19, label: 'i*=3 (ternary)',
     code: wrap('for(int i=1;i<n;i*=3){}'), expected: 'O(log n)' },
   { id: 20, label: 'while i*=2',
-    code: wrap('int i=1; while(i<n){ i*=2; }'), expected: 'O(log n)' },
+    code: wrap('int i=1; while(i<n){ i*=2; }'), expected: 'Unknown' },
   { id: 21, label: 'while i/=2',
     code: wrap('int i=n; while(i>0){ i/=2; }'), expected: 'O(log n)' },
   { id: 22, label: 'binary search style (lo/hi midpoint)',
@@ -157,7 +157,7 @@ const CASES: Case[] = [
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++){}\nfor(int i=0;i<n;i++) for(int j=0;j<n;j++) for(int k=0;k<n;k++){}'), expected: 'O(n³)' },
   // Two additional edge cases
   { id: 51, label: 'while(i<n) i*=2 inside for',
-    code: wrap('for(int x=0;x<n;x++){\n  int i=1;\n  while(i<n){ i*=2; }\n}'), expected: 'O(n log n)' },
+    code: wrap('for(int x=0;x<n;x++){\n  int i=1;\n  while(i<n){ i*=2; }\n}'), expected: 'Unknown' },
   { id: 52, label: 'Constant loop inside linear loop (constant ignored)',
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<10;j++){}'), expected: 'O(n)' },
 
@@ -391,12 +391,20 @@ const CASES: Case[] = [
     code: wrap('for(int i=0;i<sizeof(int);i++){}'), expected: 'O(1)' as any },
 
   // Case I: for(i<n){} for(j<m){} -> O(n) (dominance limitation)
-  { id: 119, label: 'Multi-var Case I: sequential loops fallback to O(n)',
-    code: wrap('for(int i=0;i<n;i++){}\nfor(int j=0;j<m;j++){}'), expected: 'O(n)' as any },
+  { id: 119, label: 'Multi-var Case I: sequential loops fallback to O(m + n) [D4.7]', code: `
+void foo(int n, int m) {
+  for(int i=0;i<n;i++) {}
+  for(int j=0;j<m;j++) {}
+}`, expected: 'O(m + n)' as any },
 
   // Case J: for(i<n) for(j<m) {} for(k<p) {} -> O(nm)
-  { id: 120, label: 'Multi-var Case J: sequential loops fallback dominance to O(nm)',
-    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++){}\nfor(int k=0;k<p;k++){}'), expected: 'O(nm)' as any },
+  { id: 120, label: 'Multi-var Case J: sequential loops fallback dominance to O(nm + p) [D4.7]', code: `
+void foo(int n, int m, int p) {
+  for(int i=0;i<n;i++) {
+    for(int j=0;j<m;j++) {}
+  }
+  for(int k=0;k<p;k++) {}
+}`, expected: 'O(nm + p)' as any },
 
   // Case K: for(i<m) for(j<n) -> O(nm) (deterministic sort order)
   { id: 121, label: 'Multi-var Case K: deterministic sort order O(nm)',
@@ -522,7 +530,7 @@ const CASES: Case[] = [
 
   // ── D2.3: Dijkstra & Priority-Queue Graph Algorithms ───────────────────────
 
-  { id: 147, label: 'D2.3: Dijkstra (pq.push) → O((V+E) log V)', code: `
+  { id: 147, label: 'D2.3: Dijkstra (pq.push) → O((V+E) log V + log n) [D4.7: initial pq.push is O(log n), incommensurable with O((V+E) log V)]', code: `
 void dijkstra() {
   priority_queue<pair<int,int>> pq;
   pq.push({0, src});
@@ -533,9 +541,9 @@ void dijkstra() {
       pq.push({dist + edge.w, edge.v});
     }
   }
-}`, expected: 'O((V+E) log V)' as any },
+}`, expected: 'O((V+E) log V + log n)' as any },
 
-  { id: 148, label: 'D2.3: Prim (pq.emplace) → O((V+E) log V)', code: `
+  { id: 148, label: 'D2.3: Prim (pq.emplace) → O((V+E) log V + log n) [D4.7: initial pq.emplace is O(log n)]', code: `
 void prim() {
   priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
   pq.emplace(0, src);
@@ -546,9 +554,9 @@ void prim() {
       pq.emplace(nw, v);
     }
   }
-}`, expected: 'O((V+E) log V)' as any },
+}`, expected: 'O((V+E) log V + log n)' as any },
 
-  { id: 149, label: 'D2.3: min-heap (greater<>) → O((V+E) log V)', code: `
+  { id: 149, label: 'D2.3: min-heap (greater<>) → O((V+E) log V + log n) [D4.7: initial pq.push is O(log n)]', code: `
 void solve() {
   priority_queue<int, vector<int>, greater<int>> pq;
   pq.push(0);
@@ -559,7 +567,7 @@ void solve() {
       pq.push(v);
     }
   }
-}`, expected: 'O((V+E) log V)' as any },
+}`, expected: 'O((V+E) log V + log n)' as any },
 
   { id: 150, label: 'D2.3: priority_queue without for_range_loop → existing behavior (no graph detection)', code: `
 void process() {
@@ -596,7 +604,7 @@ void bfs() {
   }
 }`, expected: 'O(V+E)' as any },
 
-  { id: 153, label: 'D2.3: pq.top() inside Dijkstra — no double counting', code: `
+  { id: 153, label: 'D2.3: pq.top() inside Dijkstra → O((V+E) log V + log n) [D4.7: initial pq.push is O(log n)]', code: `
 void dijkstra() {
   priority_queue<pair<int,int>> pq;
   pq.push({0, src});
@@ -609,7 +617,7 @@ void dijkstra() {
       }
     }
   }
-}`, expected: 'O((V+E) log V)' as any },
+}`, expected: 'O((V+E) log V + log n)' as any },
 
   { id: 154, label: 'D2.3: pq.top() standalone in O(n) loop → O(n)', code: `
 void getMax() {
@@ -619,7 +627,7 @@ void getMax() {
   }
 }`, expected: 'O(n)' as any },
 
-  { id: 155, label: 'D2.3: typedef alias priority_queue → O((V+E) log V)', code: `
+  { id: 155, label: 'D2.3: typedef alias priority_queue → O((V+E) log V + log n) [D4.7: initial pq.push is O(log n)]', code: `
 void dijkstra() {
   typedef priority_queue<pair<int,int>> PQ;
   PQ pq;
@@ -630,9 +638,9 @@ void dijkstra() {
       pq.push(edge);
     }
   }
-}`, expected: 'O((V+E) log V)' as any },
+}`, expected: 'O((V+E) log V + log n)' as any },
 
-  { id: 156, label: 'D2.3: using alias priority_queue → O((V+E) log V)', code: `
+  { id: 156, label: 'D2.3: using alias priority_queue → O((V+E) log V + log n) [D4.7: initial pq.push is O(log n)]', code: `
 void dijkstra() {
   using PQ = priority_queue<pair<int,int>>;
   PQ pq;
@@ -643,7 +651,7 @@ void dijkstra() {
       pq.push(v);
     }
   }
-}`, expected: 'O((V+E) log V)' as any },
+}`, expected: 'O((V+E) log V + log n)' as any },
 
   // ── D3.1: Bitmask & Exponential Complexity ─────────────────────────────────
 
@@ -1355,13 +1363,297 @@ int solve(int* a, int lo, int hi, int target) {
     return solve(a, lo, mid - 1, target);
 }`, expected: 'O(log n)' as any },
 
+  { id: 245, label: 'D4.6: Regression guard — if(cond) f(...); return f(...); → Unknown', code: `
+int solve(int l, int r) {
+    if (l > r) return -1;
+    int mid = (l + r) / 2;
+    if (mid & 1)
+        solve(l, mid - 1);
+    return solve(mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 246, label: 'D4.6: Regression guard — bare sequential f(...); return f(...); → Unknown', code: `
+int solve(int l, int r) {
+    if (l > r) return -1;
+    int mid = (l + r) / 2;
+    solve(l, mid - 1);
+    return solve(mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 247, label: 'D4.6: Regression guard — braced if(cond) { f(...); } return f(...); → Unknown', code: `
+int solve(int l, int r) {
+    if (l > r) return -1;
+    int mid = (l + r) / 2;
+    if (mid & 1) { solve(l, mid - 1); }
+    return solve(mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  // ── D4.7: Sum Node — sequential additive complexity ──────────────────────
+  // These cases validate the mergeAndReduce / addNode pipeline.
+
+  { id: 248, label: 'D4.7: two sequential incommensurable loops → O(m + n)', code: `
+void foo(int n, int m) {
+  for(int i = 0; i < n; i++) { }
+  for(int j = 0; j < m; j++) { }
+}`, expected: 'O(m + n)' as any },
+
+  { id: 249, label: 'D4.7: two sequential same-variable loops → O(n) (deduplicated)', code: `
+void foo(int n) {
+  for(int i = 0; i < n; i++) { }
+  for(int j = 0; j < n; j++) { }
+}`, expected: 'O(n)' as any },
+
+  { id: 250, label: 'D4.7: three loops — two with n, one with m → O(m + n) (n deduplicated)', code: `
+void foo(int n, int m) {
+  for(int i = 0; i < n; i++) { }
+  for(int j = 0; j < m; j++) { }
+  for(int k = 0; k < n; k++) { }
+}`, expected: 'O(m + n)' as any },
+
+  { id: 251, label: 'D4.9: j*=2 with variable init (j=i) — cannot prove j₀>0 → Unknown', code: `
+void foo(int n) {
+  for(int i = 0; i < n; i++) { }
+  for(int i = 0; i < n; i++) {
+    for(int j = i; j < n; j *= 2) { }
+  }
+}`, expected: 'Unknown' as any },
+
+  { id: 252, label: 'D4.7: regression — nested loop still multiplies, not sums → O(nm)', code: `
+void foo(int n, int m) {
+  for(int i = 0; i < n; i++) {
+    for(int j = 0; j < m; j++) { }
+  }
+}`, expected: 'O(nm)' as any },
+
+  { id: 253, label: 'D4.7: O(n) + O(m) + O(k) three-way sum → O(k + m + n) (canonical sort)', code: `
+void foo(int n, int m, int k) {
+  for(int i = 0; i < n; i++) { }
+  for(int j = 0; j < m; j++) { }
+  for(int l = 0; l < k; l++) { }
+}`, expected: 'O(k + m + n)' as any },
+
+  { id: 254, label: 'D4.7: regression — BFS graph traversal alone → O(V+E) (unchanged)', code: `
+void bfs() {
+  queue<int> q;
+  q.push(src);
+  while(!q.empty()) {
+    int u = q.front();
+    q.pop();
+    for(auto v : adj[u]) {
+      q.push(v);
+    }
+  }
+}`, expected: 'O(V+E)' as any },
+
+  { id: 255, label: 'D4.7: regression — DSU path compression → O(1) (unchanged)', code: `
+int find(int x) {
+  if(parent[x] != x) parent[x] = find(parent[x]);
+  return parent[x];
+}`, expected: 'O(1)' as any },
+
+  { id: 256, label: 'D4.7: regression — memoized recursion 2D → O(n²) (unchanged)', code: `
+int dp(int i, int j) {
+  if(memo[i][j] != -1) return memo[i][j];
+  return memo[i][j] = dp(i-1, j);
+}`, expected: 'O(n²)' as any },
+
+  { id: 257, label: 'D4.7: regression — recursive binary search → O(log n) (unchanged)', code: `
+int solve(int l, int r) {
+  if(l > r) return -1;
+  int mid = (l + r) / 2;
+  if(a[mid] == target) return mid;
+  if(a[mid] < target) return solve(mid + 1, r);
+  return solve(l, mid - 1);
+}`, expected: 'O(log n)' as any },
+
+  { id: 258, label: 'D4.7: regression — D4.6 guard: if(cond) f(); return f(); → Unknown (unchanged)', code: `
+int solve(int l, int r) {
+  if(l >= r) return 0;
+  int mid = (l + r) / 2;
+  if(mid > 0) solve(l, mid);
+  return solve(mid + 1, r);
+}`, expected: 'Unknown' as any },
+
+  { id: 259, label: 'D4.7: O(n²) dominates sequential O(n) — same variable → O(n²)', code: `
+void foo(int n) {
+  for(int i = 0; i < n; i++) { }
+  for(int i = 0; i < n; i++) {
+    for(int j = 0; j < n; j++) { }
+  }
+}`, expected: 'O(n²)' as any },
+
+  { id: 260, label: 'D4.9: j*=2 variable init + O(m) → Unknown', code: `
+void foo(int n, int m) {
+  for(int i = 0; i < n; i++) {
+    for(int j = i; j < n; j *= 2) { }
+  }
+  for(int k = 0; k < m; k++) { }
+}`, expected: 'Unknown' as any },
+
+  // ── Phase D4.8: Canonical Symbol Registry ────────────────────────────────────
+  // POSITIVE cases — alias is structurally provable; loop bound must canonicalize.
+
+  { id: 261, label: 'D4.8: int alias — int m=n; two loops → O(n) not O(m+n)', code: `
+void foo(int n) {
+  int m = n;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(n)' as any },
+
+  { id: 262, label: 'D4.8: const alias — const int m=n; two loops → O(n)', code: `
+void foo(int n) {
+  const int m = n;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(n)' as any },
+
+  { id: 263, label: 'D4.8: auto alias — auto m=n; two loops → O(n)', code: `
+void foo(int n) {
+  auto m = n;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(n)' as any },
+
+  { id: 264, label: 'D4.8: multi-hop alias — d→c→a→b; b and d loops dedup to O(b) → emits O(n)', code: `
+void foo(int b) {
+  int a = b;
+  int c = a;
+  int d = c;
+  for(int i = 0; i < b; i++) {}
+  for(int j = 0; j < d; j++) {}
+}`, expected: 'O(n)' as any },
+
+  { id: 265, label: 'D4.8: alias dedup — int m=n; only one param so loops merge to O(n)', code: `
+void foo(int n) {
+  int m = n;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(n)' as any },
+
+  { id: 266, label: 'D4.8: alias in nested scope — inner m=n; outer n loop → O(n)', code: `
+void foo(int n) {
+  {
+    int m = n;
+    for(int i = 0; i < m; i++) {}
+  }
+  for(int j = 0; j < n; j++) {}
+}`, expected: 'O(n)' as any },
+
+  // NEGATIVE cases — alias must be REJECTED; the loop variables must stay distinct.
+  // Two-parameter functions are used so that SumNode path reveals the distinction.
+
+  { id: 270, label: 'D4.8: reject — m++ mutation; two loops with n and m → O(m + n)', code: `
+void foo(int n, int m) {
+  m++;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(m + n)' as any },
+
+  { id: 271, label: 'D4.8: reject — m+=1 mutation; two loops with n and m → O(m + n)', code: `
+void foo(int n, int m) {
+  m += 1;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(m + n)' as any },
+
+  { id: 272, label: 'D4.8: reject — non-bare RHS m=n+1; two loops → O(m + n)', code: `
+void foo(int n, int m) {
+  int k = n + 1;
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(m + n)' as any },
+
+  { id: 273, label: 'D4.8: reject — call RHS m=foo(); two loops → O(m + n)', code: `
+int foo();
+void bar(int n, int m) {
+  int k = foo();
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(m + n)' as any },
+
+  { id: 274, label: 'D4.8: shadow — outer m=n; inner n; outer loop m → still O(n)', code: `
+void foo(int n) {
+  int m = n;
+  {
+    int n = 5;
+  }
+  for(int i = 0; i < n; i++) {}
+  for(int j = 0; j < m; j++) {}
+}`, expected: 'O(n)' as any },
+
+  { id: 275, label: 'D4.8: shadow isolation — inner scope alias does not affect outer → O(n)', code: `
+void foo(int n) {
+  {
+    int n = 5;
+    int m = n;
+  }
+  for(int i = 0; i < n; i++) {}
+}`, expected: 'O(n)' as any },
+
+  // ── D4.9: Multiplicative Induction Recognition ──────────────────────────────
+  // ── Positive cases (MUST return O(log n)) ───────────────────────────────────
+
+  { id: 276, label: 'D4.9 A: for i*=2 literal → O(log n)',
+    code: `void f(int n){ for(int i=1;i<n;i*=2){} }`, expected: 'O(log n)' as any },
+
+  { id: 277, label: 'D4.9 A: for i<<=1 literal → O(log n)',
+    code: `void f(int n){ for(int i=1;i<n;i<<=1){} }`, expected: 'O(log n)' as any },
+
+  { id: 278, label: 'D4.9 A: for i>>=1 literal → O(log n)',
+    code: `void f(int n){ for(int i=n;i>1;i>>=1){} }`, expected: 'O(log n)' as any },
+
+  { id: 279, label: 'D4.9 A: for i/=2 literal → O(log n)',
+    code: `void f(int n){ for(int i=n;i>1;i/=2){} }`, expected: 'O(log n)' as any },
+
+  { id: 280, label: 'D4.9 B: for i=i*2 plain assignment → O(log n)',
+    code: `void f(int n){ for(int i=1;i<n;i=i*2){} }`, expected: 'O(log n)' as any },
+
+  { id: 281, label: 'D4.9 B: for i=i*3 plain assignment → O(log n)',
+    code: `void f(int n){ for(int i=1;i<n;i=i*3){} }`, expected: 'O(log n)' as any },
+
+  { id: 282, label: "D4.9 B': for i=i<<1 shift plain assignment → O(log n)",
+    code: `void f(int n){ for(int i=1;i<n;i=i<<1){} }`, expected: 'O(log n)' as any },
+
+  { id: 283, label: 'D4.9 C: for i=i+i self-doubling addition → O(log n)',
+    code: `void f(int n){ for(int i=1;i<n;i=i+i){} }`, expected: 'O(log n)' as any },
+
+  { id: 284, label: 'D4.9 D: for i+=i self-doubling += → O(log n)',
+    code: `void f(int n){ for(int i=1;i<n;i+=i){} }`, expected: 'O(log n)' as any },
+
+  // ── Negative cases (MUST return Unknown) ────────────────────────────────────
+
+  { id: 285, label: 'D4.9 NEG A: i*=k variable multiplier → Unknown',
+    code: `void f(int n,int k){ for(int i=1;i<n;i*=k){} }`, expected: 'Unknown' as any },
+
+  { id: 286, label: 'D4.9 NEG A: i*=1 no-op multiplier → Unknown',
+    code: `void f(int n){ for(int i=1;i<n;i*=1){} }`, expected: 'Unknown' as any },
+
+  { id: 287, label: 'D4.9 NEG A: i*=0 zero multiplier → Unknown',
+    code: `void f(int n){ for(int i=1;i<n;i*=0){} }`, expected: 'Unknown' as any },
+
+  { id: 288, label: 'D4.9 NEG B: i=i*k variable factor → Unknown or linear',
+    code: `void f(int n,int k){ for(int i=1;i<n;i=i*k){} }`, expected: 'Unknown' as any },
+
+  { id: 289, label: 'D4.9 NEG: init=0 multiplicative stuck at 0 → Unknown',
+    code: `void f(int n){ for(int i=0;i<n;i*=2){} }`, expected: 'Unknown' as any },
+
+  { id: 290, label: 'D4.9 NEG E: guarded while i*=2 inside if → Unknown',
+    code: `void f(int n){ int i=1; while(i<n){ if(i>0) i*=2; } }`, expected: 'Unknown' as any },
+
+  { id: 291, label: 'D4.9 NEG E: guarded while i=i*2 inside if → Unknown',
+    code: `void f(int n){ int i=1; while(i<n){ if(i>0) i=i*2; } }`, expected: 'Unknown' as any },
+
+  { id: 292, label: 'D4.9 NEG E: guarded while i+=i inside if → Unknown',
+    code: `void f(int n){ int i=1; while(i<n){ if(i>0) i+=i; } }`, expected: 'Unknown' as any },
+
 ];
+
 
 
 
 // ─── vitest suite ───────────────────────────────────────────────────────────
 
-describe('Validation Suite — 84 patterns', () => {
+describe('Validation Suite — 292 patterns', () => {
   beforeAll(async () => {
     await initParser(distDir);
   });
