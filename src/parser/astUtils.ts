@@ -1359,15 +1359,38 @@ function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
     const lhsDeclId = lhsIdent.id;
     const lhsName   = lhsIdent.text;
 
-    // RHS must be a bare identifier — all other forms are rejected.
+    // RHS must be an identifier or an approved binary expression
     const rhs = initDecl.childForFieldName('value');
-    if (!rhs || rhs.type !== 'identifier') continue;
+    if (!rhs) continue;
 
-    // Lexically resolve RHS to its declaration.
-    const targetDecl = resolveDeclarationNode(rhs, fnNode);
-    if (!targetDecl) continue;
+    let targetDeclId: number;
 
-    const targetDeclId = targetDecl.id;
+    if (rhs.type === 'identifier') {
+      const targetDecl = resolveDeclarationNode(rhs, fnNode);
+      if (!targetDecl) continue;
+      targetDeclId = targetDecl.id;
+    } else if (rhs.type === 'binary_expression') {
+      const op = rhs.childForFieldName('operator');
+      if (!op || (op.type !== '+' && op.type !== '/')) continue;
+      
+      // D5.5 structurally check: if '/', right MUST be number_literal
+      if (op.type === '/') {
+        const right = rhs.childForFieldName('right');
+        if (!right || right.type !== 'number_literal') continue;
+      }
+
+      // Verify shape with strict traversal
+      const compoundNodes = extractCompoundBoundNodes(rhs);
+      if (!compoundNodes || compoundNodes.length === 0) continue;
+
+      // D5.5 user constraint: reject function calls in binary expressions.
+      // All extracted nodes must be strictly identifiers.
+      if (compoundNodes.some(n => n.type !== 'identifier')) continue;
+
+      targetDeclId = rhs.id;
+    } else {
+      continue;
+    }
 
     // Self-alias guard.
     if (lhsDeclId === targetDeclId) continue;
@@ -1436,6 +1459,25 @@ function canonicalizeIdentNode(
         for (const leaf of compoundNodes) {
           if (leaf.type === 'identifier' && !resolveDeclarationNode(leaf, fnNode)) {
             // Undeclared identifier — structurally unverifiable. Fall back.
+            return targetNode.text;
+          }
+        }
+        return compoundNodes.flatMap(vNode =>
+          canonicalizeIdentNode(vNode, fnNode, aliasMap)
+        );
+      }
+    }
+  }
+
+  // D5.5: Explicitly map approved binary_expression
+  if (targetNode.type === 'binary_expression') {
+    const op = targetNode.childForFieldName('operator');
+    if (op && (op.type === '+' || op.type === '/')) {
+      const compoundNodes = extractCompoundBoundNodes(targetNode);
+      if (compoundNodes && compoundNodes.length > 0) {
+        // Guard: verify all identifier leaves are declared in scope.
+        for (const leaf of compoundNodes) {
+          if (leaf.type === 'identifier' && !resolveDeclarationNode(leaf, fnNode)) {
             return targetNode.text;
           }
         }

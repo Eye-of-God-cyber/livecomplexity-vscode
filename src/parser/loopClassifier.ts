@@ -361,21 +361,27 @@ export function extractCompoundBoundNodes(node: SyntaxNode): SyntaxNode[] | unde
 
   if (node.type === 'binary_expression') {
     const op = node.childForFieldName('operator');
-    if (!op || op.type !== '+') {
-      // Immediate rejection of -, *, /, %, logical, bitwise, etc.
-      return undefined;
-    }
     const left = node.childForFieldName('left');
     const right = node.childForFieldName('right');
-    if (!left || !right) return undefined;
+    if (!op || !left || !right) return undefined;
 
-    const leftExtracted = extractCompoundBoundNodes(left);
-    if (!leftExtracted) return undefined; // Atomic failure
+    if (op.type === '+') {
+      const leftExtracted = extractCompoundBoundNodes(left);
+      if (!leftExtracted) return undefined; // Atomic failure
 
-    const rightExtracted = extractCompoundBoundNodes(right);
-    if (!rightExtracted) return undefined; // Atomic failure
+      const rightExtracted = extractCompoundBoundNodes(right);
+      if (!rightExtracted) return undefined; // Atomic failure
 
-    return [...leftExtracted, ...rightExtracted];
+      return [...leftExtracted, ...rightExtracted];
+    } else if (op.type === '/') {
+      if (right.type === 'number_literal') {
+        return extractCompoundBoundNodes(left);
+      }
+      return undefined;
+    } else {
+      // Immediate rejection of -, *, %, logical, bitwise, etc.
+      return undefined;
+    }
   }
 
   if (node.type === 'call_expression') {
