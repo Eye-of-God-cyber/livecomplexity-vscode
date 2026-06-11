@@ -99,7 +99,7 @@ export const STL_MEMBER_REGISTRY: Record<string, LoopClassification> = {
 export interface LoopClassificationResult {
   classification: LoopClassification;
   confidence: LoopConfidence;
-  boundVar?: string;
+  boundVar?: string | string[];
 }
 
 
@@ -112,7 +112,17 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
   let initializerNode: SyntaxNode | null = null;
 
   if (node.type === 'for_range_loop') {
-    return { classification: 'linear', confidence: 'medium' };
+    // D5.6 Issue 1: Extract the container identifier as boundVar.
+    // Tree-sitter-cpp for_range_loop has a 'right' field that is the range expression.
+    // Only bare identifier containers are accepted (e.g., `v` in `for (auto x : v)`).
+    // Call expressions (v.subrange()), field expressions, and complex expressions
+    // are rejected — the loop classifies as linear with no boundVar (unknown variable).
+    let rangeBoundVar: string | undefined = undefined;
+    const rangeExpr = node.childForFieldName('right');
+    if (rangeExpr && rangeExpr.type === 'identifier') {
+      rangeBoundVar = rangeExpr.text;
+    }
+    return { classification: 'linear', confidence: 'medium', boundVar: rangeBoundVar };
   }
 
   if (node.type === 'for_statement') {
@@ -193,7 +203,8 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
       if (left && left.type === 'binary_expression' && left.childForFieldName('operator')?.type === '*') {
         const l1 = left.childForFieldName('left');
         const l2 = left.childForFieldName('right');
-        if (l1 && l2 && l1.text === l2.text) {
+        const unwrap = (n: any) => n && n.type === 'cast_expression' ? (n.child(1) || n) : n;
+        if (l1 && l2 && unwrap(l1).text === unwrap(l2).text) {
           return { classification: 'fractional', confidence: 'high' };
         }
       }
@@ -281,7 +292,7 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
   return result;
 }
 
-function getBoundVariable(conditionNode: SyntaxNode | null): string | undefined {
+export function getBoundVariable(conditionNode: SyntaxNode | null): string | string[] | undefined {
   if (!conditionNode) return undefined;
   if (conditionNode.type === 'condition_clause') {
     for (let i = 0; i < conditionNode.childCount; i++) {
@@ -297,10 +308,116 @@ function getBoundVariable(conditionNode: SyntaxNode | null): string | undefined 
     const op = conditionNode.childForFieldName('operator')?.type;
     if (op === '<' || op === '<=') {
       const right = conditionNode.childForFieldName('right');
-      if (right && right.type === 'identifier') return right.text;
+      if (right) {
+        return extractCompoundBound(right);
+      }
     }
   }
+
+  if (conditionNode.type === 'update_expression') {
+    const arg = conditionNode.childForFieldName('argument') || conditionNode.child(0);
+    if (arg && arg.type === 'identifier') {
+      return arg.text;
+    }
+  }
+
+  if (conditionNode.type === 'assignment_expression') {
+    const left = conditionNode.childForFieldName('left');
+    if (left && left.type === 'identifier') {
+      return left.text;
+    }
+  }
+
   return undefined;
+}
+
+/**
+ * ATOMIC EXTRACTION RULE:
+ * Recursive extraction is all-or-nothing. Either the ENTIRE expression is structurally proven,
+ * or it returns undefined. No partial recovery. No dropping unsupported branches.
+ * Constants (number_literal) contribute no asymptotic growth and are discarded.
+ *
+ * extractCompoundBoundNodes is the SINGLE canonical structural traversal.
+ * extractCompoundBound is a thin string-projection wrapper over it.
+ * The two cannot silently diverge: they share exactly one structural definition.
+ */
+export function extractCompoundBoundNodes(node: SyntaxNode): SyntaxNode[] | undefined {
+  if (node.type === 'identifier') {
+    return [node]; // Return the node itself, not its text.
+  }
+
+  if (node.type === 'number_literal') {
+    // Constants contribute no growth. Discard structurally proven constants.
+    return [];
+  }
+
+  if (node.type === 'parenthesized_expression') {
+    const inner = node.child(1); // skip '('
+    if (inner && inner.type !== ')') {
+      return extractCompoundBoundNodes(inner);
+    }
+    return undefined;
+  }
+
+  if (node.type === 'binary_expression') {
+    const op = node.childForFieldName('operator');
+    if (!op || op.type !== '+') {
+      // Immediate rejection of -, *, /, %, logical, bitwise, etc.
+      return undefined;
+    }
+    const left = node.childForFieldName('left');
+    const right = node.childForFieldName('right');
+    if (!left || !right) return undefined;
+
+    const leftExtracted = extractCompoundBoundNodes(left);
+    if (!leftExtracted) return undefined; // Atomic failure
+
+    const rightExtracted = extractCompoundBoundNodes(right);
+    if (!rightExtracted) return undefined; // Atomic failure
+
+    return [...leftExtracted, ...rightExtracted];
+  }
+
+  if (node.type === 'call_expression') {
+    // Structural proof for container.size() or container.length() ONLY
+    const argsList = node.childForFieldName('arguments');
+    if (!argsList || argsList.childCount > 2) return undefined; // Must be empty '()'
+
+    const funcExpr = node.childForFieldName('function');
+    if (!funcExpr || funcExpr.type !== 'field_expression') return undefined;
+
+    const objIdent = funcExpr.childForFieldName('argument');
+    if (!objIdent || objIdent.type !== 'identifier') return undefined;
+
+    const fieldIdent = funcExpr.childForFieldName('field');
+    if (!fieldIdent || (fieldIdent.text !== 'size' && fieldIdent.text !== 'length')) return undefined;
+
+    return [node]; // Return the call_expression node itself — its .text is "v.size()".
+  }
+
+  if (node.type === 'cast_expression') {
+    // Bug D fix: structural unwrapping of C-style cast (int)v.size().
+    // A cast_expression is a pure type annotation wrapper — asymptotically
+    // it contributes nothing. Recurse into its value child.
+    // tree-sitter field name for the cast value is 'value'.
+    const castValue = node.childForFieldName('value');
+    if (castValue) return extractCompoundBoundNodes(castValue);
+    return undefined;
+  }
+
+  // Reject everything else (min/max, ternary, arrays, unknown calls, member chains)
+  return undefined;
+}
+
+/**
+ * String-projection wrapper over extractCompoundBoundNodes.
+ * Behaviour is identical to the original extractCompoundBound;
+ * callers that only need strings continue to work unchanged.
+ */
+export function extractCompoundBound(node: SyntaxNode): string[] | undefined {
+  const nodes = extractCompoundBoundNodes(node);
+  if (nodes === undefined) return undefined;
+  return nodes.map(n => n.text);
 }
 
 function findBodyUpdate(bodyNode: SyntaxNode | null): SyntaxNode | null {
@@ -471,18 +588,38 @@ function hasMidpointUpdate(bodyNode: SyntaxNode | null): boolean {
     const lhs = asgn.childForFieldName('left');
     if (lhs && lhs.text === midpointName) continue; // skip the midpoint declaration itself
     const rhs = asgn.childForFieldName('right');
-    if (rhs && rhs.text.includes(midpointName)) return true;
+    if (rhs && containsIdentifier(rhs, midpointName)) return true;
   }
   return false;
 }
 
-/** Returns true when node is or contains a top-level division expression. */
+/**
+ * Returns true when node is or structurally contains a division expression
+ * at any level of nesting.
+ *
+ * D5.6 Issue 2 fix: The classical midpoint expression `left + (right - left) / 2`
+ * is parsed as a binary_expression with top-level operator `+`, where the right
+ * operand `(right - left) / 2` IS a binary_expression with operator `/`.
+ * The original shallow check only inspected the top-level operator and therefore
+ * returned false for this form, causing the loop to fall through to a linear
+ * classification and produce a false-positive O(n) for binary search loops.
+ *
+ * The fix: recurse into both operands of any binary_expression (not just `/`).
+ * The function is structurally bounded — tree-sitter nodes are finite and acyclic.
+ * The recursion terminates at leaf nodes (identifiers, literals, etc.).
+ */
 function containsDivision(node: SyntaxNode): boolean {
   if (node.type === 'binary_expression') {
     const op = node.childForFieldName('operator');
     if (op && op.type === '/') return true;
+    // Recurse into both operands — needed for e.g. `left + (right - left) / 2`
+    // where the top-level op is `+` but the right child contains `/`.
+    const left = node.childForFieldName('left');
+    const right = node.childForFieldName('right');
+    if (left && containsDivision(left)) return true;
+    if (right && containsDivision(right)) return true;
   }
-  // Handle parenthesized: (lo+hi)/2
+  // Handle explicit parenthesized: (lo+hi)/2
   if (node.type === 'parenthesized_expression') {
     const inner = node.child(1) ?? node.child(0);
     if (inner) return containsDivision(inner);
@@ -500,7 +637,7 @@ function hasModuloAssignment(bodyNode: SyntaxNode | null): boolean {
   // Check math_assignment_expression with %=
   const mathAssigns = bodyNode.descendantsOfType('math_assignment_expression');
   for (const a of mathAssigns) {
-    if (a.text.includes('%=')) return true;
+    if (a.children.find(c => c.type === '%=')) return true;
   }
   // Check plain assignment where RHS contains binary % expression
   const assigns = bodyNode.descendantsOfType('assignment_expression');
@@ -909,36 +1046,59 @@ export function classifyMacroString(macroText: string): LoopClassificationResult
  *   parent[x] = parent[parent[x]]
  * All 3 array identifiers must match, and the innermost index must match the LHS index.
  */
+function getSubscriptParts(node: SyntaxNode) {
+  if (node.type !== 'subscript_expression') return null;
+  const arrayNode = node.childForFieldName('argument');
+  const indicesNode = node.childForFieldName('indices');
+  if (!arrayNode || !indicesNode || arrayNode.type !== 'identifier') return null;
+  
+  let indexNode: SyntaxNode | null = null;
+  for (let i = 0; i < indicesNode.childCount; i++) {
+    const c = indicesNode.child(i);
+    if (c && c.type !== '[' && c.type !== ']') {
+      indexNode = c;
+      break;
+    }
+  }
+  return { arrayNode, indexNode };
+}
+
 function isPathHalvingBody(bodyNode: SyntaxNode): boolean {
   const assignments = bodyNode.descendantsOfType('assignment_expression');
   for (const assign of assignments) {
-    const leftText = assign.childForFieldName('left')?.text.replace(/\s+/g, '');
-    let rightNode = assign.childForFieldName('right');
+    const lhs = assign.childForFieldName('left');
+    let rhs = assign.childForFieldName('right');
     
-    // Unwrap parenthesis if any
-    while (rightNode && rightNode.type === 'parenthesized_expression') {
+    if (!lhs || !rhs) continue;
+
+    while (rhs.type === 'parenthesized_expression') {
       let inner: SyntaxNode | null = null;
-      for (let i = 0; i < rightNode.childCount; i++) {
-        const ch = rightNode.child(i);
+      for (let i = 0; i < rhs.childCount; i++) {
+        const ch = rhs.child(i);
         if (ch && ch.type !== '(' && ch.type !== ')') {
           inner = ch;
           break;
         }
       }
       if (!inner) break;
-      rightNode = inner;
+      rhs = inner;
     }
     
-    const rightText = rightNode?.text.replace(/\s+/g, '');
-    if (leftText && rightText) {
-      // Find array A and index B from A[B]
-      const match = leftText.match(/^([a-zA-Z0-9_]+)\[(.*)\]$/);
-      if (match) {
-        const A = match[1];
-        const B = match[2];
-        const expectedRight = `${A}[${A}[${B}]]`;
-        if (rightText === expectedRight) return true;
-      }
+    const lhsParts = getSubscriptParts(lhs);
+    const rhsParts = getSubscriptParts(rhs);
+    
+    if (!lhsParts || !rhsParts) continue;
+    if (!lhsParts.indexNode || !rhsParts.indexNode) continue;
+    
+    if (rhsParts.arrayNode.text !== lhsParts.arrayNode.text) continue;
+    
+    const rhsInnerParts = getSubscriptParts(rhsParts.indexNode);
+    if (!rhsInnerParts || !rhsInnerParts.indexNode) continue;
+    
+    if (rhsInnerParts.arrayNode.text !== lhsParts.arrayNode.text) continue;
+    
+    if (rhsInnerParts.indexNode.text === lhsParts.indexNode.text) {
+      return true;
     }
   }
   return false;
@@ -1014,4 +1174,13 @@ export function isSparseTableOuterLoop(conditionNode: SyntaxNode | null): boolea
   if (!shiftRight || shiftRight.type !== 'identifier') return false;
 
   return true;
+}
+
+export function containsIdentifier(node: import('web-tree-sitter').SyntaxNode, name: string): boolean {
+  if (node.type === 'identifier' && node.text === name) return true;
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child && containsIdentifier(child, name)) return true;
+  }
+  return false;
 }

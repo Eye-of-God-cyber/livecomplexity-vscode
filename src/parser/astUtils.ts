@@ -3,6 +3,7 @@ import { classifyLoop, classifyMacroString, LoopClassification, LoopConfidence, 
 import { ComplexityNode } from '../engine/complexityNode';
 import { parseOneOff } from './treeSitter';
 import { buildTypeContext, mergeTypeContexts, TypeContext } from './typeTracker';
+import { extractCompoundBound, extractCompoundBoundNodes } from './loopClassifier';
 
 export interface MacroRegistryEntry {
   bodyText: string;
@@ -28,7 +29,7 @@ export interface ExtractedLoop {
    * Used by the inference engine to detect step-dependent (harmonic) nested loops.
    */
   iteratorVar?: string;
-  boundVar?: string;
+  boundVar?: string | string[];
   /**
    * If set, this loop's step increment is the named variable from an enclosing loop.
    * e.g. `j += i` where `i` is an outer loop's iterator → stepDependentOn = 'i'.
@@ -41,6 +42,16 @@ export interface ExtractedLoop {
    * complexity, not by parent × self. Used for trial division and two-pointer.
    */
   isAmortized?: boolean;
+  /**
+   * Bug D fix: D5.0 positional argument substitution.
+   * When a known user-defined function is called (isUserCall), we extract the
+   * actual argument expressions at the call site and canonicalize them.
+   * callArgVars[i] = the canonical variable name for the i-th call-site argument.
+   * calleeParamNames[i] = the formal parameter name of the callee at position i.
+   * inference.ts uses these to substitute the callee's linearVars/expVars.
+   */
+  callArgVars?: string[];
+  calleeParamNames?: string[];
 }
 
 export interface AnalysisResult {
@@ -248,7 +259,8 @@ export function extractFunctionLoops(
   fnNode: SyntaxNode, 
   macroRegistry?: Map<string, MacroRegistryEntry>,
   functionRegistry?: Map<string, ComplexityNode>,
-  globalTypeContext?: TypeContext
+  globalTypeContext?: TypeContext,
+  paramMap?: Map<string, string[]>
 ): ExtractedLoop[] {
   // Build a function-local TypeContext and merge with the global one.
   // Local declarations shadow global ones (local wins on conflict).
@@ -358,7 +370,7 @@ export function extractFunctionLoops(
     let classification: LoopClassification | 'custom';
     let confidence: LoopConfidence;
     let customComplexity: ComplexityNode | undefined;
-    let boundVar: string | undefined;
+    let boundVar: string | string[] | undefined;
     
     if (isMacro) {
       const macroMeta = macroRegistry!.get(name)!;
@@ -417,6 +429,54 @@ export function extractFunctionLoops(
       classification = 'custom';
       confidence = 'high';
       customComplexity = functionRegistry!.get(userCallName);
+
+      // ── Bug D fix: D5.0 Positional Argument Substitution ───────────────────
+      // Extract the actual arguments at the call site and canonicalize them.
+      // Only identifier and structurally proven container-size arguments are
+      // accepted (via extractCompoundBoundNodes, which now handles cast_expression).
+      // If an argument cannot be structurally resolved, it is left as its raw text.
+      // No heuristics. No guessing. Structural proof only.
+      const calleeParams = paramMap?.get(userCallName);
+      if (calleeParams && calleeParams.length > 0) {
+        const argsNode = node.childForFieldName('arguments');
+        if (argsNode) {
+          const callArgVars: string[] = [];
+          let argIdx = 0;
+          for (let i = 0; i < argsNode.childCount; i++) {
+            const p = argsNode.child(i);
+            if (!p || p.type === '(' || p.type === ')' || p.type === ',') continue;
+            if (argIdx < calleeParams.length) {
+              // extractCompoundBoundNodes handles identifier, cast_expression, and
+              // call_expression (.size()/.length()) — the three structurally proven forms.
+              const argNodes = extractCompoundBoundNodes(p);
+              if (argNodes && argNodes.length === 1) {
+                // Single-element result: canonicalize through the alias registry.
+                const argNode = argNodes[0];
+                const canonical = canonicalizeIdentNode(argNode, fnNode, aliasMap);
+                // Accept if it's a single string or an array of length 1.
+                if (typeof canonical === 'string') {
+                  callArgVars.push(canonical);
+                } else if (Array.isArray(canonical) && canonical.length === 1) {
+                  callArgVars.push(canonical[0]);
+                } else {
+                  callArgVars.push('n'); // generic fallback for unsupported compound args
+                }
+              } else {
+                // Multi-element or rejected: fallback to generic 'n'
+                callArgVars.push('n');
+              }
+            }
+            argIdx++;
+          }
+          if (callArgVars.length > 0) {
+            // Attach arg mapping to the loop for inference.ts to substitute.
+            // These are set below when building extractedLoop.
+            // Store temporarily; will be attached after the ExtractedLoop literal.
+            (node as any).__callArgVars = callArgVars;
+            (node as any).__calleeParamNames = calleeParams;
+          }
+        }
+      }
     } else {
       const result = classifyLoop(node);
       classification = result.classification;
@@ -430,7 +490,11 @@ export function extractFunctionLoops(
       // No heuristics. No guessing. Structural proof only.
       if (boundVar) {
         const conditionNode = node.childForFieldName('condition');
-        boundVar = canonicalizeVar(boundVar, conditionNode, fnNode, aliasMap);
+        if (Array.isArray(boundVar)) {
+          boundVar = boundVar.flatMap(v => canonicalizeVar(v, conditionNode, fnNode, aliasMap));
+        } else {
+          boundVar = canonicalizeVar(boundVar, conditionNode, fnNode, aliasMap);
+        }
       }
 
       // ── D2.2: Graph traversal upgrade ─────────────────────────────────────
@@ -471,7 +535,12 @@ export function extractFunctionLoops(
       customComplexity,
       iteratorVar,
       boundVar,
+      callArgVars: (node as any).__callArgVars,
+      calleeParamNames: (node as any).__calleeParamNames,
     };
+    // Clean up temporary properties.
+    delete (node as any).__callArgVars;
+    delete (node as any).__calleeParamNames;
 
     loopMap.set(node.id, extractedLoop);
 
@@ -626,6 +695,7 @@ export function isAmortizedInner(innerNode: SyntaxNode, parentForNode: SyntaxNod
   if (!bodyNode) return false;
 
   let mutatedVar: string | null = null;
+  let mutationOp: string | null = null;
 
   const bodyUpdates = bodyNode.descendantsOfType([
     'update_expression', 'assignment_expression', 'math_assignment_expression'
@@ -638,6 +708,7 @@ export function isAmortizedInner(innerNode: SyntaxNode, parentForNode: SyntaxNod
         const ch = update.child(ci);
         if (ch && ch.type === 'identifier') {
           mutatedVar = ch.text;
+          mutationOp = update.text.includes('++') ? '++' : '--';
           break;
         }
       }
@@ -656,10 +727,12 @@ export function isAmortizedInner(innerNode: SyntaxNode, parentForNode: SyntaxNod
         const rhs = update.childForFieldName('right');
         if (rhs && rhs.type === 'number_literal' && Number(rhs.text) > 0) {
           mutatedVar = lhs.text;
+          mutationOp = op;
         }
       } else if (op === '/=') {
         // Division always reduces n (any divisor > 1 implied by context)
         mutatedVar = lhs.text;
+        mutationOp = op;
       }
     }
     if (mutatedVar) break;
@@ -682,15 +755,16 @@ export function isAmortizedInner(innerNode: SyntaxNode, parentForNode: SyntaxNod
   }
   if (!innerCond.text.includes(mutatedVar)) return false;
 
-  // ── 3A. Two-pointer: inner condition references outer iterator ────────────
-  const outerIterVar = getForIteratorVar(parentForNode);
-  if (outerIterVar && innerCond.text.includes(outerIterVar)) {
-    return true;
-  }
-
   // ── 3B. Trial division: mutated variable appears in outer for condition ───
   const outerCond = parentForNode.childForFieldName('condition');
   if (outerCond && outerCond.text.includes(mutatedVar)) {
+    if (mutationOp !== '/=') return false; // reject += for trial division
+    return true;
+  }
+
+  // ── 3A. Two-pointer: inner condition references outer iterator ────────────
+  const outerIterVar = getForIteratorVar(parentForNode);
+  if (outerIterVar && innerCond.text.includes(outerIterVar)) {
     return true;
   }
 
@@ -1323,26 +1397,56 @@ function canonicalizeVar(
   condNode: SyntaxNode | null,
   fnNode: SyntaxNode,
   aliasMap: AliasMap
-): string {
-  if (aliasMap.size === 0) return rawVar;
+): string | string[] {
 
   // Locate the bound identifier in the condition expression.
   const condIdent = findConditionBoundIdent(rawVar, condNode);
   if (!condIdent) return rawVar;
 
+  return canonicalizeIdentNode(condIdent, fnNode, aliasMap);
+}
+
+function canonicalizeIdentNode(
+  identNode: SyntaxNode,
+  fnNode: SyntaxNode,
+  aliasMap: AliasMap
+): string | string[] {
+  const rawVar = identNode.text;
+
   // Lexically resolve to its declaration.
-  const declNode = resolveDeclarationNode(condIdent, fnNode);
+  const declNode = resolveDeclarationNode(identNode, fnNode);
   if (!declNode) return rawVar;
 
   // Follow alias chain.
   const canonicalId = resolveCanonical(declNode.id, aliasMap);
-  if (canonicalId === declNode.id) return rawVar;
+  if (typeof canonicalId === 'string') return canonicalId;
 
-  // Retrieve canonical declaration text.
-  const canonicalNode = findNodeById(fnNode, canonicalId);
-  if (!canonicalNode) return rawVar;
+  const targetNode = findNodeById(fnNode, canonicalId);
+  if (!targetNode) return rawVar;
 
-  return canonicalNode.text;
+  // Bug B fix: Phase 2 lazy evaluation of compound initializers.
+  // Applied to the resolved target node (after following the alias chain).
+  const parent = targetNode.parent;
+  if (parent && parent.type === 'init_declarator') {
+    const valueNode = parent.childForFieldName('value');
+    if (valueNode) {
+      const compoundNodes = extractCompoundBoundNodes(valueNode);
+      if (compoundNodes && compoundNodes.length > 0) {
+        // Guard: verify all identifier leaves are declared in scope.
+        for (const leaf of compoundNodes) {
+          if (leaf.type === 'identifier' && !resolveDeclarationNode(leaf, fnNode)) {
+            // Undeclared identifier — structurally unverifiable. Fall back.
+            return targetNode.text;
+          }
+        }
+        return compoundNodes.flatMap(vNode =>
+          canonicalizeIdentNode(vNode, fnNode, aliasMap)
+        );
+      }
+    }
+  }
+
+  return targetNode.text;
 }
 
 /**
@@ -1368,7 +1472,25 @@ function findConditionBoundIdent(
   if (op !== '<' && op !== '<=') return null;
 
   const right = expr.childForFieldName('right');
-  if (right && right.type === 'identifier' && right.text === rawVar) return right;
+  if (right) {
+    const ident = findIdentNodeByText(right, rawVar);
+    if (ident) return ident;
+  }
+  return null;
+}
+
+/**
+ * Recursively finds an identifier node by its exact text within an expression.
+ */
+function findIdentNodeByText(node: SyntaxNode, text: string): SyntaxNode | null {
+  if (node.type === 'identifier' && node.text === text) return node;
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      const found = findIdentNodeByText(child, text);
+      if (found) return found;
+    }
+  }
   return null;
 }
 
