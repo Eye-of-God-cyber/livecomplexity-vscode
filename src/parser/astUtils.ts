@@ -104,7 +104,8 @@ export function buildMacroRegistry(tree: Tree): Map<string, MacroRegistryEntry> 
             for (let i = 0; i < paramsNode.childCount; i++) {
               const p = paramsNode.child(i);
               if (p && p.type === 'identifier') {
-                if (p.text === result.boundVar) {
+                const targetText = Array.isArray(result.boundVar) && result.boundVar.length === 1 ? result.boundVar[0] : result.boundVar;
+                if (typeof targetText === 'string' && p.text === targetText) {
                   boundParamIndex = paramIdx;
                   break;
                 }
@@ -276,7 +277,7 @@ export function extractFunctionLoops(
   // ── D4.8: Canonical Symbol Registry ─────────────────────────────────────────
   // Build an alias map for this function analysis only. Lifetime: this call frame.
   // Maps DeclarationID -> CanonicalDeclarationID. Never serialized or reused.
-  const aliasMap = buildAliasRegistry(fnNode);
+  const aliasMap = buildAliasRegistry(fnNode, macroRegistry);
 
   const loopMap = new Map<number, ExtractedLoop>();
   const loopParentMap = new Map<number, number | null>();
@@ -387,7 +388,11 @@ export function extractFunctionLoops(
               const p = argsNode.child(i);
               if (p && p.type !== '(' && p.type !== ')' && p.type !== ',') {
                 if (argIdx === macroMeta.boundParamIndex) {
-                  if (p.type === 'identifier') {
+                  const argNodes = extractCompoundBoundNodes(p);
+                  if (argNodes && argNodes.length > 0) {
+                    const canonical = canonicalizeIdentNode(argNodes[0], fnNode, aliasMap);
+                    boundVar = canonical;
+                  } else if (p.type === 'identifier') {
                     boundVar = p.text;
                   }
                   break;
@@ -406,7 +411,13 @@ export function extractFunctionLoops(
                 const p = params.child(i);
                 if (p && p.type !== '(' && p.type !== ')' && p.type !== ',') {
                   if (argIdx === macroMeta.boundParamIndex) {
-                    boundVar = p.text;
+                    const argNodes = extractCompoundBoundNodes(p);
+                    if (argNodes && argNodes.length > 0) {
+                      const canonical = canonicalizeIdentNode(argNodes[0], fnNode, aliasMap);
+                      boundVar = canonical;
+                    } else {
+                      boundVar = p.text;
+                    }
                     break;
                   }
                   argIdx++;
@@ -1157,7 +1168,8 @@ function resolveCanonical(startId: number, aliasMap: AliasMap): number {
 function isMutated(
   name: string,
   fnNode: SyntaxNode,
-  fnDefMap: Map<string, SyntaxNode>
+  fnDefMap: Map<string, SyntaxNode>,
+  macroRegistry?: Map<string, MacroRegistryEntry>
 ): boolean {
   const allIdents = fnNode.descendantsOfType('identifier').filter(id => id.text === name);
 
@@ -1199,8 +1211,10 @@ function isMutated(
       if (!calleeName) return true; // unknown callee — conservative reject
 
       const calleeDef = fnDefMap.get(calleeName);
-      if (!calleeDef) return true; // signature unavailable — conservative reject
-
+      if (!calleeDef) {
+        if (macroRegistry && macroRegistry.has(calleeName)) continue; // Known macro, assume it doesn't mutate its bound parameters
+        return true; // signature unavailable — conservative reject
+      }
       const argIndex = getArgumentIndex(p, id);
       if (argIndex === -1) return true;
 
@@ -1359,7 +1373,7 @@ function countSymbolicWrites(name: string, declId: number, fnNode: SyntaxNode): 
  * Plain `m = n;` assignments are NOT aliased (writeCount > 1 due to conservative
  * counting — safe rejection).
  */
-function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
+export function buildAliasRegistry(fnNode: SyntaxNode, macroRegistry?: Map<string, MacroRegistryEntry>): AliasMap {
   const aliasMap: AliasMap = new Map();
   const fnDefMap = buildFunctionDefMap(fnNode);
 
@@ -1428,7 +1442,7 @@ function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
     if (countSymbolicWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
 
     // LHS must not be mutated anywhere.
-    if (isMutated(lhsName, fnNode, fnDefMap)) continue;
+    if (isMutated(lhsName, fnNode, fnDefMap, macroRegistry)) continue;
 
     aliasMap.set(lhsDeclId, targetDeclId);
   }
@@ -1461,7 +1475,7 @@ function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
     if (countSymbolicWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
 
     // LHS must not be mutated anywhere
-    if (isMutated(lhsName, fnNode, fnDefMap)) continue;
+    if (isMutated(lhsName, fnNode, fnDefMap, macroRegistry)) continue;
 
     const rhs = assign.childForFieldName('right');
     if (!rhs) continue;
