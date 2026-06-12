@@ -3,19 +3,19 @@
     "name": "Different bounds (n, m)",
     "code": "void solve(int n, int m) { for(int i=0;i<n;i++) { for(int j=0;j<m;j++) {} } }",
     "correct": "O(n*m)",
-    "actual": "O(n²)"
+    "actual": "O(nm)"
   },
   {
     "name": "Three variables (n, m, k)",
     "code": "void solve(int n, int m, int k) { for(int i=0;i<n;i++) for(int j=0;j<m;j++) for(int l=0;l<k;l++) {} }",
     "correct": "O(n*m*k)",
-    "actual": "O(n³)"
+    "actual": "O(nkm)"
   },
   {
     "name": "Sequential different variables",
     "code": "void solve(int n, int m) { for(int i=0;i<n;i++){} for(int j=0;j<m;j++){} }",
     "correct": "O(n + m)",
-    "actual": "O(n)"
+    "actual": "O(m + n)"
   },
   {
     "name": "Helper function inside loop",
@@ -75,13 +75,13 @@
     "name": "i * i <= n",
     "code": "void solve(int n) { for(int i=1; i*i<=n; i++) {} }",
     "correct": "O(sqrt(n))",
-    "actual": "O(n)"
+    "actual": "O(sqrt n)"
   },
   {
     "name": "i * i < n",
     "code": "void solve(int n) { for(int i=1; i*i<n; i++) {} }",
     "correct": "O(sqrt(n))",
-    "actual": "O(n)"
+    "actual": "O(sqrt n)"
   },
   {
     "name": "i *= 2",
@@ -99,13 +99,13 @@
     "name": "i <<= 1",
     "code": "void solve(int n) { for(int i=1; i<n; i<<=1) {} }",
     "correct": "O(log n)",
-    "actual": "Unknown"
+    "actual": "O(log n)"
   },
   {
     "name": "n >>= 1",
     "code": "void solve(int n) { while(n > 0) { n >>= 1; } }",
     "correct": "O(log n)",
-    "actual": "Unknown"
+    "actual": "O(log n)"
   },
   {
     "name": "Early return in loop",

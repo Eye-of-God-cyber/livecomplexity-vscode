@@ -1,0 +1,1130 @@
+[helper1]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 21 classified as linear. | Overall time complexity of function "helper1" is O(n).
+---
+[helper2]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 28 classified as linear. | Overall time complexity of function "helper2" is O(n).
+---
+[helper3]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 35 classified as logarithmic. | Overall time complexity of function "helper3" is O(log n).
+---
+[helper4]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 42 classified as logarithmic. | Overall time complexity of function "helper4" is O(log n).
+---
+[helper5]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "helper5" contains no loops or only constant loops. Time complexity is O(1).
+---
+[helper6]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 54 classified as linear. | Loop at line 55 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "helper6" is O(nm).
+---
+[helper7]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 62 classified as linear. | Overall time complexity of function "helper7" is O(n).
+---
+[helper8]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 69 classified as linear. | Overall time complexity of function "helper8" is O(n).
+---
+[helper9]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 75 classified as custom. | Overall time complexity of function "helper9" is O(n).
+---
+[helper10]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 80 classified as custom. | Loop at line 80 classified as custom. | Overall time complexity of function "helper10" is O(nm).
+---
+[helper11]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 86 classified as logarithmic. | Overall time complexity of function "helper11" is O(log n).
+---
+[helper12]
+  Complexity: O(a + b)
+  Confidence: high
+  Explanation: Loop at line 93 classified as linear. | Loop at line 94 classified as linear. | Overall time complexity of function "helper12" is O(a + b).
+---
+[helper13]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 101 classified as linear. | Loop at line 102 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "helper13" is O(n²).
+---
+[helper14]
+  Complexity: O(n³)
+  Confidence: high
+  Explanation: Loop at line 109 classified as linear. | Loop at line 110 classified as linear. | Loop at line 111 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Nested O(n²) loop inside O(n) loop multiply to produce O(n³). | Overall time complexity of function "helper14" is O(n³).
+---
+[helper15]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 118 classified as linear. | Overall time complexity of function "helper15" is O(n).
+---
+[helper16]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 124 classified as custom. | Overall time complexity of function "helper16" is O(n).
+---
+[helper17]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 129 classified as custom. | Overall time complexity of function "helper17" is O(n).
+---
+[helper18]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 135 classified as linear. | Overall time complexity of function "helper18" is O(n).
+---
+[helper19]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 142 classified as linear. | Overall time complexity of function "helper19" is O(n).
+---
+[helper20]
+  Complexity: O(colsrows)
+  Confidence: high
+  Explanation: Loop at line 149 classified as linear. | Loop at line 150 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(colsrows). | Overall time complexity of function "helper20" is O(colsrows).
+---
+[helper21]
+  Complexity: O(nmr)
+  Confidence: high
+  Explanation: Loop at line 157 classified as linear. | Loop at line 158 classified as linear. | Loop at line 159 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(mr). | Nested O(mr) loop inside O(n) loop multiply to produce O(nmr). | Overall time complexity of function "helper21" is O(nmr).
+---
+[helper22]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 166 classified as logarithmic. | Overall time complexity of function "helper22" is O(log n).
+---
+[helper23]
+  Complexity: O(a + b + c)
+  Confidence: high
+  Explanation: Loop at line 173 classified as linear. | Loop at line 174 classified as linear. | Sequential loop at line 175 dominates previous loops. | Loop at line 175 classified as linear. | Overall time complexity of function "helper23" is O(a + b + c).
+---
+[helper24]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 181 classified as custom. | Overall time complexity of function "helper24" is O(n²).
+---
+[helper25]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 186 classified as custom. | Loop at line 186 classified as custom. | Overall time complexity of function "helper25" is O(nm).
+---
+[test1]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test1" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test2]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test2" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test3]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test3" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test4]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test4" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test5]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: Loop at line 220 classified as custom. | Function "test5" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test6]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test6" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test7]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: Loop at line 230 classified as custom. | Loop at line 230 classified as custom. | Outer loop at line 230 is constant, so it does not multiply inner complexity. | Function "test7" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test8]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test8" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test9]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test9" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test10]
+  Complexity: O(1)
+  Confidence: high
+  Explanation: No loops detected. Complexity is O(1). | Function "test10" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test11]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 253 classified as logarithmic. | Overall time complexity of function "test11" is O(log n).
+---
+[test12]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 260 classified as logarithmic. | Overall time complexity of function "test12" is O(log n).
+---
+[test13]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 267 classified as logarithmic. | Overall time complexity of function "test13" is O(log n).
+---
+[test14]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 274 classified as logarithmic. | Overall time complexity of function "test14" is O(log n).
+---
+[test15]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 281 classified as logarithmic. | Overall time complexity of function "test15" is O(log n).
+---
+[test16]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 287 classified as custom. | Overall time complexity of function "test16" is O(log n).
+---
+[test17]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 293 classified as unknown. | Overall time complexity of function "test17" is Unknown.
+---
+[test18]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 305 classified as logarithmic. | Overall time complexity of function "test18" is O(log n).
+---
+[test19]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 316 classified as unknown. | Overall time complexity of function "test19" is Unknown.
+---
+[test20]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 327 classified as logarithmic. | Overall time complexity of function "test20" is O(log n).
+---
+[test21]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 334 classified as logarithmic. | Overall time complexity of function "test21" is O(log n).
+---
+[test22]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 341 classified as logarithmic. | Overall time complexity of function "test22" is O(log n).
+---
+[test23]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 347 classified as custom. | Overall time complexity of function "test23" is O(log n).
+---
+[test24]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 352 classified as custom. | Overall time complexity of function "test24" is O(log n).
+---
+[test25]
+  Complexity: O(n)
+  Confidence: low
+  Explanation: Loop at line 358 classified as linear. | Overall time complexity of function "test25" is O(n).
+---
+[test26]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 371 classified as linear. | Overall time complexity of function "test26" is O(n).
+---
+[test27]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 378 classified as linear. | Overall time complexity of function "test27" is O(n).
+---
+[test28]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 385 classified as linear. | Overall time complexity of function "test28" is O(n).
+---
+[test29]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 392 classified as linear. | Overall time complexity of function "test29" is O(n).
+---
+[test30]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 399 classified as linear. | Overall time complexity of function "test30" is O(n).
+---
+[test31]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 406 classified as linear. | Overall time complexity of function "test31" is O(n).
+---
+[test32]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 413 classified as linear. | Overall time complexity of function "test32" is O(n).
+---
+[test33]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 420 classified as linear. | Overall time complexity of function "test33" is O(n).
+---
+[test34]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 427 classified as linear. | Overall time complexity of function "test34" is O(n).
+---
+[test35]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 434 classified as linear. | Overall time complexity of function "test35" is O(n).
+---
+[test36]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 441 classified as linear. | Overall time complexity of function "test36" is O(n).
+---
+[test37]
+  Complexity: O(len)
+  Confidence: high
+  Explanation: Loop at line 447 classified as custom. | Overall time complexity of function "test37" is O(len).
+---
+[test38]
+  Complexity: O(sz)
+  Confidence: high
+  Explanation: Loop at line 452 classified as custom. | Overall time complexity of function "test38" is O(sz).
+---
+[test39]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 458 classified as linear. | Overall time complexity of function "test39" is O(n).
+---
+[test40]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 465 classified as linear. | Overall time complexity of function "test40" is O(n).
+---
+[test41]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 472 classified as linear. | Overall time complexity of function "test41" is O(n).
+---
+[test42]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 479 classified as linear. | Overall time complexity of function "test42" is O(n).
+---
+[test43]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 486 classified as linear. | Overall time complexity of function "test43" is O(n).
+---
+[test44]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 493 classified as linear. | Overall time complexity of function "test44" is O(n).
+---
+[test45]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 499 classified as custom. | Overall time complexity of function "test45" is O(n).
+---
+[test46]
+  Complexity: O(m)
+  Confidence: high
+  Explanation: Loop at line 504 classified as custom. | Overall time complexity of function "test46" is O(m).
+---
+[test47]
+  Complexity: O(k)
+  Confidence: high
+  Explanation: Loop at line 509 classified as custom. | Overall time complexity of function "test47" is O(k).
+---
+[test48]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 515 classified as linear. | Overall time complexity of function "test48" is O(n).
+---
+[test49]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 522 classified as linear. | Overall time complexity of function "test49" is O(n).
+---
+[test50]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 530 classified as linear. | Overall time complexity of function "test50" is O(n).
+---
+[test51]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 541 classified as linear. | Overall time complexity of function "test51" is O(n).
+---
+[test52]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 550 classified as linear. | Overall time complexity of function "test52" is O(n).
+---
+[test53]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 558 classified as linear. | Overall time complexity of function "test53" is O(n).
+---
+[test54]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 566 classified as linear. | Overall time complexity of function "test54" is O(n).
+---
+[test55]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 574 classified as linear. | Overall time complexity of function "test55" is O(n).
+---
+[test56]
+  Complexity: O(m + n)
+  Confidence: high
+  Explanation: Loop at line 583 classified as linear. | Loop at line 584 classified as linear. | Overall time complexity of function "test56" is O(m + n).
+---
+[test57]
+  Complexity: O(a + b)
+  Confidence: high
+  Explanation: Loop at line 590 classified as custom. | Overall time complexity of function "test57" is O(a + b).
+---
+[test58]
+  Complexity: O(a + b + c)
+  Confidence: high
+  Explanation: Loop at line 595 classified as custom. | Overall time complexity of function "test58" is O(a + b + c).
+---
+[test59]
+  Complexity: O(m + n)
+  Confidence: high
+  Explanation: Loop at line 601 classified as linear. | Loop at line 603 classified as linear. | Overall time complexity of function "test59" is O(m + n).
+---
+[test60]
+  Complexity: O(x + y)
+  Confidence: high
+  Explanation: Loop at line 610 classified as linear. | Loop at line 611 classified as linear. | Overall time complexity of function "test60" is O(x + y).
+---
+[test61]
+  Complexity: O(r + t)
+  Confidence: high
+  Explanation: Loop at line 618 classified as linear. | Loop at line 619 classified as linear. | Overall time complexity of function "test61" is O(r + t).
+---
+[test62]
+  Complexity: O(m + n)
+  Confidence: high
+  Explanation: Loop at line 625 classified as custom. | Overall time complexity of function "test62" is O(m + n).
+---
+[test63]
+  Complexity: O(a + b + c)
+  Confidence: high
+  Explanation: Loop at line 630 classified as custom. | Overall time complexity of function "test63" is O(a + b + c).
+---
+[test64]
+  Complexity: O(cols + rows)
+  Confidence: high
+  Explanation: Loop at line 636 classified as linear. | Loop at line 637 classified as linear. | Overall time complexity of function "test64" is O(cols + rows).
+---
+[test65]
+  Complexity: O(len + sz)
+  Confidence: high
+  Explanation: Loop at line 646 classified as linear. | Loop at line 647 classified as linear. | Overall time complexity of function "test65" is O(len + sz).
+---
+[test66]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 656 classified as linear. | Loop at line 657 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test66" is O(nm).
+---
+[test67]
+  Complexity: O(ab)
+  Confidence: high
+  Explanation: Loop at line 664 classified as linear. | Loop at line 665 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(ab). | Overall time complexity of function "test67" is O(ab).
+---
+[test68]
+  Complexity: O(rt)
+  Confidence: high
+  Explanation: Loop at line 672 classified as linear. | Loop at line 673 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(rt). | Overall time complexity of function "test68" is O(rt).
+---
+[test69]
+  Complexity: O(colsrows)
+  Confidence: high
+  Explanation: Loop at line 679 classified as custom. | Overall time complexity of function "test69" is O(colsrows).
+---
+[test70]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 684 classified as custom. | Overall time complexity of function "test70" is O(nm).
+---
+[test71]
+  Complexity: O(kr)
+  Confidence: high
+  Explanation: Loop at line 690 classified as linear. | Loop at line 691 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(kr). | Overall time complexity of function "test71" is O(kr).
+---
+[test72]
+  Complexity: O(xy)
+  Confidence: high
+  Explanation: Loop at line 698 classified as linear. | Loop at line 699 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(xy). | Overall time complexity of function "test72" is O(xy).
+---
+[test73]
+  Complexity: O(lensz)
+  Confidence: high
+  Explanation: Loop at line 708 classified as linear. | Loop at line 709 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(lensz). | Overall time complexity of function "test73" is O(lensz).
+---
+[test74]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 718 classified as linear. | Loop at line 719 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test74" is O(n²).
+---
+[test75]
+  Complexity: O(m²)
+  Confidence: high
+  Explanation: Loop at line 726 classified as linear. | Loop at line 727 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(m²). | Overall time complexity of function "test75" is O(m²).
+---
+[test76]
+  Complexity: O(k²)
+  Confidence: high
+  Explanation: Loop at line 734 classified as linear. | Loop at line 735 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(k²). | Overall time complexity of function "test76" is O(k²).
+---
+[test77]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 741 classified as custom. | Overall time complexity of function "test77" is O(n²).
+---
+[test78]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 746 classified as custom. | Overall time complexity of function "test78" is O(n²).
+---
+[test79]
+  Complexity: O(a²)
+  Confidence: high
+  Explanation: Loop at line 752 classified as linear. | Loop at line 753 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(a²). | Overall time complexity of function "test79" is O(a²).
+---
+[test80]
+  Complexity: O(r²)
+  Confidence: high
+  Explanation: Loop at line 760 classified as linear. | Loop at line 761 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(r²). | Overall time complexity of function "test80" is O(r²).
+---
+[test81]
+  Complexity: O(n³)
+  Confidence: high
+  Explanation: Loop at line 770 classified as linear. | Loop at line 771 classified as linear. | Loop at line 772 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Nested O(n²) loop inside O(n) loop multiply to produce O(n³). | Overall time complexity of function "test81" is O(n³).
+---
+[test82]
+  Complexity: O(m³)
+  Confidence: high
+  Explanation: Loop at line 779 classified as linear. | Loop at line 780 classified as linear. | Loop at line 781 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(m²). | Nested O(m²) loop inside O(n) loop multiply to produce O(m³). | Overall time complexity of function "test82" is O(m³).
+---
+[test83]
+  Complexity: O(n³)
+  Confidence: high
+  Explanation: Loop at line 787 classified as custom. | Overall time complexity of function "test83" is O(n³).
+---
+[test84]
+  Complexity: O(a³)
+  Confidence: high
+  Explanation: Loop at line 793 classified as linear. | Loop at line 794 classified as linear. | Loop at line 795 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(a²). | Nested O(a²) loop inside O(n) loop multiply to produce O(a³). | Overall time complexity of function "test84" is O(a³).
+---
+[test85]
+  Complexity: O(nmr)
+  Confidence: high
+  Explanation: Loop at line 804 classified as linear. | Loop at line 805 classified as linear. | Loop at line 806 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(mr). | Nested O(mr) loop inside O(n) loop multiply to produce O(nmr). | Overall time complexity of function "test85" is O(nmr).
+---
+[test86]
+  Complexity: O(nmr)
+  Confidence: high
+  Explanation: Loop at line 812 classified as custom. | Overall time complexity of function "test86" is O(nmr).
+---
+[test87]
+  Complexity: O(abc)
+  Confidence: high
+  Explanation: Loop at line 818 classified as linear. | Loop at line 819 classified as linear. | Loop at line 820 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(bc). | Nested O(bc) loop inside O(n) loop multiply to produce O(abc). | Overall time complexity of function "test87" is O(abc).
+---
+[test88]
+  Complexity: O(krt)
+  Confidence: high
+  Explanation: Loop at line 827 classified as linear. | Loop at line 828 classified as linear. | Loop at line 829 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(rt). | Nested O(rt) loop inside O(n) loop multiply to produce O(krt). | Overall time complexity of function "test88" is O(krt).
+---
+[test89]
+  Complexity: O(n²m)
+  Confidence: high
+  Explanation: Loop at line 838 classified as linear. | Loop at line 839 classified as linear. | Loop at line 840 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Nested O(nm) loop inside O(n) loop multiply to produce O(n²m). | Overall time complexity of function "test89" is O(n²m).
+---
+[test90]
+  Complexity: O(a²b)
+  Confidence: high
+  Explanation: Loop at line 847 classified as linear. | Loop at line 848 classified as linear. | Loop at line 849 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(ab). | Nested O(ab) loop inside O(n) loop multiply to produce O(a²b). | Overall time complexity of function "test90" is O(a²b).
+---
+[test91]
+  Complexity: O(nm²)
+  Confidence: high
+  Explanation: Loop at line 856 classified as linear. | Loop at line 857 classified as linear. | Loop at line 858 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(m²). | Nested O(m²) loop inside O(n) loop multiply to produce O(nm²). | Overall time complexity of function "test91" is O(nm²).
+---
+[test92]
+  Complexity: O(ab²)
+  Confidence: high
+  Explanation: Loop at line 865 classified as linear. | Loop at line 866 classified as linear. | Loop at line 867 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(b²). | Nested O(b²) loop inside O(n) loop multiply to produce O(ab²). | Overall time complexity of function "test92" is O(ab²).
+---
+[test93]
+  Complexity: O(n²mr)
+  Confidence: high
+  Explanation: Loop at line 874 classified as linear. | Loop at line 875 classified as linear. | Loop at line 876 classified as linear. | Loop at line 877 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(mr). | Nested O(mr) loop inside O(n) loop multiply to produce O(nmr). | Nested O(nmr) loop inside O(n) loop multiply to produce O(n²mr). | Overall time complexity of function "test93" is O(n²mr).
+---
+[test94]
+  Complexity: O(a³b²)
+  Confidence: high
+  Explanation: Loop at line 884 classified as linear. | Loop at line 885 classified as linear. | Loop at line 886 classified as linear. | Loop at line 887 classified as linear. | Loop at line 888 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(b²). | Nested O(b²) loop inside O(n) loop multiply to produce O(ab²). | Nested O(ab²) loop inside O(n) loop multiply to produce O(a²b²). | Nested O(a²b²) loop inside O(n) loop multiply to produce O(a³b²). | Overall time complexity of function "test94" is O(a³b²).
+---
+[test95]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 896 classified as custom. | Overall time complexity of function "test95" is O(n).
+---
+[test96]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 901 classified as custom. | Overall time complexity of function "test96" is O(n).
+---
+[test97]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 906 classified as custom. | Overall time complexity of function "test97" is O(n²).
+---
+[test98]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 911 classified as custom. | Overall time complexity of function "test98" is O(nm).
+---
+[test99]
+  Complexity: O(m)
+  Confidence: high
+  Explanation: Loop at line 916 classified as custom. | Overall time complexity of function "test99" is O(m).
+---
+[test100]
+  Complexity: O(k)
+  Confidence: high
+  Explanation: Loop at line 921 classified as custom. | Overall time complexity of function "test100" is O(k).
+---
+[test101]
+  Complexity: O(r)
+  Confidence: high
+  Explanation: Loop at line 926 classified as custom. | Overall time complexity of function "test101" is O(r).
+---
+[test102]
+  Complexity: O(sz)
+  Confidence: high
+  Explanation: Loop at line 931 classified as custom. | Overall time complexity of function "test102" is O(sz).
+---
+[test103]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 936 classified as custom. | Overall time complexity of function "test103" is O(log n).
+---
+[test104]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 941 classified as custom. | Overall time complexity of function "test104" is O(log n).
+---
+[test105]
+  Complexity: O(a + b)
+  Confidence: high
+  Explanation: Loop at line 946 classified as custom. | Overall time complexity of function "test105" is O(a + b).
+---
+[test106]
+  Complexity: O(m + n)
+  Confidence: high
+  Explanation: Loop at line 951 classified as custom. | Overall time complexity of function "test106" is O(m + n).
+---
+[test107]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 956 classified as custom. | Overall time complexity of function "test107" is O(nm).
+---
+[test108]
+  Complexity: O(colsrows)
+  Confidence: high
+  Explanation: Loop at line 961 classified as custom. | Overall time complexity of function "test108" is O(colsrows).
+---
+[test109]
+  Complexity: O(nmr)
+  Confidence: high
+  Explanation: Loop at line 966 classified as custom. | Overall time complexity of function "test109" is O(nmr).
+---
+[test110]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 973 classified as custom. | Overall time complexity of function "test110" is O(n).
+---
+[test111]
+  Complexity: O(m)
+  Confidence: high
+  Explanation: Loop at line 978 classified as custom. | Overall time complexity of function "test111" is O(m).
+---
+[test112]
+  Complexity: O(k)
+  Confidence: high
+  Explanation: Loop at line 983 classified as custom. | Overall time complexity of function "test112" is O(k).
+---
+[test113]
+  Complexity: O(r)
+  Confidence: high
+  Explanation: Loop at line 988 classified as custom. | Overall time complexity of function "test113" is O(r).
+---
+[test114]
+  Complexity: O(t)
+  Confidence: high
+  Explanation: Loop at line 993 classified as custom. | Overall time complexity of function "test114" is O(t).
+---
+[test115]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 998 classified as custom. | Overall time complexity of function "test115" is O(n).
+---
+[test116]
+  Complexity: O(m)
+  Confidence: high
+  Explanation: Loop at line 1003 classified as custom. | Overall time complexity of function "test116" is O(m).
+---
+[test117]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1010 classified as custom. | Overall time complexity of function "test117" is O(n).
+---
+[test118]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1017 classified as linear. | Overall time complexity of function "test118" is O(n).
+---
+[test119]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1025 classified as linear. | Overall time complexity of function "test119" is O(n).
+---
+[test120]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1032 classified as linear. | Overall time complexity of function "test120" is O(n).
+---
+[test121]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1039 classified as linear. | Overall time complexity of function "test121" is O(n).
+---
+[test122]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1046 classified as linear. | Overall time complexity of function "test122" is O(n).
+---
+[test123]
+  Complexity: O(n log n)
+  Confidence: medium
+  Explanation: Loop at line 1053 classified as linear. | Loop at line 1053 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test123" is O(n log n).
+---
+[test124]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1060 classified as linear. | Loop at line 1060 classified as constant. | Nested O(1) loop inside O(n) loop multiply to produce O(n). | Overall time complexity of function "test124" is O(n).
+---
+[test125]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1067 classified as linear. | Loop at line 1067 classified as constant. | Nested O(1) loop inside O(n) loop multiply to produce O(n). | Overall time complexity of function "test125" is O(n).
+---
+[test126]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1076 classified as linear. | Overall time complexity of function "test126" is O(n).
+---
+[test127]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1083 classified as linear. | Overall time complexity of function "test127" is O(n).
+---
+[test128]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1090 classified as linear. | Overall time complexity of function "test128" is O(n).
+---
+[test129]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1097 classified as linear. | Overall time complexity of function "test129" is O(n).
+---
+[test130]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1104 classified as linear. | Overall time complexity of function "test130" is O(n).
+---
+[test131]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1111 classified as linear. | Loop at line 1111 classified as linear. | Overall time complexity of function "test131" is O(n).
+---
+[test132]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1118 classified as linear. | Loop at line 1118 classified as linear. | Overall time complexity of function "test132" is O(n).
+---
+[test133]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1125 classified as linear. | Loop at line 1125 classified as custom. | Overall time complexity of function "test133" is O(n).
+---
+[test134]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1132 classified as linear. | Loop at line 1132 classified as custom. | Overall time complexity of function "test134" is O(n).
+---
+[test135]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1139 classified as linear. | Loop at line 1139 classified as linear. | Overall time complexity of function "test135" is O(n).
+---
+[test136]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1150 classified as linear. | Overall time complexity of function "test136" is O(n).
+---
+[test137]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1160 classified as linear. | Overall time complexity of function "test137" is O(n).
+---
+[test138]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1168 classified as linear. | Overall time complexity of function "test138" is O(n).
+---
+[test139]
+  Complexity: O(m + n)
+  Confidence: high
+  Explanation: Loop at line 1175 classified as linear. | Loop at line 1176 classified as linear. | Overall time complexity of function "test139" is O(m + n).
+---
+[test140]
+  Complexity: O(x + y + z)
+  Confidence: high
+  Explanation: Loop at line 1183 classified as linear. | Loop at line 1184 classified as linear. | Sequential loop at line 1185 dominates previous loops. | Loop at line 1185 classified as linear. | Overall time complexity of function "test140" is O(x + y + z).
+---
+[test141]
+  Complexity: O(n log n)
+  Confidence: medium
+  Explanation: Loop at line 1194 classified as linear. | Loop at line 1195 classified as linear. | Step-dependent inner loop at line 1195 creates harmonic series: outer O(n) × Σ(n/i) = O(n log n). | Overall time complexity of function "test141" is O(n log n).
+---
+[test142]
+  Complexity: O(n log n)
+  Confidence: medium
+  Explanation: Loop at line 1202 classified as linear. | Loop at line 1203 classified as linear. | Step-dependent inner loop at line 1203 creates harmonic series: outer O(n) × Σ(n/i) = O(n log n). | Overall time complexity of function "test142" is O(n log n).
+---
+[test143_find]
+  Complexity: O(1)
+  Confidence: medium
+  Explanation: Loop at line 1213 classified as constant. | Function "test143_find" contains no loops or only constant loops. Time complexity is O(1).
+---
+[test143]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1218 classified as linear. | Loop at line 1220 classified as linear. | Loop at line 1220 classified as custom. | Nested O(1) loop inside O(n) loop multiply to produce O(n). | Overall time complexity of function "test143" is O(n).
+---
+[test144]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 1229 classified as unknown. | Overall time complexity of function "test144" is Unknown.
+---
+[test145]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 1240 classified as logarithmic. | Overall time complexity of function "test145" is O(log n).
+---
+[test146]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 1251 classified as unknown. | Overall time complexity of function "test146" is Unknown.
+---
+[test147]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 1262 classified as unknown. | Overall time complexity of function "test147" is Unknown.
+---
+[test148]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 1273 classified as unknown. | Loop at line 1275 classified as logarithmic. | Overall time complexity of function "test148" is Unknown.
+---
+[test149]
+  Complexity: O(n log n)
+  Confidence: high
+  Explanation: Loop at line 1288 classified as linear. | Loop at line 1289 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test149" is O(n log n).
+---
+[test150]
+  Complexity: O(m log n)
+  Confidence: high
+  Explanation: Loop at line 1296 classified as linear. | Loop at line 1297 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(m log n). | Overall time complexity of function "test150" is O(m log n).
+---
+[test151]
+  Complexity: O(n² log n)
+  Confidence: high
+  Explanation: Loop at line 1306 classified as linear. | Loop at line 1307 classified as linear. | Loop at line 1308 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Nested O(n log n) loop inside O(n) loop multiply to produce O(n² log n). | Overall time complexity of function "test151" is O(n² log n).
+---
+[test152]
+  Complexity: O(nm log n)
+  Confidence: high
+  Explanation: Loop at line 1315 classified as linear. | Loop at line 1316 classified as linear. | Loop at line 1317 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(m log n). | Nested O(m log n) loop inside O(n) loop multiply to produce O(nm log n). | Overall time complexity of function "test152" is O(nm log n).
+---
+[test153]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1329 classified as linear. | Overall time complexity of function "test153" is O(n).
+---
+[test154]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1341 classified as linear. | Overall time complexity of function "test154" is O(n).
+---
+[test155]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1350 classified as linear. | Overall time complexity of function "test155" is O(n).
+---
+[test156]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1359 classified as linear. | Loop at line 1360 classified as logarithmic. | Overall time complexity of function "test156" is O(n).
+---
+[test157]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 1367 classified as linear. | Loop at line 1368 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Loop at line 1369 classified as linear. | Overall time complexity of function "test157" is O(n²).
+---
+[test158]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 1376 classified as linear. | Loop at line 1377 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Loop at line 1378 classified as linear. | Loop at line 1379 classified as linear. | Overall time complexity of function "test158" is O(nm).
+---
+[test159]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1387 classified as custom. | Overall time complexity of function "test159" is O(n).
+---
+[test160]
+  Complexity: O(m)
+  Confidence: high
+  Explanation: Loop at line 1392 classified as custom. | Overall time complexity of function "test160" is O(m).
+---
+[test161]
+  Complexity: O(k)
+  Confidence: high
+  Explanation: Loop at line 1397 classified as custom. | Overall time complexity of function "test161" is O(k).
+---
+[test162]
+  Complexity: O(r)
+  Confidence: high
+  Explanation: Loop at line 1402 classified as custom. | Overall time complexity of function "test162" is O(r).
+---
+[test163]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 1407 classified as custom. | Overall time complexity of function "test163" is O(nm).
+---
+[test164]
+  Complexity: O(ab)
+  Confidence: high
+  Explanation: Loop at line 1412 classified as custom. | Overall time complexity of function "test164" is O(ab).
+---
+[test165]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 1417 classified as custom. | Overall time complexity of function "test165" is O(n²).
+---
+[test166]
+  Complexity: O(n³)
+  Confidence: high
+  Explanation: Loop at line 1422 classified as custom. | Overall time complexity of function "test166" is O(n³).
+---
+[test167]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1431 classified as linear. | Overall time complexity of function "test167" is O(n).
+---
+[test168]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1439 classified as linear. | Overall time complexity of function "test168" is O(n).
+---
+[test169]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1448 classified as linear. | Loop at line 1448 classified as linear. | Overall time complexity of function "test169" is O(n).
+---
+[test170]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1456 classified as linear. | Loop at line 1456 classified as linear. | Overall time complexity of function "test170" is O(n).
+---
+[test171]
+  Complexity: O(m + n)
+  Confidence: high
+  Explanation: Loop at line 1465 classified as custom. | Overall time complexity of function "test171" is O(m + n).
+---
+[test172]
+  Complexity: O(a + b)
+  Confidence: high
+  Explanation: Loop at line 1473 classified as linear. | Loop at line 1474 classified as linear. | Overall time complexity of function "test172" is O(a + b).
+---
+[test173]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1481 classified as linear. | Loop at line 1481 classified as linear. | Overall time complexity of function "test173" is O(n).
+---
+[test174]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1491 classified as linear. | Overall time complexity of function "test174" is O(n).
+---
+[test175]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1502 classified as linear. | Overall time complexity of function "test175" is O(n).
+---
+[test176]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 1511 classified as linear. | Loop at line 1512 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test176" is O(nm).
+---
+[test177]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 1520 classified as linear. | Loop at line 1521 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test177" is O(n²).
+---
+[test178]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 1531 classified as logarithmic. | Overall time complexity of function "test178" is O(log n).
+---
+[test179]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 1540 classified as logarithmic. | Overall time complexity of function "test179" is O(log n).
+---
+[test180]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 1546 classified as custom. | Overall time complexity of function "test180" is O(log n).
+---
+[test181]
+  Complexity: O(log n)
+  Confidence: high
+  Explanation: Loop at line 1551 classified as custom. | Overall time complexity of function "test181" is O(log n).
+---
+[test182]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1559 classified as linear. | Loop at line 1559 classified as custom. | Nested O(1) loop inside O(n) loop multiply to produce O(n). | Overall time complexity of function "test182" is O(n).
+---
+[test183]
+  Complexity: O(n²)
+  Confidence: high
+  Explanation: Loop at line 1566 classified as linear. | Loop at line 1566 classified as custom. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test183" is O(n²).
+---
+[test184]
+  Complexity: O(n log n)
+  Confidence: high
+  Explanation: Loop at line 1573 classified as linear. | Loop at line 1573 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test184" is O(n log n).
+---
+[test185]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 1580 classified as linear. | Loop at line 1580 classified as custom. | Nested O(m) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test185" is O(nm).
+---
+[test186]
+  Complexity: O(nm²)
+  Confidence: high
+  Explanation: Loop at line 1587 classified as linear. | Loop at line 1587 classified as custom. | Nested O(m²) loop inside O(n) loop multiply to produce O(nm²). | Overall time complexity of function "test186" is O(nm²).
+---
+[test187]
+  Complexity: O(n log n)
+  Confidence: high
+  Explanation: Loop at line 1594 classified as linear. | Loop at line 1594 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test187" is O(n log n).
+---
+[test188]
+  Complexity: O(n² log n)
+  Confidence: high
+  Explanation: Loop at line 1601 classified as linear. | Loop at line 1602 classified as linear. | Loop at line 1602 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Nested O(n log n) loop inside O(n) loop multiply to produce O(n² log n). | Overall time complexity of function "test188" is O(n² log n).
+---
+[test189]
+  Complexity: O(a + b + c)
+  Confidence: high
+  Explanation: Loop at line 1608 classified as custom. | Loop at line 1608 classified as custom. | Overall time complexity of function "test189" is O(a + b + c).
+---
+[test190]
+  Complexity: O(abc)
+  Confidence: high
+  Explanation: Loop at line 1613 classified as custom. | Overall time complexity of function "test190" is O(abc).
+---
+[test191]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1619 classified as linear. | Overall time complexity of function "test191" is O(n).
+---
+[test192]
+  Complexity: Unknown
+  Confidence: low
+  Explanation: Loop at line 1626 classified as unknown. | Overall time complexity of function "test192" is Unknown.
+---
+[test193]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1634 classified as linear. | Overall time complexity of function "test193" is O(n).
+---
+[test194]
+  Complexity: O(nm)
+  Confidence: high
+  Explanation: Loop at line 1640 classified as custom. | Overall time complexity of function "test194" is O(nm).
+---
+[test195]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1647 classified as linear. | Overall time complexity of function "test195" is O(n).
+---
+[test196]
+  Complexity: O(n)
+  Confidence: high
+  Explanation: Loop at line 1655 classified as linear. | Overall time complexity of function "test196" is O(n).
+---
+[test197]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1662 classified as linear. | Loop at line 1663 classified as linear. | Overall time complexity of function "test197" is O(n).
+---
+[test198]
+  Complexity: O(n²)
+  Confidence: medium
+  Explanation: Loop at line 1671 classified as linear. | Loop at line 1673 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test198" is O(n²).
+---
+[test199]
+  Complexity: O(n²)
+  Confidence: medium
+  Explanation: Loop at line 1682 classified as linear. | Loop at line 1684 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test199" is O(n²).
+---
+[test200]
+  Complexity: O(n)
+  Confidence: medium
+  Explanation: Loop at line 1694 classified as linear. | Loop at line 1694 classified as linear. | Loop at line 1695 classified as custom. | Overall time complexity of function "test200" is O(n).
+---

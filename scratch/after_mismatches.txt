@@ -1,0 +1,130 @@
+﻿Category A (Formatting): 0
+Category B (Precise): 22
+Category C (Mismatch): 122
+CRASH: 0
+
+Category C mismatches:
+test603 | Exp: O(n*m) | Act: Overall time complexity of function test603 is O(nm).
+test609 | Exp: O(n*m) | Act: Overall time complexity of function test609 is O(nm).
+test611 | Exp: O(n+m) | Act: Overall time complexity of function test611 is O(m + n).
+test619 | Exp: O(n*m) | Act: Overall time complexity of function test619 is O(nm).
+test621 | Exp: O(n) | Act: Overall time complexity of function test621 is Unknown.
+test622 | Exp: O(n) | Act: Overall time complexity of function test622 is Unknown.
+test623 | Exp: O(n+m) | Act: Overall time complexity of function test623 is O(m + n).
+test624 | Exp: O(n*m) | Act: Overall time complexity of function test624 is O(ef).
+test632 | Exp: O(n+m) | Act: Overall time complexity of function test632 is O(m + n).
+test633 | Exp: O(n+m) | Act: Overall time complexity of function test633 is O(m + n).
+test634 | Exp: O(n+m+r) | Act: Overall time complexity of function test634 is O(m + n + r).
+test637 | Exp: O(n^2) | Act: Overall time complexity of function test637 is O(n┬▓).
+test652 | Exp: O(n) | Act: Overall time complexity of function test652 is O(e).
+test653 | Exp: O(e*f) | Act: Overall time complexity of function test653 is O(e + f).
+test654 | Exp: O(n*m) | Act: Overall time complexity of function test654 is O(m + n).
+test656 | Exp: O(n*m*r) | Act: Overall time complexity of function test656 is O(nmr).
+test658 | Exp: O(n^3) | Act: Overall time complexity of function test658 is O(n┬│).
+test659 | Exp: O(k^2) | Act: Overall time complexity of function test659 is O(k┬▓).
+test660 | Exp: O(n*log(n)) | Act: Overall time complexity of function test660 is O(n log n).
+test661 | Exp: O(log(n)*log(m)) | Act: Overall time complexity of function test661 is O(log┬▓ n).
+test662 | Exp: O(n+m+r+t) | Act: Overall time complexity of function test662 is O(m + n + r + t).
+test663 | Exp: O(n*m*r*t) | Act: Overall time complexity of function test663 is O(nmrt).
+test664 | Exp: O(log(n)*log(m)) | Act: Overall time complexity of function test664 is O(log┬▓ n).
+test665 | Exp: O(log(n)*log(m)) | Act: Overall time complexity of function test665 is O(log┬▓ n).
+test666 | Exp: O(log(n)*log(m)) | Act: Overall time complexity of function test666 is O(log┬▓ n).
+test667 | Exp: O(log(n)*log(n)) | Act: Overall time complexity of function test667 is O(log┬▓ n).
+test668 | Exp: O(log(n)*log(m)) | Act: Overall time complexity of function test668 is O(log┬▓ n).
+test669 | Exp: O(n*log(n)*log(m)) | Act: Overall time complexity of function test669 is O(n log┬▓ n).
+test670 | Exp: O(n+m+r+t) | Act: Overall time complexity of function test670 is O(m + n + r + t).
+test672 | Exp: O(n+m+r+t) | Act: Overall time complexity of function test672 is O(m + n + r + t).
+test673 | Exp: O(n+m+r+t) | Act: Overall time complexity of function test673 is O(m + n + r + t).
+test675 | Exp: O(n*m*r*t) | Act: Overall time complexity of function test675 is O(nmrt).
+test676 | Exp: O(a*b*c*d) | Act: Overall time complexity of function test676 is O(abcd).
+test677 | Exp: O(n*m*r*t) | Act: Overall time complexity of function test677 is O(nmrt).
+test678 | Exp: O(n*m*r*t) | Act: Overall time complexity of function test678 is O(m + n + r + t).
+test679 | Exp: O(n*m) | Act: Overall time complexity of function test679 is O(mmp).
+test680 | Exp: O(n*m) | Act: Overall time complexity of function test680 is O(mst).
+test681 | Exp: O(n*log(n)) | Act: Overall time complexity of function test681 is O(st log st).
+test682 | Exp: O(n^2) | Act: Overall time complexity of function test682 is O(mp┬▓).
+test683 | Exp: O(n+m) | Act: Overall time complexity of function test683 is O(mp + st).
+test684 | Exp: O(n+m) | Act: Overall time complexity of function test684 is Unknown.
+test685 | Exp: O(n+m) | Act: Overall time complexity of function test685 is Unknown.
+test686 | Exp: O(n+m) | Act: Overall time complexity of function test686 is O(m + n).
+test687 | Exp: O(n+m) | Act: Overall time complexity of function test687 is O(m + n).
+test688 | Exp: O(n+m+r) | Act: Overall time complexity of function test688 is O(m + n + r).
+test689 | Exp: O(n+m) | Act: Overall time complexity of function test689 is Unknown.
+test690 | Exp: O(n+m) | Act: Overall time complexity of function test690 is O(m + n).
+test691 | Exp: O(n+m) | Act: Overall time complexity of function test691 is O(m + n).
+test693 | Exp: O(n+m) | Act: Overall time complexity of function test693 is O(m + n).
+test695 | Exp: O(n^2) | Act: Overall time complexity of function test695 is O(n┬▓).
+test698 | Exp: O(n*m) | Act: Overall time complexity of function test698 is O(nm).
+test701 | Exp: O(n^2) | Act: Overall time complexity of function test701 is O(n┬▓).
+test705 | Exp: O(n^2) | Act: Overall time complexity of function test705 is O(n).
+test713 | Exp: Unknown | Act: Overall time complexity of function test713 is O(n).
+test714 | Exp: Unknown | Act: Overall time complexity of function test714 is O(n).
+test715 | Exp: Unknown | Act: Overall time complexity of function test715 is O(n).
+test716 | Exp: Unknown | Act: Overall time complexity of function test716 is O(n).
+test717 | Exp: Unknown | Act: Overall time complexity of function test717 is O(n).
+test718 | Exp: Unknown | Act: Overall time complexity of function test718 is O(n).
+test719 | Exp: O(n*m) | Act: Overall time complexity of function test719 is O(n).
+test720 | Exp: O(n^2) | Act: Overall time complexity of function test720 is O(n).
+test721 | Exp: O(n*m*r) | Act: Overall time complexity of function test721 is O(n).
+test723 | Exp: O(n^3) | Act: Overall time complexity of function test723 is O(n).
+test724 | Exp: O(n*m) | Act: Overall time complexity of function test724 is O(nm).
+test725 | Exp: O(n*m) | Act: Overall time complexity of function test725 is O(nm).
+test726 | Exp: O(n*log(m)) | Act: Overall time complexity of function test726 is O(n log n).
+test727 | Exp: O(n*m^2) | Act: Overall time complexity of function test727 is O(nm┬▓).
+test728 | Exp: O(n*m^3) | Act: Overall time complexity of function test728 is O(nm┬│).
+test729 | Exp: O(n*(m+r)) | Act: Overall time complexity of function test729 is O(nm + nr).
+test730 | Exp: O(n*m*r) | Act: Overall time complexity of function test730 is O(nmr).
+test731 | Exp: O(n*(e+f)) | Act: Overall time complexity of function test731 is O(ne + nf).
+test732 | Exp: O(n*log(n)*log(m)) | Act: Overall time complexity of function test732 is O(n log┬▓ n).
+test733 | Exp: O(e) | Act: Overall time complexity of function test733 is O(n).
+test734 | Exp: O(f) | Act: Overall time complexity of function test734 is O(n).
+test735 | Exp: O(g) | Act: Overall time complexity of function test735 is O(n).
+test736 | Exp: O(h) | Act: Overall time complexity of function test736 is O(n).
+test737 | Exp: O(e*f) | Act: Overall time complexity of function test737 is O(ef).
+test739 | Exp: O(log e) | Act: Overall time complexity of function test739 is O(log n).
+test740 | Exp: O(e^2) | Act: Overall time complexity of function test740 is O(e┬▓).
+test741 | Exp: O(e*f*g) | Act: Overall time complexity of function test741 is O(efg).
+test742 | Exp: O(n) | Act: Overall time complexity of function test742 is O(e).
+test743 | Exp: O(n*m) | Act: Overall time complexity of function test743 is O(ef).
+test744 | Exp: O(n+m) | Act: Overall time complexity of function test744 is O(e + f).
+test745 | Exp: O(n*m) | Act: Overall time complexity of function test745 is O(m + n).
+test746 | Exp: O(n^2) | Act: Overall time complexity of function test746 is O(n┬▓).
+test748 | Exp: O(n) | Act: Overall time complexity of function test748 is O(e).
+test754 | Exp: O(log m) | Act: Overall time complexity of function test754 is O(log n).
+test755 | Exp: O(log e) | Act: Overall time complexity of function test755 is O(log n).
+test758 | Exp: O(n*log(n)) | Act: Overall time complexity of function test758 is O(n log n).
+test759 | Exp: O(log(n)*log(m)) | Act: Overall time complexity of function test759 is O(log┬▓ n).
+test761 | Exp: O(m) | Act: Overall time complexity of function test761 is O(n).
+test762 | Exp: O(n*m) | Act: Overall time complexity of function test762 is O(m + n).
+test763 | Exp: O(n^2) | Act: Overall time complexity of function test763 is O(n).
+test765 | Exp: O(n+m) | Act: Overall time complexity of function test765 is O(m + n).
+test766 | Exp: O(n*m) | Act: Overall time complexity of function test766 is O(m + n).
+test768 | Exp: O(m) | Act: Overall time complexity of function test768 is O(n).
+test769 | Exp: O(n*m) | Act: Overall time complexity of function test769 is O(m + n).
+test770 | Exp: O(n^2) | Act: Overall time complexity of function test770 is O(n).
+test772 | Exp: O(n*m) | Act: Overall time complexity of function test772 is O(m + n).
+test773 | Exp: O(n*m) | Act: Overall time complexity of function test773 is O(n).
+test774 | Exp: O(n^2) | Act: Overall time complexity of function test774 is O(n).
+test775 | Exp: O(n*m) | Act: Overall time complexity of function test775 is O(m + n).
+test776 | Exp: O(n*m) | Act: Overall time complexity of function test776 is O(n┬▓).
+test777 | Exp: O(n^2) | Act: Overall time complexity of function test777 is O(n┬▓).
+test778 | Exp: O(n*log(n)) | Act: Overall time complexity of function test778 is O(n log n).
+test779 | Exp: O(n*m) | Act: Overall time complexity of function test779 is O(n┬▓).
+test780 | Exp: O(n*log(n)) | Act: Overall time complexity of function test780 is O(n).
+test782 | Exp: O(n^2*log(n)) | Act: Overall time complexity of function test782 is O(n log n).
+test783 | Exp: O(n+m) | Act: Overall time complexity of function test783 is O(m + n).
+test784 | Exp: O(n*m) | Act: Overall time complexity of function test784 is O(m + n).
+test788 | Exp: O(n*m) | Act: Overall time complexity of function test788 is O(m + n).
+test790 | Exp: O(n+m+r) | Act: Overall time complexity of function test790 is O(p + q + r).
+test791 | Exp: O(n*m*r) | Act: Overall time complexity of function test791 is O(pqr).
+test792 | Exp: O(n*log(m)) | Act: Overall time complexity of function test792 is O(n).
+test793 | Exp: O(n*m) | Act: Overall time complexity of function test793 is O(mmp).
+test794 | Exp: O(n^2*log(n)) | Act: Overall time complexity of function test794 is O(n┬▓ log n).
+test795 | Exp: O(n*(m+r)) | Act: Overall time complexity of function test795 is O(nm + nr).
+test796 | Exp: O(e*f) | Act: Overall time complexity of function test796 is O(e + f).
+test797 | Exp: O(n+m) | Act: Overall time complexity of function test797 is O(m + n).
+test798 | Exp: O(n*m) | Act: Overall time complexity of function test798 is O(n).
+test799 | Exp: O(n+m) | Act: Overall time complexity of function test799 is O(m + n).
+test800 | Exp: O(n*m*log(r)) | Act: Overall time complexity of function test800 is O(n log n).
+
+Crashes:

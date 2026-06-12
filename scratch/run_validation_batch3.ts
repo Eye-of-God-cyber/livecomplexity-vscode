@@ -45,8 +45,8 @@ async function main() {
         const exp = expected.get(func.name) || 'NOT FOUND';
         const act = func.complexity;
 
-        const expNorm = exp.replace(/\s+/g, '');
-        const actNorm = act.replace(/\s+/g, '');
+        const expNorm = exp.replace(/\s+/g, '').replace(/sqrt([a-zA-Z0-9_]+)/g, 'sqrt($1)');
+        const actNorm = act.replace(/\s+/g, '').replace(/sqrt([a-zA-Z0-9_]+)/g, 'sqrt($1)');
 
         if (expNorm === actNorm) {
             passed++;

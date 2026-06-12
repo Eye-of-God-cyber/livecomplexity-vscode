@@ -1,0 +1,1599 @@
+Failed: 133
+Passed: 67
+Total tests checked: 200
+## test409
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 708 classified as linear. | Loop at line 709 classified as linear. | Overall time complexity of function "test409" is O(m + n).
+
+---
+## test410
+
+Expected:
+O(n*m)
+
+Produced:
+O(nm)
+
+Explanation:
+Loop at line 718 classified as linear. | Loop at line 719 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test410" is O(nm).
+
+---
+## test413
+
+Expected:
+O(n*m)
+
+Produced:
+O(pq)
+
+Explanation:
+Loop at line 743 classified as custom. | Overall time complexity of function "test413" is O(pq).
+
+---
+## test415
+
+Expected:
+O(n)
+
+Produced:
+O(str.length())
+
+Explanation:
+Loop at line 756 classified as linear. | Overall time complexity of function "test415" is O(str.length()).
+
+---
+## test416
+
+Expected:
+O(n)
+
+Produced:
+O(str.size())
+
+Explanation:
+Loop at line 763 classified as linear. | Overall time complexity of function "test416" is O(str.size()).
+
+---
+## test417
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 771 classified as linear. | Loop at line 772 classified as linear. | Overall time complexity of function "test417" is O(m + n).
+
+---
+## test418
+
+Expected:
+O(n*m)
+
+Produced:
+O(nm)
+
+Explanation:
+Loop at line 780 classified as linear. | Loop at line 781 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test418" is O(nm).
+
+---
+## test420
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 798 classified as linear. | Loop at line 799 classified as linear. | Overall time complexity of function "test420" is O(m + n).
+
+---
+## test428
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 862 classified as linear. | Overall time complexity of function "test428" is O(n).
+
+---
+## test429
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 870 classified as linear. | Overall time complexity of function "test429" is O(n).
+
+---
+## test433
+
+Expected:
+O(n^2)
+
+Produced:
+O(n²)
+
+Explanation:
+Loop at line 901 classified as linear. | Loop at line 902 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test433" is O(n²).
+
+---
+## test434
+
+Expected:
+O(n*m)
+
+Produced:
+O(nm)
+
+Explanation:
+Loop at line 909 classified as linear. | Loop at line 910 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test434" is O(nm).
+
+---
+## test435
+
+Expected:
+O(n^3)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 921 classified as linear. | Loop at line 921 classified as linear. | Loop at line 921 classified as linear. | Overall time complexity of function "test435" is O(n).
+
+---
+## test436
+
+Expected:
+O(n*m*r)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 928 classified as linear. | Loop at line 928 classified as linear. | Loop at line 928 classified as linear. | Overall time complexity of function "test436" is O(n).
+
+---
+## test437
+
+Expected:
+O(n^2*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 935 classified as linear. | Loop at line 935 classified as linear. | Loop at line 935 classified as linear. | Overall time complexity of function "test437" is O(n).
+
+---
+## test438
+
+Expected:
+O(n*m^2)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 942 classified as linear. | Loop at line 942 classified as linear. | Loop at line 942 classified as linear. | Overall time complexity of function "test438" is O(n).
+
+---
+## test439
+
+Expected:
+O(n^3)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 949 classified as linear. | Loop at line 949 classified as linear. | Loop at line 949 classified as linear. | Overall time complexity of function "test439" is O(n).
+
+---
+## test440
+
+Expected:
+O(n*m*r)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 956 classified as linear. | Loop at line 956 classified as linear. | Loop at line 956 classified as linear. | Overall time complexity of function "test440" is O(n).
+
+---
+## test441
+
+Expected:
+O(n^3)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 963 classified as linear. | Loop at line 963 classified as linear. | Loop at line 963 classified as linear. | Overall time complexity of function "test441" is O(n).
+
+---
+## test442
+
+Expected:
+O(n*m*r)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 970 classified as linear. | Loop at line 970 classified as linear. | Loop at line 970 classified as linear. | Overall time complexity of function "test442" is O(n).
+
+---
+## test443
+
+Expected:
+O(n^3)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 977 classified as linear. | Overall time complexity of function "test443" is O(n).
+
+---
+## test444
+
+Expected:
+O(n*m*r)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 984 classified as linear. | Overall time complexity of function "test444" is O(n).
+
+---
+## test445
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 991 classified as linear. | Overall time complexity of function "test445" is O(n).
+
+---
+## test446
+
+Expected:
+O(n^2)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 998 classified as linear. | Overall time complexity of function "test446" is O(n).
+
+---
+## test447
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1005 classified as linear. | Loop at line 1005 classified as linear. | Loop at line 1005 classified as linear. | Overall time complexity of function "test447" is O(n).
+
+---
+## test448
+
+Expected:
+O(n^2*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1012 classified as linear. | Loop at line 1012 classified as linear. | Loop at line 1012 classified as linear. | Loop at line 1012 classified as linear. | Overall time complexity of function "test448" is O(n).
+
+---
+## test451
+
+Expected:
+O(n^2)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1043 classified as linear. | Loop at line 1043 classified as linear. | Overall time complexity of function "test451" is O(n).
+
+---
+## test452
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1052 classified as linear. | Loop at line 1052 classified as linear. | Overall time complexity of function "test452" is O(n).
+
+---
+## test454
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1069 classified as linear. | Loop at line 1070 classified as linear. | Overall time complexity of function "test454" is O(n).
+
+---
+## test458
+
+Expected:
+O(n*m)
+
+Produced:
+O(pq)
+
+Explanation:
+Loop at line 1098 classified as custom. | Overall time complexity of function "test458" is O(pq).
+
+---
+## test459
+
+Expected:
+O(n+extra)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1107 classified as linear. | Overall time complexity of function "test459" is O(n).
+
+---
+## test460
+
+Expected:
+O(n*m)
+
+Produced:
+O(pq)
+
+Explanation:
+Loop at line 1115 classified as custom. | Overall time complexity of function "test460" is O(pq).
+
+---
+## test462
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 1131 classified as linear. | Loop at line 1132 classified as linear. | Overall time complexity of function "test462" is O(m + n).
+
+---
+## test463
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 1143 classified as linear. | Overall time complexity of function "test463" is O(m + n).
+
+---
+## test464
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 1150 classified as linear. | Overall time complexity of function "test464" is O(m + n).
+
+---
+## test465
+
+Expected:
+O(n+m+r)
+
+Produced:
+O(m + n + r)
+
+Explanation:
+Loop at line 1157 classified as linear. | Overall time complexity of function "test465" is O(m + n + r).
+
+---
+## test466
+
+Expected:
+O(n+m)
+
+Produced:
+O(n + v.size())
+
+Explanation:
+Loop at line 1164 classified as linear. | Overall time complexity of function "test466" is O(n + v.size()).
+
+---
+## test467
+
+Expected:
+O(a+b)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1172 classified as linear. | Overall time complexity of function "test467" is O(n).
+
+---
+## test468
+
+Expected:
+O(n+m)
+
+Produced:
+O(p + q)
+
+Explanation:
+Loop at line 1180 classified as custom. | Overall time complexity of function "test468" is O(p + q).
+
+---
+## test469
+
+Expected:
+O(a+b+c)
+
+Produced:
+O(p + q + r)
+
+Explanation:
+Loop at line 1189 classified as custom. | Overall time complexity of function "test469" is O(p + q + r).
+
+---
+## test470
+
+Expected:
+O(wid+hgt)
+
+Produced:
+O(hgt + wid)
+
+Explanation:
+Loop at line 1195 classified as linear. | Overall time complexity of function "test470" is O(hgt + wid).
+
+---
+## test471
+
+Expected:
+O(wid*hgt)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 1201 classified as custom. | Overall time complexity of function "test471" is O(hgtwid).
+
+---
+## test472
+
+Expected:
+O(cap+lim)
+
+Produced:
+O(cap + lim)
+
+Explanation:
+Loop at line 1206 classified as custom. | Overall time complexity of function "test472" is O(cap + lim).
+
+---
+## test473
+
+Expected:
+O(cap*lim)
+
+Produced:
+O(caplim)
+
+Explanation:
+Loop at line 1211 classified as custom. | Overall time complexity of function "test473" is O(caplim).
+
+---
+## test474
+
+Expected:
+O(n+v.size())
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1219 classified as linear. | Overall time complexity of function "test474" is O(n).
+
+---
+## test475
+
+Expected:
+O(n+m+r)
+
+Produced:
+O(m + n + r + t)
+
+Explanation:
+Loop at line 1228 classified as custom. | Overall time complexity of function "test475" is O(m + n + r + t).
+
+---
+## test476
+
+Expected:
+O(n+m+r+t)
+
+Produced:
+O(m + n + r + t)
+
+Explanation:
+Loop at line 1234 classified as custom. | Overall time complexity of function "test476" is O(m + n + r + t).
+
+---
+## test477
+
+Expected:
+O(n*m*r*t)
+
+Produced:
+O(nmrt)
+
+Explanation:
+Loop at line 1239 classified as custom. | Overall time complexity of function "test477" is O(nmrt).
+
+---
+## test483
+
+Expected:
+O(sqrt(n))
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1291 classified as linear. | Overall time complexity of function "test483" is O(n).
+
+---
+## test484
+
+Expected:
+O(sqrt(n))
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1299 classified as linear. | Overall time complexity of function "test484" is O(n).
+
+---
+## test485
+
+Expected:
+O(sqrt(n))
+
+Produced:
+O(sqrt n)
+
+Explanation:
+Loop at line 1307 classified as fractional. | Overall time complexity of function "test485" is O(sqrt n).
+
+---
+## test488
+
+Expected:
+O(n)
+
+Produced:
+O(n²)
+
+Explanation:
+Loop at line 1340 classified as linear. | Loop at line 1342 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test488" is O(n²).
+
+---
+## test489
+
+Expected:
+O(n)
+
+Produced:
+O(n²)
+
+Explanation:
+Loop at line 1353 classified as linear. | Loop at line 1355 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test489" is O(n²).
+
+---
+## test492
+
+Expected:
+O(m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1399 classified as linear. | Overall time complexity of function "test492" is O(n).
+
+---
+## test494
+
+Expected:
+O(m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1416 classified as linear. | Overall time complexity of function "test494" is O(n).
+
+---
+## test498
+
+Expected:
+O(rows*cols)
+
+Produced:
+O(cr)
+
+Explanation:
+Loop at line 1455 classified as linear. | Loop at line 1456 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(cr). | Overall time complexity of function "test498" is O(cr).
+
+---
+## test501
+
+Expected:
+O(n+m+r)
+
+Produced:
+O(m + n + r)
+
+Explanation:
+Loop at line 1495 classified as linear. | Loop at line 1496 classified as linear. | Sequential loop at line 1497 dominates previous loops. | Loop at line 1497 classified as linear. | Overall time complexity of function "test501" is O(m + n + r).
+
+---
+## test502
+
+Expected:
+O(n*m*r)
+
+Produced:
+O(nmr)
+
+Explanation:
+Loop at line 1507 classified as linear. | Loop at line 1508 classified as linear. | Loop at line 1509 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(mr). | Nested O(mr) loop inside O(n) loop multiply to produce O(nmr). | Overall time complexity of function "test502" is O(nmr).
+
+---
+## test503
+
+Expected:
+O(n^2)
+
+Produced:
+O(n1n2)
+
+Explanation:
+Loop at line 1518 classified as linear. | Loop at line 1519 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n1n2). | Overall time complexity of function "test503" is O(n1n2).
+
+---
+## test504
+
+Expected:
+O(n+m)
+
+Produced:
+O(m + n)
+
+Explanation:
+Loop at line 1529 classified as linear. | Loop at line 1530 classified as linear. | Overall time complexity of function "test504" is O(m + n).
+
+---
+## test505
+
+Expected:
+O(n*m)
+
+Produced:
+O(nm)
+
+Explanation:
+Loop at line 1539 classified as linear. | Loop at line 1540 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test505" is O(nm).
+
+---
+## test507
+
+Expected:
+O(n+m+r)
+
+Produced:
+O(m + n + r + t)
+
+Explanation:
+Loop at line 1557 classified as custom. | Overall time complexity of function "test507" is O(m + n + r + t).
+
+---
+## test508
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1567 classified as linear. | Overall time complexity of function "test508" is O(n).
+
+---
+## test510
+
+Expected:
+O(n*m)
+
+Produced:
+O(nm)
+
+Explanation:
+Loop at line 1589 classified as linear. | Loop at line 1590 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test510" is O(nm).
+
+---
+## test511
+
+Expected:
+O(wid)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1600 classified as custom. | Overall time complexity of function "test511" is O(n).
+
+---
+## test512
+
+Expected:
+O(hgt)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1605 classified as custom. | Overall time complexity of function "test512" is O(n).
+
+---
+## test513
+
+Expected:
+O(wid*hgt)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 1610 classified as custom. | Overall time complexity of function "test513" is O(hgtwid).
+
+---
+## test514
+
+Expected:
+O(wid*hgt)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 1615 classified as custom. | Overall time complexity of function "test514" is O(hgtwid).
+
+---
+## test515
+
+Expected:
+O(wid+hgt)
+
+Produced:
+O(hgt + wid)
+
+Explanation:
+Loop at line 1620 classified as custom. | Overall time complexity of function "test515" is O(hgt + wid).
+
+---
+## test516
+
+Expected:
+O(cap)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1625 classified as custom. | Overall time complexity of function "test516" is O(n).
+
+---
+## test517
+
+Expected:
+O(lim)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1630 classified as custom. | Overall time complexity of function "test517" is O(n).
+
+---
+## test518
+
+Expected:
+O(cap+lim)
+
+Produced:
+O(cap + lim)
+
+Explanation:
+Loop at line 1635 classified as custom. | Overall time complexity of function "test518" is O(cap + lim).
+
+---
+## test519
+
+Expected:
+O(cap*lim)
+
+Produced:
+O(caplim)
+
+Explanation:
+Loop at line 1642 classified as custom. | Overall time complexity of function "test519" is O(caplim).
+
+---
+## test520
+
+Expected:
+O(wid*hgt)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 1649 classified as custom. | Overall time complexity of function "test520" is O(hgtwid).
+
+---
+## test521
+
+Expected:
+O(wid)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1655 classified as custom. | Overall time complexity of function "test521" is O(n).
+
+---
+## test522
+
+Expected:
+O(wid)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1660 classified as custom. | Overall time complexity of function "test522" is O(n).
+
+---
+## test523
+
+Expected:
+O(cap)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1665 classified as custom. | Overall time complexity of function "test523" is O(n).
+
+---
+## test524
+
+Expected:
+O(n*log(m))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1674 classified as custom. | Overall time complexity of function "test524" is O(n log n).
+
+---
+## test525
+
+Expected:
+O(rows*log(cols))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1679 classified as custom. | Overall time complexity of function "test525" is O(n log n).
+
+---
+## test526
+
+Expected:
+O(a*log(b))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1684 classified as custom. | Overall time complexity of function "test526" is O(n log n).
+
+---
+## test527
+
+Expected:
+O(n*log(n))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1689 classified as custom. | Overall time complexity of function "test527" is O(n log n).
+
+---
+## test528
+
+Expected:
+O(n*log(m))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1695 classified as linear. | Loop at line 1697 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test528" is O(n log n).
+
+---
+## test529
+
+Expected:
+O(n*log(m))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1705 classified as linear. | Loop at line 1706 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test529" is O(n log n).
+
+---
+## test530
+
+Expected:
+O(rows*log(cols))
+
+Produced:
+O(rows log rows)
+
+Explanation:
+Loop at line 1714 classified as linear. | Loop at line 1715 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(rows log rows). | Overall time complexity of function "test530" is O(rows log rows).
+
+---
+## test531
+
+Expected:
+O(n*log(m))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1724 classified as linear. | Loop at line 1725 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test531" is O(n log n).
+
+---
+## test532
+
+Expected:
+O(n^2*log(n))
+
+Produced:
+O(n² log n)
+
+Explanation:
+Loop at line 1731 classified as custom. | Overall time complexity of function "test532" is O(n² log n).
+
+---
+## test536
+
+Expected:
+O(m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1755 classified as custom. | Overall time complexity of function "test536" is O(n).
+
+---
+## test537
+
+Expected:
+O(k)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1760 classified as custom. | Overall time complexity of function "test537" is O(n).
+
+---
+## test539
+
+Expected:
+O(m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1770 classified as custom. | Overall time complexity of function "test539" is O(n).
+
+---
+## test540
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1775 classified as custom. | Overall time complexity of function "test540" is O(n).
+
+---
+## test541
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1780 classified as custom. | Overall time complexity of function "test541" is O(n).
+
+---
+## test542
+
+Expected:
+O(a*b)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1785 classified as custom. | Overall time complexity of function "test542" is O(n).
+
+---
+## test543
+
+Expected:
+O(rows*cols)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1790 classified as custom. | Overall time complexity of function "test543" is O(n).
+
+---
+## test545
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1802 classified as custom. | Overall time complexity of function "test545" is O(n).
+
+---
+## test548
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1836 classified as linear. | Loop at line 1836 classified as linear. | Overall time complexity of function "test548" is O(n).
+
+---
+## test549
+
+Expected:
+O(n^2)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1846 classified as linear. | Loop at line 1846 classified as linear. | Overall time complexity of function "test549" is O(n).
+
+---
+## test550
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1858 classified as linear. | Overall time complexity of function "test550" is O(n).
+
+---
+## test551
+
+Expected:
+O(wid*hgt)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 1867 classified as custom. | Overall time complexity of function "test551" is O(hgtwid).
+
+---
+## test552
+
+Expected:
+O(n+m+r)
+
+Produced:
+O(p + q + r)
+
+Explanation:
+Loop at line 1876 classified as custom. | Overall time complexity of function "test552" is O(p + q + r).
+
+---
+## test553
+
+Expected:
+O(n*log(m))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 1884 classified as custom. | Overall time complexity of function "test553" is O(n log n).
+
+---
+## test555
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1902 classified as linear. | Overall time complexity of function "test555" is O(n).
+
+---
+## test556
+
+Expected:
+O(n^3)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1910 classified as linear. | Overall time complexity of function "test556" is O(n).
+
+---
+## test557
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1921 classified as linear. | Loop at line 1921 classified as linear. | Overall time complexity of function "test557" is O(n).
+
+---
+## test558
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 1932 classified as linear. | Overall time complexity of function "test558" is O(n).
+
+---
+## test564
+
+Expected:
+O(n*m)
+
+Produced:
+O(nhalf)
+
+Explanation:
+Loop at line 1991 classified as linear. | Loop at line 1992 classified as linear. | Loop at line 1993 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nhalf). | Overall time complexity of function "test564" is O(nhalf).
+
+---
+## test565
+
+Expected:
+O(log(n))
+
+Produced:
+O(log n)
+
+Explanation:
+Loop at line 2004 classified as logarithmic. | Overall time complexity of function "test565" is O(log n).
+
+---
+## test567
+
+Expected:
+O(n*m)
+
+Produced:
+O(nm)
+
+Explanation:
+Loop at line 2020 classified as linear. | Loop at line 2022 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nm). | Overall time complexity of function "test567" is O(nm).
+
+---
+## test568
+
+Expected:
+O(n^2)
+
+Produced:
+O(n²)
+
+Explanation:
+Loop at line 2032 classified as linear. | Loop at line 2033 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test568" is O(n²).
+
+---
+## test569
+
+Expected:
+O(n^2)
+
+Produced:
+O(lim²)
+
+Explanation:
+Loop at line 2042 classified as linear. | Loop at line 2043 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(lim²). | Overall time complexity of function "test569" is O(lim²).
+
+---
+## test570
+
+Expected:
+O(rows*cols)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 2058 classified as custom. | Overall time complexity of function "test570" is O(hgtwid).
+
+---
+## test571
+
+Expected:
+O(n*m)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 2065 classified as custom. | Overall time complexity of function "test571" is O(hgtwid).
+
+---
+## test572
+
+Expected:
+O(n+m)
+
+Produced:
+O(cap + lim)
+
+Explanation:
+Loop at line 2070 classified as custom. | Overall time complexity of function "test572" is O(cap + lim).
+
+---
+## test573
+
+Expected:
+O(n*m)
+
+Produced:
+O(caplim)
+
+Explanation:
+Loop at line 2076 classified as custom. | Overall time complexity of function "test573" is O(caplim).
+
+---
+## test574
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2083 classified as custom. | Overall time complexity of function "test574" is O(n).
+
+---
+## test575
+
+Expected:
+O(n*m)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 2088 classified as custom. | Overall time complexity of function "test575" is O(hgtwid).
+
+---
+## test578
+
+Expected:
+O(m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2131 classified as linear. | Overall time complexity of function "test578" is O(n).
+
+---
+## test579
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2144 classified as linear. | Loop at line 2144 classified as linear. | Overall time complexity of function "test579" is O(n).
+
+---
+## test581
+
+Expected:
+O(n^2)
+
+Produced:
+O(n²)
+
+Explanation:
+Loop at line 2161 classified as linear. | Loop at line 2162 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(n²). | Overall time complexity of function "test581" is O(n²).
+
+---
+## test583
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2184 classified as linear. | Loop at line 2184 classified as linear. | Overall time complexity of function "test583" is O(n).
+
+---
+## test584
+
+Expected:
+O(n)
+
+Produced:
+O(str.size())
+
+Explanation:
+Loop at line 2191 classified as linear. | Overall time complexity of function "test584" is O(str.size()).
+
+---
+## test585
+
+Expected:
+O(n)
+
+Produced:
+O(v.size())
+
+Explanation:
+Loop at line 2198 classified as linear. | Overall time complexity of function "test585" is O(v.size()).
+
+---
+## test586
+
+Expected:
+O(n+m)
+
+Produced:
+O(dq.size() + v.size())
+
+Explanation:
+Loop at line 2205 classified as linear. | Loop at line 2206 classified as linear. | Overall time complexity of function "test586" is O(dq.size() + v.size()).
+
+---
+## test587
+
+Expected:
+O(n^2)
+
+Produced:
+O(v.size()²)
+
+Explanation:
+Loop at line 2213 classified as linear. | Loop at line 2214 classified as linear. | Nested O(v.size()) loop inside O(v.size()) loop multiply to produce O(v.size()²). | Overall time complexity of function "test587" is O(v.size()²).
+
+---
+## test589
+
+Expected:
+O(n*m)
+
+Produced:
+O(nmm)
+
+Explanation:
+Loop at line 2231 classified as linear. | Loop at line 2232 classified as linear. | Nested O(n) loop inside O(n) loop multiply to produce O(nmm). | Overall time complexity of function "test589" is O(nmm).
+
+---
+## test590
+
+Expected:
+O(n*log(n))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 2239 classified as linear. | Loop at line 2239 classified as custom. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test590" is O(n log n).
+
+---
+## test591
+
+Expected:
+O(n*log(n))
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2246 classified as linear. | Loop at line 2246 classified as custom. | Overall time complexity of function "test591" is O(n).
+
+---
+## test592
+
+Expected:
+O(n*m*log(r))
+
+Produced:
+O(nm log n)
+
+Explanation:
+Loop at line 2253 classified as linear. | Loop at line 2254 classified as linear. | Loop at line 2255 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(m log m). | Nested O(m log m) loop inside O(n) loop multiply to produce O(nm log n). | Overall time complexity of function "test592" is O(nm log n).
+
+---
+## test593
+
+Expected:
+O(n*log(m))
+
+Produced:
+O(n log n)
+
+Explanation:
+Loop at line 2264 classified as linear. | Loop at line 2265 classified as logarithmic. | Nested O(log n) loop inside O(n) loop multiply to produce O(n log n). | Overall time complexity of function "test593" is O(n log n).
+
+---
+## test596
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2295 classified as linear. | Loop at line 2296 classified as linear. | Overall time complexity of function "test596" is O(n).
+
+---
+## test597
+
+Expected:
+O(rows*cols)
+
+Produced:
+O(hgtwid)
+
+Explanation:
+Loop at line 2306 classified as custom. | Overall time complexity of function "test597" is O(hgtwid).
+
+---
+## test598
+
+Expected:
+O(n+m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2317 classified as linear. | Overall time complexity of function "test598" is O(n).
+
+---
+## test599
+
+Expected:
+O(n*m)
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2331 classified as linear. | Overall time complexity of function "test599" is O(n).
+
+---
+## test600
+
+Expected:
+O(n^2*log(n))
+
+Produced:
+O(n)
+
+Explanation:
+Loop at line 2340 classified as linear. | Loop at line 2340 classified as linear. | Loop at line 2340 classified as custom. | Overall time complexity of function "test600" is O(n).
+
+---

@@ -1,0 +1,178 @@
+<USER_REQUEST>
+# LiveComplexityIDE — Batch 4 Validation (Tests 601–800)
+
+STOP.
+
+Do NOT implement anything.
+
+Do NOT modify production code.
+
+Do NOT patch production files.
+
+Do NOT redesign architecture.
+
+Do NOT proactively fix anything.
+
+Your task is STRICTLY VALIDATION.
+
+---
+
+# Context
+
+This is NOT a new project.
+
+This is a continuation of the LiveComplexityIDE correctness-first deterministic AST-based C++ time complexity inference engine.
+
+The deterministic engine is currently in compiler-freeze mode.
+
+The objective is validation and correctness verification, NOT feature expansion.
+
+---
+
+# NON-NEGOTIABLE PROJECT PHILOSOPHY
+
+* Zero heuristics
+* Zero regex guessing
+* Zero semantic reasoning
+* Zero identifier-name reasoning
+* Pure AST structural reasoning only
+* Deterministic behavior only
+* Unknown is ALWAYS preferred over a false positive
+* Preserve backward compatibility
+* Prefer tiny additive fixes
+* Reuse existing infrastructure
+* No symbolic algebra
+* No ProductNode
+* No architecture redesign
+* No parallel symbolic systems
+
+If something cannot be structurally proven:
+
+Return Unknown.
+
+Never guess.
+
+---
+
+# IMPORTANT
+
+I have attached:
+
+1. validation_corpus_batch4.cpp
+
+2. validation_answers_batch4.txt
+
+The expected answers file is a HUMAN-WRITTEN EXPECTATION document.
+
+It is NOT automatically correct.
+
+Treat it as something that must itself be VERIFIED.
+
+Do NOT blindly trust it.
+
+Attempt to DISPROVE expected answers whenever appropriate.
+
+---
+
+# YOUR OBJECTIVE
+
+Validate ONLY:
+
+test601
+through
+test800
+
+Do NOT validate earlier batches again.
+
+Do NOT report Batch 1 / Batch 2 issues.
+
+Only use previous helpers/macros as supporting context if needed.
+
+---
+
+# REQUIRED VALIDATION PROCEDURE
+
+For EVERY test from test601 to test800:
+
+1. Parse the AST.
+
+2. Trace the deterministic pipeline.
+
+3. Determine what the current engine should produce.
+
+4. Compare against validation_answers_batch4.txt.
+
+5. If they match:
+
+Mar
+<truncated 45215 bytes>
+ost
+int test699(int n) {
+    int s = 0;
+    {
+        int x = n;
+        {
+            int y = x;
+            fo(i, y) s++;
+        }
+    }
+    return s;
+}
+
+// test700: O(n)  — scope block with cast inside
+int test700(vector<int>& v) {
+    int s = 0;
+    {
+        int n = static_cast<int>(v.size());
+        {
+            const int lim = n;
+            rep(i, 0, lim) s++;
+        }
+    }
+    return s;
+}
+
+// test701: O(n^2)  — nested scope alias feeding nested loops
+int test701(int n) {
+    int s = 0;
+    {
+        auto a = n;
+        {
+            auto b = a;
+            for (int i = 0; i < b; i++)
+                for (int j = 0; j < b; j++) s++;
+        }
+    }
+    return s;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  §N  repLL + foLL WITH CONTAINER-DERIVED LONG LONG BOUNDS
+// ══════════════════════════════════════════════════════════════════
+
+// test702: O(n)  — repLL over long long alias of v.size()
+int test702(vector<int>& v) {
+    long long n = static_cast<long long>(v.size());
+    long long s = 0;
+    repLL(i, 0, n) s++;
+    return (int)s;
+}
+
+// test703: O(n*m)  — repLL nested, both from container aliases
+int test703(vector<int>& v, vector<int>& u) {
+    long long n = (long long)v.size();
+    long long m = (long long)u.size();
+    long long s = 0;
+    repLL(i, 0, n) repLL(j, 0, m) s++;
+    return (int)s;
+}
+
+// test704: O(n)  — foLL then inner O(1) helper
+int test704(int n) {
+    long long ll = (long long)n;
+    long long s  = 0;
+    foLL(i, ll) s += helper5((int)i);
+    return (int)s;
+<truncated 29225 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.

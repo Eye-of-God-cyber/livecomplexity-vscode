@@ -1,0 +1,508 @@
+// validation_answers_batch4.txt
+// Expected complexity answers for test601–test800
+// Format: testN -> O(...)
+// Variable names preserved exactly as they appear in each function's parameter list.
+// "Unknown" = engine should not infer a definite complexity for this case.
+
+// ─────────────────────────────────────────────────────────────────
+//  NEW HELPERS (helper91–helper120)
+// ─────────────────────────────────────────────────────────────────
+
+helper91  -> O(e)
+helper92  -> O(e)
+helper93  -> O(e)
+helper94  -> O(e)
+helper95  -> O(e)
+helper96  -> O(e)
+helper97  -> O(log e)
+helper98  -> O(log e)
+helper99  -> O(e^2)
+helper100 -> O(e*f)
+helper101 -> O(e+f)
+helper102 -> O(e*f)
+helper103 -> O(e*f)
+helper104 -> O(e+f)
+helper105 -> O(e+f)
+helper106 -> O(n*log(n))
+helper107 -> O(n*log(n))
+helper108 -> O(log(n)*log(m))
+helper109 -> O(log(n)*log(m))
+helper110 -> O(n+m+r+t)
+helper111 -> O(n*m*r*t)
+helper112 -> O(e^3)
+helper113 -> O(e^3)
+helper114 -> O(e*f*g)
+helper115 -> O(e+f+g)
+helper116 -> O(e)
+helper117 -> O(e)
+helper118 -> O(e*f)
+helper119 -> O(e*f)
+helper120 -> O(e*f)
+
+// ─────────────────────────────────────────────────────────────────
+//  §A  typedef / using ALIAS DECLARATIONS
+// ─────────────────────────────────────────────────────────────────
+
+test601 -> O(n)
+test602 -> O(n)
+test603 -> O(n*m)
+test604 -> O(n)
+test605 -> O(n+m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §B  const / const auto / auto ALIAS DECLARATIONS
+// ─────────────────────────────────────────────────────────────────
+
+test606 -> O(n)
+test607 -> O(n)
+test608 -> O(n)
+test609 -> O(n*m)
+test610 -> O(n)
+test611 -> O(n+m)
+test612 -> O(n)
+test613 -> O(log n)
+test614 -> O(log n)
+test615 -> O(n^2)
+
+// ─────────────────────────────────────────────────────────────────
+//  §C  static_cast<> EXPRESSIONS
+// ─────────────────────────────────────────────────────────────────
+
+test616 -> O(n)
+test617 -> O(n)
+test618 -> O(n)
+test619 -> O(n*m)
+test620 -> O(n)
+test621 -> O(n)
+test622 -> O(n)
+test623 -> O(n+m)
+test624 -> O(n*m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §D  DEEPLY PARENTHESIZED BOUNDS
+// ─────────────────────────────────────────────────────────────────
+
+test625 -> O(n)
+test626 -> O(n)
+test627 -> O(n)
+test628 -> O(n)
+test629 -> O(n)
+test630 -> O(n)
+test631 -> O(n)
+test632 -> O(n+m)
+test633 -> O(n+m)
+test634 -> O(n+m+r)
+test635 -> O(n)
+test636 -> O(log n)
+test637 -> O(n^2)
+
+// ─────────────────────────────────────────────────────────────────
+//  §E  NEW CONTAINER TYPES
+// ─────────────────────────────────────────────────────────────────
+
+test638 -> O(n)
+test639 -> O(n)
+test640 -> O(n)
+test641 -> O(n)
+test642 -> O(n)
+test643 -> O(n)
+test644 -> O(n+m)
+test645 -> O(n*m)
+test646 -> O(n)
+test647 -> O(n)
+test648 -> O(n)
+
+// ─────────────────────────────────────────────────────────────────
+//  §F  DEEP HELPER CHAINS (5-deep, 6-deep, new params)
+// ─────────────────────────────────────────────────────────────────
+
+// test649: helper96(e), param e => O(e)
+test649 -> O(e)
+
+// test650: helper95(n), param n mapped to helper's e => O(n)
+test650 -> O(n)
+
+// test651: helper94(k), param k mapped to helper's e => O(k)
+test651 -> O(k)
+
+// test652: e = v.size(), helper96(e) => O(n)
+test652 -> O(n)
+
+// test653: helper120(e,f) => O(e*f)
+test653 -> O(e*f)
+
+// test654: helper120(n,m), params n,m => O(n*m)
+test654 -> O(n*m)
+
+// test655: helper105(a,b) => O(a+b)
+test655 -> O(a+b)
+
+// test656: helper114(n,m,r) => O(n*m*r)
+test656 -> O(n*m*r)
+
+// test657: helper115(a,b,c) => O(a+b+c)
+test657 -> O(a+b+c)
+
+// test658: helper113(n) => O(n^3)
+test658 -> O(n^3)
+
+// test659: helper99(k) => O(k^2)
+test659 -> O(k^2)
+
+// test660: helper107(n) => O(n*log(n))
+test660 -> O(n*log(n))
+
+// test661: helper109(n,m) => O(log(n)*log(m))
+test661 -> O(log(n)*log(m))
+
+// test662: helper110(n,m,r,t) => O(n+m+r+t)
+test662 -> O(n+m+r+t)
+
+// test663: helper111(n,m,r,t) => O(n*m*r*t)
+test663 -> O(n*m*r*t)
+
+// ─────────────────────────────────────────────────────────────────
+//  §G  log(n)*log(m) — DOUBLE LOGARITHMIC LOOPS
+// ─────────────────────────────────────────────────────────────────
+
+test664 -> O(log(n)*log(m))
+test665 -> O(log(n)*log(m))
+test666 -> O(log(n)*log(m))
+test667 -> O(log(n)*log(n))
+test668 -> O(log(n)*log(m))
+test669 -> O(n*log(n)*log(m))
+
+// ─────────────────────────────────────────────────────────────────
+//  §H  O(n+m+r+t) FOUR-SEQUENTIAL
+// ─────────────────────────────────────────────────────────────────
+
+test670 -> O(n+m+r+t)
+test671 -> O(a+b+c+d)
+test672 -> O(n+m+r+t)
+test673 -> O(n+m+r+t)
+test674 -> O(n+m+r+t)
+
+// ─────────────────────────────────────────────────────────────────
+//  §I  O(n*m*r*t) FOUR-NESTED
+// ─────────────────────────────────────────────────────────────────
+
+test675 -> O(n*m*r*t)
+test676 -> O(a*b*c*d)
+test677 -> O(n*m*r*t)
+test678 -> O(n*m*r*t)
+
+// ─────────────────────────────────────────────────────────────────
+//  §J  RANGE-FOR OVER map/set WITH INNER NESTING
+// ─────────────────────────────────────────────────────────────────
+
+test679 -> O(n*m)
+test680 -> O(n*m)
+test681 -> O(n*log(n))
+test682 -> O(n^2)
+test683 -> O(n+m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §K  COMPOUND SUM ALIAS → HELPER / MACRO
+// ─────────────────────────────────────────────────────────────────
+
+test684 -> O(n+m)
+test685 -> O(n+m)
+test686 -> O(n+m)
+test687 -> O(n+m)
+test688 -> O(n+m+r)
+test689 -> O(n+m)
+test690 -> O(n+m)
+test691 -> O(n+m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §L  FOR-INIT ALIAS + INNER BLOCK + CAST COMBOS
+// ─────────────────────────────────────────────────────────────────
+
+test692 -> O(n)
+test693 -> O(n+m)
+test694 -> O(n)
+test695 -> O(n^2)
+test696 -> O(n*m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §M  ANONYMOUS SCOPE BLOCKS — MULTI-HOP ALIASES
+// ─────────────────────────────────────────────────────────────────
+
+test697 -> O(n)
+test698 -> O(n*m)
+test699 -> O(n)
+test700 -> O(n)
+test701 -> O(n^2)
+
+// ─────────────────────────────────────────────────────────────────
+//  §N  repLL / foLL WITH CONTAINER-DERIVED LONG LONG BOUNDS
+// ─────────────────────────────────────────────────────────────────
+
+test702 -> O(n)
+test703 -> O(n*m)
+test704 -> O(n)
+test705 -> O(n^2)
+test706 -> O(n+m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §O  ptrdiff_t CHAINS WITH CAST + HELPER
+// ─────────────────────────────────────────────────────────────────
+
+test707 -> O(n)
+test708 -> O(n)
+test709 -> O(n*m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §P  HELPER RETURNING VALUE AS ANOTHER HELPER'S ARGUMENT
+//      (conservative boundary — engine should stay Unknown)
+// ─────────────────────────────────────────────────────────────────
+
+// test710: helper91(helper5(n))
+//   helper5(n) is O(1) to evaluate but its return VALUE is n^2+3.
+//   The inner call's loop bound equals helper5(n) = n^2+3, which
+//   requires value-level reasoning unavailable to a pure-AST engine.
+test710 -> Unknown
+
+// test711: helper7(helper1(n))
+//   helper1(n) returns a value ~n^2/2; the engine cannot determine
+//   that return value from AST structure alone.
+test711 -> Unknown
+
+// test712: helper91(helper97(n))
+//   helper97(n) returns ~log2(n); the engine cannot determine
+//   that return value from AST structure alone.
+test712 -> Unknown
+
+// ─────────────────────────────────────────────────────────────────
+//  §Q  CONSERVATIVE / AMBIGUOUS BOUNDARY TESTS
+// ─────────────────────────────────────────────────────────────────
+
+// test713: lim = n - m  (subtraction not a supported compound bound)
+test713 -> Unknown
+
+// test714: lim = n * m  (product alias not a supported single-level bound;
+//   engine sees one loop with an alias whose RHS is a product expression)
+test714 -> Unknown
+
+// test715: lim = n / m  (division of two symbolic variables)
+test715 -> Unknown
+
+// test716: lim = n % m  (modulo of two symbolic variables)
+test716 -> Unknown
+
+// test717: loop variable mutated by conditional logic inside body
+test717 -> Unknown
+
+// test718: bound variable n mutated inside loop body
+test718 -> Unknown
+
+// ─────────────────────────────────────────────────────────────────
+//  §R  NEST2 / NEST3 WITH CONTAINER-DERIVED ALIASES
+// ─────────────────────────────────────────────────────────────────
+
+test719 -> O(n*m)
+test720 -> O(n^2)
+test721 -> O(n*m*r)
+test722 -> O(n*m*r)
+test723 -> O(n^3)
+
+// ─────────────────────────────────────────────────────────────────
+//  §S  MIXED NEW-HELPER COMPOSITIONS
+// ─────────────────────────────────────────────────────────────────
+
+// test724: outer n, inner helper91(m) = O(m) => O(n*m)
+test724 -> O(n*m)
+
+// test725: e=m, outer n, inner helper96(e)=O(e)=O(m) => O(n*m)
+test725 -> O(n*m)
+
+// test726: outer n, inner helper98(m)=O(log m) => O(n*log(m))
+test726 -> O(n*log(m))
+
+// test727: outer n, inner helper99(m)=O(m^2) => O(n*m^2)
+test727 -> O(n*m^2)
+
+// test728: outer n, inner helper113(m)=O(m^3) => O(n*m^3)
+test728 -> O(n*m^3)
+
+// test729: outer n, inner helper101(m,r)=O(m+r) => O(n*(m+r))
+test729 -> O(n*(m+r))
+
+// test730: outer n*m (nested), innermost helper91(r)=O(r) => O(n*m*r)
+test730 -> O(n*m*r)
+
+// test731: outer n, inner helper104(e,f)=O(e+f) => O(n*(e+f))
+test731 -> O(n*(e+f))
+
+// test732: outer n, inner helper108(n,m)=O(log(n)*log(m)) => O(n*log(n)*log(m))
+test732 -> O(n*log(n)*log(m))
+
+// ─────────────────────────────────────────────────────────────────
+//  §T  NEW PARAM NAMES: e, f, g, h
+// ─────────────────────────────────────────────────────────────────
+
+test733 -> O(e)
+test734 -> O(f)
+test735 -> O(g)
+test736 -> O(h)
+test737 -> O(e*f)
+test738 -> O(e+f+g)
+test739 -> O(log e)
+test740 -> O(e^2)
+test741 -> O(e*f*g)
+
+// ─────────────────────────────────────────────────────────────────
+//  §U  STATIC_CAST ALIAS → DEEP CHAIN COMPOSITION
+// ─────────────────────────────────────────────────────────────────
+
+// test742: e = static_cast<int>(v.size()), helper96(e) = O(e) = O(n)
+test742 -> O(n)
+
+// test743: e=v.size(), f=u.size(), helper100(e,f)=O(e*f) = O(n*m)
+test743 -> O(n*m)
+
+// test744: e=v.size(), f=u.size(), helper101(e,f)=O(e+f) = O(n+m)
+test744 -> O(n+m)
+
+// test745: n=v.size(), fo(i,n) rep(j,0,m) => O(n*m)
+test745 -> O(n*m)
+
+// test746: n=v.size() via typedef Bound, nested loops => O(n^2)
+test746 -> O(n^2)
+
+// ─────────────────────────────────────────────────────────────────
+//  §V  TRIPLE ALIAS CHAIN + CAST + MACRO + HELPER COMBO
+// ─────────────────────────────────────────────────────────────────
+
+// test747: e1=n, e2=e1, e3=e2, fo(i,e3) => O(n)
+test747 -> O(n)
+
+// test748: ll=(long long)v.size(), e=static_cast<Elem>(ll), helper93(e)=O(e) => O(n)
+test748 -> O(n)
+
+// test749: n=v.size(), m=u.size(), NEST2(n,m) => O(n*m)
+test749 -> O(n*m)
+
+// test750: n=static_cast<int>((size_t)str.size()), repLL over n => O(n)
+test750 -> O(n)
+
+// ─────────────────────────────────────────────────────────────────
+//  §W  NEW LOG STEP SIZES (×4, ÷3, ÷4)
+// ─────────────────────────────────────────────────────────────────
+
+test751 -> O(log n)
+test752 -> O(log n)
+test753 -> O(log n)
+test754 -> O(log m)
+test755 -> O(log e)
+test756 -> O(log n)
+test757 -> O(log n)
+test758 -> O(n*log(n))
+test759 -> O(log(n)*log(m))
+
+// ─────────────────────────────────────────────────────────────────
+//  §X  FORI MACRO FORMS
+// ─────────────────────────────────────────────────────────────────
+
+test760 -> O(n)
+test761 -> O(m)
+test762 -> O(n*m)
+test763 -> O(n^2)
+test764 -> O(n)
+test765 -> O(n+m)
+test766 -> O(n*m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §Y  repe (<=) MACRO FORMS
+// ─────────────────────────────────────────────────────────────────
+
+test767 -> O(n)
+test768 -> O(m)
+test769 -> O(n*m)
+test770 -> O(n^2)
+
+// ─────────────────────────────────────────────────────────────────
+//  §Z  fod (REVERSE) MACRO COMBOS
+// ─────────────────────────────────────────────────────────────────
+
+test771 -> O(n)
+test772 -> O(n*m)
+test773 -> O(n*m)
+test774 -> O(n^2)
+test775 -> O(n*m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §AA  FORV MACRO + INNER HELPERS / LOOPS
+// ─────────────────────────────────────────────────────────────────
+
+test776 -> O(n*m)
+test777 -> O(n^2)
+test778 -> O(n*log(n))
+test779 -> O(n*m)
+
+// ─────────────────────────────────────────────────────────────────
+//  §BB  ADDITIONAL DEEP MULTI-CONCEPT CHAINS
+// ─────────────────────────────────────────────────────────────────
+
+// test780: typedef Bound; n=v.size(); fo(i,n); inner helper97(n)=O(log n) => O(n*log(n))
+test780 -> O(n*log(n))
+
+// test781: const auto n=v.size(), const auto m=u.size(), NEST2(n,m) => O(n*m)
+test781 -> O(n*m)
+
+// test782: n=v.size(), NEST2(n,n), inner helper97(n)=O(log n) => O(n^2*log(n))
+test782 -> O(n^2*log(n))
+
+// test783: typedef T; T a=n; auto b=m; sequential loops => O(n+m)
+test783 -> O(n+m)
+
+// test784: using Idx=int; const Idx rows=n, cols=m; FORI nested => O(n*m)
+test784 -> O(n*m)
+
+// test785: six-hop alias chain n->a->b->c->d->e->f; loop on f => O(n)
+test785 -> O(n)
+
+// test786: six-hop const alias chain; fo(i,f) => O(n)
+test786 -> O(n)
+
+// test787: mixed-type alias chain (int→auto→const int→typedef); loop => O(n)
+test787 -> O(n)
+
+// test788: v.size()→long long→int→auto→nn; fo(i,nn) fo(j,m) => O(n*m)
+test788 -> O(n*m)
+
+// test789: six-hop mixed-const alias chain; log loop => O(log n)
+test789 -> O(log n)
+
+// test790: p=v.size(), q=dq.size(), r=ms.size(); helper39(p,q,r)=O(p+q+r) => O(n+m+r)
+test790 -> O(n+m+r)
+
+// test791: p=v.size(), q=u.size(), r=dq.size(); helper38(p,q,r)=O(p*q*r) => O(n*m*r)
+test791 -> O(n*m*r)
+
+// test792: n=v.size(), m=u.size(); fo(i,n) helper34(m)=O(log m) => O(n*log(m))
+test792 -> O(n*log(m))
+
+// test793: map range-for (|mp|=n), inner fo(j,m) => O(n*m)
+test793 -> O(n*m)
+
+// test794: auto n=v.size(); FORV outer, FORV inner, inner helper97(n)=O(log n) => O(n^2*log(n))
+test794 -> O(n^2*log(n))
+
+// test795: outer n, inner helper101(m,r)=O(m+r) => O(n*(m+r))
+test795 -> O(n*(m+r))
+
+// test796: using E=int, F=int; ee=e, ff=f; helper120(ee,ff)=O(e*f) => O(e*f)
+test796 -> O(e*f)
+
+// test797: for-init total=n+m; loop total times; +O(1) dominated => O(n+m)
+test797 -> O(n+m)
+
+// test798: const int n=v.size(); NEST2(n,m); inner helper5 O(1) per cell => O(n*m)
+test798 -> O(n*m)
+
+// test799: n=mm.size(), m=umm.size(); helper101(n,m)=O(n+m) => O(n+m)
+test799 -> O(n+m)
+
+// test800: n=v.size(), m=u.size(); NEST2(n,m) outer; inner log loop on r => O(n*m*log(r))
+test800 -> O(n*m*log(r))

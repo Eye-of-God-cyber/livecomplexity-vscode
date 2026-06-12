@@ -1644,16 +1644,19 @@ void foo(int n) {
     code: `void f(int n){ int i=1; while(i<n){ if(i>0) i=i*2; } }`, expected: 'Unknown' as any },
 
   { id: 292, label: 'D4.9 NEG E: guarded while i+=i inside if → Unknown',
-    code: `void f(int n){ int i=1; while(i<n){ if(i>0) i+=i; } }`, expected: 'Unknown' as any },
+    code: wrap('int i = 1; while (i < n) { if (true) { i += i; } }'), expected: 'Unknown' },
+
+  // ── D5.4 Issue 6: Harmonic Shadowing & Canonical Aliasing ─────────────────
+  { id: 293, label: 'D5.4: shadow isolation — inner i=2; inner loop j+=i must NOT be harmonic -> O(n²)',
+    code: wrap('for(int i=1;i<=n;i++) { int i=2; for(int j=i;j<=n;j+=i){} }'), expected: 'O(n²)' },
+  { id: 294, label: 'D5.4: harmonic alias — step=i; j+=step -> O(n log n)',
+    code: wrap('for(int i=1;i<=n;i++) { int step=i; for(int j=step;j<=n;j+=step){} }'), expected: 'O(n log n)' },
 
 ];
 
-
-
-
 // ─── vitest suite ───────────────────────────────────────────────────────────
 
-describe('Validation Suite — 292 patterns', () => {
+describe('Validation Suite — 294 patterns', () => {
   beforeAll(async () => {
     await initParser(distDir);
   });

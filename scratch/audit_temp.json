@@ -1,0 +1,743 @@
+{
+  "catA": [
+    {
+      "name": "test428",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test429",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test433",
+      "exp": "O(n^2)",
+      "prod": "O(n²)"
+    },
+    {
+      "name": "test434",
+      "exp": "O(n*m)",
+      "prod": "O(nm)"
+    },
+    {
+      "name": "test463",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test464",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test465",
+      "exp": "O(n+m+r)",
+      "prod": "O(m + n + r)"
+    },
+    {
+      "name": "test468",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test470",
+      "exp": "O(wid+hgt)",
+      "prod": "O(hgt + wid)"
+    },
+    {
+      "name": "test473",
+      "exp": "O(cap*lim)",
+      "prod": "O(caplim)"
+    },
+    {
+      "name": "test475",
+      "exp": "O(n+m+r)",
+      "prod": "O(m + n + r)"
+    },
+    {
+      "name": "test476",
+      "exp": "O(n+m+r+t)",
+      "prod": "O(m + n + r + t)"
+    },
+    {
+      "name": "test477",
+      "exp": "O(n*m*r*t)",
+      "prod": "O(nmrt)"
+    },
+    {
+      "name": "test515",
+      "exp": "O(wid+hgt)",
+      "prod": "O(hgt + wid)"
+    },
+    {
+      "name": "test519",
+      "exp": "O(cap*lim)",
+      "prod": "O(caplim)"
+    },
+    {
+      "name": "test564",
+      "exp": "O(n*m)",
+      "prod": "O(nm)"
+    },
+    {
+      "name": "test567",
+      "exp": "O(n*m)",
+      "prod": "O(nm)"
+    },
+    {
+      "name": "test568",
+      "exp": "O(n^2)",
+      "prod": "O(n²)"
+    },
+    {
+      "name": "test569",
+      "exp": "O(n^2)",
+      "prod": "O(n²)"
+    },
+    {
+      "name": "test572",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test573",
+      "exp": "O(n*m)",
+      "prod": "O(nm)"
+    },
+    {
+      "name": "test575",
+      "exp": "O(n*m)",
+      "prod": "O(nm)"
+    },
+    {
+      "name": "test589",
+      "exp": "O(n*m)",
+      "prod": "O(nm)"
+    },
+    {
+      "name": "test596",
+      "exp": "O(n+m)",
+      "prod": "O(m + n)"
+    }
+  ],
+  "catB": [
+    {
+      "name": "test402",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test403",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test404",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test405",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test406",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test407",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test408",
+      "exp": "O(n)",
+      "prod": "O(str.size())"
+    },
+    {
+      "name": "test409",
+      "exp": "O(n+m)",
+      "prod": "O(dq.size() + v.size())"
+    },
+    {
+      "name": "test410",
+      "exp": "O(n*m)",
+      "prod": "O(u.size()v.size())"
+    },
+    {
+      "name": "test411",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test412",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test413",
+      "exp": "O(n*m)",
+      "prod": "O(ms.size()st.size())"
+    },
+    {
+      "name": "test414",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test415",
+      "exp": "O(n)",
+      "prod": "O(str.length())"
+    },
+    {
+      "name": "test416",
+      "exp": "O(n)",
+      "prod": "O(str.size())"
+    },
+    {
+      "name": "test419",
+      "exp": "O(n)",
+      "prod": "O(arr.size())"
+    },
+    {
+      "name": "test420",
+      "exp": "O(n+m)",
+      "prod": "O(arr.size() + v.size())"
+    },
+    {
+      "name": "test426",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test427",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test449",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test450",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test453",
+      "exp": "O(n)",
+      "prod": "O(str.size())"
+    },
+    {
+      "name": "test454",
+      "exp": "O(n+m)",
+      "prod": "O(str.size() + v.size())"
+    },
+    {
+      "name": "test455",
+      "exp": "O(n)",
+      "prod": "O(mp.size())"
+    },
+    {
+      "name": "test456",
+      "exp": "O(n)",
+      "prod": "O(mp.size())"
+    },
+    {
+      "name": "test457",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test458",
+      "exp": "O(n*m)",
+      "prod": "O(u.size()v.size())"
+    },
+    {
+      "name": "test459",
+      "exp": "O(n+extra)",
+      "prod": "O(extra + v.size())"
+    },
+    {
+      "name": "test461",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test462",
+      "exp": "O(n+m)",
+      "prod": "O(dq.size() + v.size())"
+    },
+    {
+      "name": "test495",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test503",
+      "exp": "O(n^2)",
+      "prod": "O(v.size()²)"
+    },
+    {
+      "name": "test504",
+      "exp": "O(n+m)",
+      "prod": "O(mp.size() + ump.size())"
+    },
+    {
+      "name": "test505",
+      "exp": "O(n*m)",
+      "prod": "O(mp.size()ump.size())"
+    },
+    {
+      "name": "test506",
+      "exp": "O(n)",
+      "prod": "O(mm.size())"
+    },
+    {
+      "name": "test508",
+      "exp": "O(n+m)",
+      "prod": "O(s1.size() + s2.size())"
+    },
+    {
+      "name": "test509",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test510",
+      "exp": "O(n*m)",
+      "prod": "O(v.size()w.size())"
+    },
+    {
+      "name": "test544",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test546",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test547",
+      "exp": "O(n)",
+      "prod": "O(mp.size())"
+    },
+    {
+      "name": "test550",
+      "exp": "O(n+m)",
+      "prod": "O(str.size() + v.size())"
+    },
+    {
+      "name": "test554",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test558",
+      "exp": "O(n+m)",
+      "prod": "O(m + v.size())"
+    },
+    {
+      "name": "test571",
+      "exp": "O(n*m)",
+      "prod": "O(u.size()v.size())"
+    },
+    {
+      "name": "test576",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test577",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test580",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test581",
+      "exp": "O(n^2)",
+      "prod": "O(v.size()²)"
+    },
+    {
+      "name": "test584",
+      "exp": "O(n)",
+      "prod": "O(str.size())"
+    },
+    {
+      "name": "test585",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test586",
+      "exp": "O(n+m)",
+      "prod": "O(dq.size() + v.size())"
+    },
+    {
+      "name": "test587",
+      "exp": "O(n^2)",
+      "prod": "O(v.size()²)"
+    },
+    {
+      "name": "test588",
+      "exp": "O(n)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test598",
+      "exp": "O(n+m)",
+      "prod": "O(u.size() + v.size())"
+    }
+  ],
+  "other": [
+    {
+      "name": "test417",
+      "exp": "O(n+m)",
+      "prod": "O(n + v.size())"
+    },
+    {
+      "name": "test418",
+      "exp": "O(n*m)",
+      "prod": "O(nv.size())"
+    },
+    {
+      "name": "test435",
+      "exp": "O(n^3)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test436",
+      "exp": "O(n*m*r)",
+      "prod": "O(m + n + r)"
+    },
+    {
+      "name": "test437",
+      "exp": "O(n^2*m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test438",
+      "exp": "O(n*m^2)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test439",
+      "exp": "O(n^3)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test440",
+      "exp": "O(n*m*r)",
+      "prod": "O(m + n + r)"
+    },
+    {
+      "name": "test441",
+      "exp": "O(n^3)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test442",
+      "exp": "O(n*m*r)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test443",
+      "exp": "O(n^3)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test444",
+      "exp": "O(n*m*r)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test445",
+      "exp": "O(n*m)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test446",
+      "exp": "O(n^2)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test447",
+      "exp": "O(n*m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test448",
+      "exp": "O(n^2*m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test451",
+      "exp": "O(n^2)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test452",
+      "exp": "O(n*m)",
+      "prod": "O(u.size() + v.size())"
+    },
+    {
+      "name": "test460",
+      "exp": "O(n*m)",
+      "prod": "O(mv.size())"
+    },
+    {
+      "name": "test466",
+      "exp": "O(n+m)",
+      "prod": "O(n + v.size())"
+    },
+    {
+      "name": "test471",
+      "exp": "O(wid*hgt)",
+      "prod": "O(hgtwid)"
+    },
+    {
+      "name": "test488",
+      "exp": "O(n)",
+      "prod": "O(n²)"
+    },
+    {
+      "name": "test489",
+      "exp": "O(n)",
+      "prod": "O(n²)"
+    },
+    {
+      "name": "test492",
+      "exp": "O(m)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test494",
+      "exp": "O(m)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test498",
+      "exp": "O(rows*cols)",
+      "prod": "O(cr)"
+    },
+    {
+      "name": "test501",
+      "exp": "O(n+m+r)",
+      "prod": "O(dq.size() + st.size() + v.size())"
+    },
+    {
+      "name": "test502",
+      "exp": "O(n*m*r)",
+      "prod": "O(u.size()v.size()w.size())"
+    },
+    {
+      "name": "test507",
+      "exp": "O(n+m+r)",
+      "prod": "O(dq.size() + n + st.size() + v.size())"
+    },
+    {
+      "name": "test513",
+      "exp": "O(wid*hgt)",
+      "prod": "O(hgtwid)"
+    },
+    {
+      "name": "test514",
+      "exp": "O(wid*hgt)",
+      "prod": "O(hgtwid)"
+    },
+    {
+      "name": "test520",
+      "exp": "O(wid*hgt)",
+      "prod": "O(u.size()v.size())"
+    },
+    {
+      "name": "test521",
+      "exp": "O(wid)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test524",
+      "exp": "O(n*log(m))",
+      "prod": "O(n log n)"
+    },
+    {
+      "name": "test525",
+      "exp": "O(rows*log(cols))",
+      "prod": "O(rows log rows)"
+    },
+    {
+      "name": "test526",
+      "exp": "O(a*log(b))",
+      "prod": "O(a log a)"
+    },
+    {
+      "name": "test527",
+      "exp": "O(n*log(n))",
+      "prod": "O(n log n)"
+    },
+    {
+      "name": "test528",
+      "exp": "O(n*log(m))",
+      "prod": "O(n log n)"
+    },
+    {
+      "name": "test529",
+      "exp": "O(n*log(m))",
+      "prod": "O(n log n)"
+    },
+    {
+      "name": "test530",
+      "exp": "O(rows*log(cols))",
+      "prod": "O(rows log rows)"
+    },
+    {
+      "name": "test531",
+      "exp": "O(n*log(m))",
+      "prod": "O(v.size() log v.size())"
+    },
+    {
+      "name": "test532",
+      "exp": "O(n^2*log(n))",
+      "prod": "O(n² log n)"
+    },
+    {
+      "name": "test540",
+      "exp": "O(n*m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test541",
+      "exp": "O(n*m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test542",
+      "exp": "O(a*b)",
+      "prod": "O(a + b)"
+    },
+    {
+      "name": "test543",
+      "exp": "O(rows*cols)",
+      "prod": "O(cols + rows)"
+    },
+    {
+      "name": "test545",
+      "exp": "O(n*m)",
+      "prod": "O(m + v.size())"
+    },
+    {
+      "name": "test548",
+      "exp": "O(n*m)",
+      "prod": "O(u.size() + v.size())"
+    },
+    {
+      "name": "test549",
+      "exp": "O(n^2)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test551",
+      "exp": "O(wid*hgt)",
+      "prod": "O(u.size()v.size())"
+    },
+    {
+      "name": "test552",
+      "exp": "O(n+m+r)",
+      "prod": "O(dq.size() + st.size() + v.size())"
+    },
+    {
+      "name": "test553",
+      "exp": "O(n*log(m))",
+      "prod": "O(v.size() log v.size())"
+    },
+    {
+      "name": "test555",
+      "exp": "O(n*m)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test556",
+      "exp": "O(n^3)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test557",
+      "exp": "O(n*m)",
+      "prod": "O(m + v.size())"
+    },
+    {
+      "name": "test565",
+      "exp": "O(log(n))",
+      "prod": "O(log n)"
+    },
+    {
+      "name": "test570",
+      "exp": "O(rows*cols)",
+      "prod": "O(colsrows)"
+    },
+    {
+      "name": "test574",
+      "exp": "O(n*m)",
+      "prod": "O(m + v.size())"
+    },
+    {
+      "name": "test578",
+      "exp": "O(m)",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test579",
+      "exp": "O(n*m)",
+      "prod": "O(m + v.size())"
+    },
+    {
+      "name": "test583",
+      "exp": "O(n*m)",
+      "prod": "O(m + n)"
+    },
+    {
+      "name": "test590",
+      "exp": "O(n*log(n))",
+      "prod": "O(n log n)"
+    },
+    {
+      "name": "test591",
+      "exp": "O(n*log(n))",
+      "prod": "O(n)"
+    },
+    {
+      "name": "test592",
+      "exp": "O(n*m*log(r))",
+      "prod": "O(nm log n)"
+    },
+    {
+      "name": "test593",
+      "exp": "O(n*log(m))",
+      "prod": "O(nn log nn)"
+    },
+    {
+      "name": "test597",
+      "exp": "O(rows*cols)",
+      "prod": "O(colsg.size())"
+    },
+    {
+      "name": "test599",
+      "exp": "O(n*m)",
+      "prod": "O(v.size())"
+    },
+    {
+      "name": "test600",
+      "exp": "O(n^2*log(n))",
+      "prod": "O(v.size() + log n)"
+    }
+  ]
+}

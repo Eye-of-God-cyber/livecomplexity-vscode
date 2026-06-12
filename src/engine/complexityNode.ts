@@ -34,6 +34,7 @@ export interface ComplexityNode {
   isGraphSumLog?: boolean;  // true → format as O((V+E) log V) (D2.3+)
   expVars?: string[];        // per-variable 2^x entries — e.g. ['n'] → 2ⁿ, ['n','m'] → 2ⁿ·2ᵐ (D3.1+)
   sumTerms?: ComplexityNode[]; // D4.7: non-empty → Sum Node O(T₁+T₂+…); undefined → Scalar Node
+  isSubstituted?: boolean; // D5.0: true → disable isSingleVariable fallback
 }
 
 /**

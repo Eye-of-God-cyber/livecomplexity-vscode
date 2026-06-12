@@ -1,0 +1,698 @@
+﻿
+================================================================================
+CASE: BRACE-LESS NESTED: fo(i, n) fo(j, m) s++;
+SOURCE:
+  1: #define fo(i, n) for (int i = 0; i < (n); i++)
+  2: void test() {
+  3:     int n = 10, m = 5, s = 0;
+  4:     fo(i, n) fo(j, m) s++;
+  5: }
+================================================================================
+
+--- FULL AST ---
+translation_unit [0:0ΓÇô4:1] bytes[0ΓÇô119] id=3602416 parentId=ROOT text="#define fo(i, n) for (int i = 0; i < (n); i++)\nvoid test() {"
+  preproc_function_def [0:0ΓÇô1:0] bytes[0ΓÇô47] id=3603040 parentId=3602416 text="#define fo(i, n) for (int i = 0; i < (n); i++)\n"
+    #define [0:0ΓÇô0:7] bytes[0ΓÇô7] id=3594824 parentId=3603040 text="#define"
+    identifier [0:8ΓÇô0:10] bytes[8ΓÇô10] id=3594832 parentId=3603040 text="fo"
+    preproc_params [0:10ΓÇô0:16] bytes[10ΓÇô16] id=3594840 parentId=3603040 text="(i, n)"
+      ( [0:10ΓÇô0:11] bytes[10ΓÇô11] id=3594632 parentId=3594840 text="("
+      identifier [0:11ΓÇô0:12] bytes[11ΓÇô12] id=3594640 parentId=3594840 text="i"
+      , [0:12ΓÇô0:13] bytes[12ΓÇô13] id=3594368 parentId=3594840 text=","
+      identifier [0:14ΓÇô0:15] bytes[14ΓÇô15] id=3594376 parentId=3594840 text="n"
+      ) [0:15ΓÇô0:16] bytes[15ΓÇô16] id=3594656 parentId=3594840 text=")"
+    preproc_arg [0:17ΓÇô0:46] bytes[17ΓÇô46] id=3594848 parentId=3603040 text="for (int i = 0; i < (n); i++)"
+  function_definition [1:0ΓÇô4:1] bytes[47ΓÇô119] id=3603048 parentId=3602416 text="void test() {\n    int n = 10, m = 5, s = 0;\n    fo(i, n) fo("
+    primitive_type [1:0ΓÇô1:4] bytes[47ΓÇô51] id=3594944 parentId=3603048 text="void"
+    function_declarator [1:5ΓÇô1:11] bytes[52ΓÇô58] id=3595488 parentId=3603048 text="test()"
+      identifier [1:5ΓÇô1:9] bytes[52ΓÇô56] id=3595120 parentId=3595488 text="test"
+      parameter_list [1:9ΓÇô1:11] bytes[56ΓÇô58] id=3595304 parentId=3595488 text="()"
+        ( [1:9ΓÇô1:10] bytes[56ΓÇô57] id=3595208 parentId=3595304 text="("
+        ) [1:10ΓÇô1:11] bytes[57ΓÇô58] id=3595216 parentId=3595304 text=")"
+    compound_statement [1:12ΓÇô4:1] bytes[59ΓÇô119] id=3602952 parentId=3603048 text="{\n    int n = 10, m = 5, s = 0;\n    fo(i, n) fo(j, m) s++;\n}"
+      { [1:12ΓÇô1:13] bytes[59ΓÇô60] id=3602832 parentId=3602952 text="{"
+      declaration [2:4ΓÇô2:29] bytes[65ΓÇô90] id=79936 parentId=3602952 text="int n = 10, m = 5, s = 0;"
+        primitive_type [2:4ΓÇô2:7] bytes[65ΓÇô68] id=3595576 parentId=79936 text="int"
+        init_declarator [2:8ΓÇô2:14] bytes[69ΓÇô75] id=3597992 parentId=79936 text="n = 10"
+          identifier [2:8ΓÇô2:9] bytes[69ΓÇô70] id=3595752 parentId=3597992 text="n"
+          = [2:10ΓÇô2:11] bytes[71ΓÇô72] id=3596360 parentId=3597992 text="="
+          number_literal [2:12ΓÇô2:14] bytes[73ΓÇô75] id=3596008 parentId=3597992 text="10"
+        , [2:14ΓÇô2:15] bytes[75ΓÇô76] id=3597160 parentId=79936 text=","
+        init_declarator [2:16ΓÇô2:21] bytes[77ΓÇô82] id=3597168 parentId=79936 text="m = 5"
+          identifier [2:16ΓÇô2:17] bytes[77ΓÇô78] id=3596456 parentId=3597168 text="m"
+          = [2:18ΓÇô2:19] bytes[79ΓÇô80] id=3597064 parentId=3597168 text="="
+          number_literal [2:20ΓÇô2:21] bytes[81ΓÇô82] id=3596712 parentId=3597168 text="5"
+        , [2:21ΓÇô2:22] bytes[82ΓÇô83] id=3597792 parentId=79936 text=","
+        init_declarator [2:23ΓÇô2:28] bytes[84ΓÇô89] id=3597800 parentId=79936 text="s = 0"
+          identifier [2:23ΓÇô2:24] bytes[84ΓÇô85] id=3597256 parentId=3597800 text="s"
+          = [2:25ΓÇô2:26] bytes[86ΓÇô87] id=3597696 parentId=3597800 text="="
+          number_literal [2:27ΓÇô2:28] bytes[88ΓÇô89] id=3597344 parentId=3597800 text="0"
+        ; [2:28ΓÇô2:29] bytes[89ΓÇô90] id=3598008 parentId=79936 text=";"
+      expression_statement [3:4ΓÇô3:12] bytes[95ΓÇô103] id=79944 parentId=3602952 text="fo(i, n)"
+        call_expression [3:4ΓÇô3:12] bytes[95ΓÇô103] id=3600384 parentId=79944 text="fo(i, n)"
+          identifier [3:4ΓÇô3:6] bytes[95ΓÇô97] id=3598272 parentId=3600384 text="fo"
+          argument_list [3:6ΓÇô3:12] bytes[97ΓÇô103] id=3600296 parentId=3600384 text="(i, n)"
+            ( [3:6ΓÇô3:7] bytes[97ΓÇô98] id=3600176 parentId=3600296 text="("
+            identifier [3:7ΓÇô3:8] bytes[98ΓÇô99] id=3598872 parentId=3600296 text="i"
+            , [3:8ΓÇô3:9] bytes[99ΓÇô100] id=3599720 parentId=3600296 text=","
+            identifier [3:10ΓÇô3:11] bytes[101ΓÇô102] id=3598184 parentId=3600296 text="n"
+            ) [3:11ΓÇô3:12] bytes[102ΓÇô103] id=3600200 parentId=3600296 text=")"
+        ; [3:12ΓÇô3:12] bytes[103ΓÇô103] id=3600568 parentId=3600200 text=""
+      expression_statement [3:13ΓÇô3:26] bytes[104ΓÇô117] id=3602552 parentId=3602952 text="fo(j, m) s++;"
+        update_expression [3:13ΓÇô3:25] bytes[104ΓÇô116] id=3599216 parentId=3602552 text="fo(j, m) s++"
+          call_expression [3:13ΓÇô3:21] bytes[104ΓÇô112] id=3601376 parentId=3599216 text="fo(j, m)"
+            identifier [3:13ΓÇô3:15] bytes[104ΓÇô106] id=3599904 parentId=3601376 text="fo"
+            argument_list [3:15ΓÇô3:21] bytes[106ΓÇô112] id=3601672 parentId=3601376 text="(j, m)"
+              ( [3:15ΓÇô3:16] bytes[106ΓÇô107] id=3601552 parentId=3601672 text="("
+              identifier [3:16ΓÇô3:17] bytes[107ΓÇô108] id=3598096 parentId=3601672 text="j"
+              , [3:17ΓÇô3:18] bytes[108ΓÇô109] id=3601096 parentId=3601672 text=","
+              identifier [3:19ΓÇô3:20] bytes[110ΓÇô111] id=3599816 parentId=3601672 text="m"
+              ) [3:20ΓÇô3:21] bytes[111ΓÇô112] id=3601576 parentId=3601672 text=")"
+          ERROR [3:22ΓÇô3:23] bytes[113ΓÇô114] id=3602136 parentId=3599216 text="s"
+            identifier [3:22ΓÇô3:23] bytes[113ΓÇô114] id=3602456 parentId=3602136 text="s"
+          ++ [3:23ΓÇô3:25] bytes[114ΓÇô116] id=3602144 parentId=3599216 text="++"
+        ; [3:25ΓÇô3:26] bytes[116ΓÇô117] id=3602328 parentId=3602552 text=";"
+      } [4:0ΓÇô4:1] bytes[118ΓÇô119] id=3602848 parentId=3602952 text="}"
+
+--- ALL call_expression NODES ---
+
+call_expression: text="fo(i, n)"
+  call_expression [3:4ΓÇô3:12] bytes[95ΓÇô103] id=3600384 parentId=79944 text="fo(i, n)"
+  Siblings:
+  Parent: expression_statement(id=79944), childCount=2
+  >>> sibling[0]: call_expression(id=3600384) text="fo(i, n)"
+      sibling[1]: ;(id=3600568) text=""
+  Parent chain:
+Parent chain: call_expression(id=3600384) -> expression_statement(id=79944) -> compound_statement(id=3602952) -> function_definition(id=3603048) -> translation_unit(id=3602416)
+
+call_expression: text="fo(j, m)"
+  call_expression [3:13ΓÇô3:21] bytes[104ΓÇô112] id=3601376 parentId=3599216 text="fo(j, m)"
+  Siblings:
+  Parent: update_expression(id=3599216), childCount=3
+  >>> sibling[0]: call_expression(id=3601376) text="fo(j, m)"
+      sibling[1]: ERROR(id=3602136) text="s"
+      sibling[2]: ++(id=3602144) text="++"
+  Parent chain:
+Parent chain: call_expression(id=3601376) -> update_expression(id=3599216) -> expression_statement(id=3602552) -> compound_statement(id=3602952) -> function_definition(id=3603048) -> translation_unit(id=3602416)
+
+--- ALL for_statement / for_range_loop NODES ---
+
+--- expression_statement NODES ---
+
+expression_statement: text="fo(i, n)"
+  expression_statement [3:4ΓÇô3:12] bytes[95ΓÇô103] id=79944 parentId=3602952 text="fo(i, n)"
+  Siblings:
+  Parent: compound_statement(id=3602952), childCount=5
+      sibling[0]: {(id=3602832) text="{"
+      sibling[1]: declaration(id=79936) text="int n = 10, m = 5, s = 0;"
+  >>> sibling[2]: expression_statement(id=79944) text="fo(i, n)"
+      sibling[3]: expression_statement(id=3602552) text="fo(j, m) s++;"
+      sibling[4]: }(id=3602848) text="}"
+
+expression_statement: text="fo(j, m) s++;"
+  expression_statement [3:13ΓÇô3:26] bytes[104ΓÇô117] id=3602552 parentId=3602952 text="fo(j, m) s++;"
+  Siblings:
+  Parent: compound_statement(id=3602952), childCount=5
+      sibling[0]: {(id=3602832) text="{"
+      sibling[1]: declaration(id=79936) text="int n = 10, m = 5, s = 0;"
+      sibling[2]: expression_statement(id=79944) text="fo(i, n)"
+  >>> sibling[3]: expression_statement(id=3602552) text="fo(j, m) s++;"
+      sibling[4]: }(id=3602848) text="}"
+
+================================================================================
+CASE: OUTER BRACES: fo(i, n) { fo(j, m) s++; }
+SOURCE:
+  1: #define fo(i, n) for (int i = 0; i < (n); i++)
+  2: void test() {
+  3:     int n = 10, m = 5, s = 0;
+  4:     fo(i, n) { fo(j, m) s++; }
+  5: }
+================================================================================
+
+--- FULL AST ---
+translation_unit [0:0ΓÇô4:1] bytes[0ΓÇô123] id=3608752 parentId=ROOT text="#define fo(i, n) for (int i = 0; i < (n); i++)\nvoid test() {"
+  preproc_function_def [0:0ΓÇô1:0] bytes[0ΓÇô47] id=3611328 parentId=3608752 text="#define fo(i, n) for (int i = 0; i < (n); i++)\n"
+    #define [0:0ΓÇô0:7] bytes[0ΓÇô7] id=3601968 parentId=3611328 text="#define"
+    identifier [0:8ΓÇô0:10] bytes[8ΓÇô10] id=3601976 parentId=3611328 text="fo"
+    preproc_params [0:10ΓÇô0:16] bytes[10ΓÇô16] id=3601984 parentId=3611328 text="(i, n)"
+      ( [0:10ΓÇô0:11] bytes[10ΓÇô11] id=3601856 parentId=3601984 text="("
+      identifier [0:11ΓÇô0:12] bytes[11ΓÇô12] id=3601864 parentId=3601984 text="i"
+      , [0:12ΓÇô0:13] bytes[12ΓÇô13] id=3601760 parentId=3601984 text=","
+      identifier [0:14ΓÇô0:15] bytes[14ΓÇô15] id=3601768 parentId=3601984 text="n"
+      ) [0:15ΓÇô0:16] bytes[15ΓÇô16] id=3601880 parentId=3601984 text=")"
+    preproc_arg [0:17ΓÇô0:46] bytes[17ΓÇô46] id=3601992 parentId=3611328 text="for (int i = 0; i < (n); i++)"
+  function_definition [1:0ΓÇô4:1] bytes[47ΓÇô123] id=3611336 parentId=3608752 text="void test() {\n    int n = 10, m = 5, s = 0;\n    fo(i, n) { f"
+    primitive_type [1:0ΓÇô1:4] bytes[47ΓÇô51] id=3602232 parentId=3611336 text="void"
+    function_declarator [1:5ΓÇô1:11] bytes[52ΓÇô58] id=3603712 parentId=3611336 text="test()"
+      identifier [1:5ΓÇô1:9] bytes[52ΓÇô56] id=3601192 parentId=3603712 text="test"
+      parameter_list [1:9ΓÇô1:11] bytes[56ΓÇô58] id=3602640 parentId=3603712 text="()"
+        ( [1:9ΓÇô1:10] bytes[56ΓÇô57] id=3601280 parentId=3602640 text="("
+        ) [1:10ΓÇô1:11] bytes[57ΓÇô58] id=3601288 parentId=3602640 text=")"
+    compound_statement [1:12ΓÇô4:1] bytes[59ΓÇô123] id=3611240 parentId=3611336 text="{\n    int n = 10, m = 5, s = 0;\n    fo(i, n) { fo(j, m) s++;"
+      { [1:12ΓÇô1:13] bytes[59ΓÇô60] id=3611120 parentId=3611240 text="{"
+      declaration [2:4ΓÇô2:29] bytes[65ΓÇô90] id=3610424 parentId=3611240 text="int n = 10, m = 5, s = 0;"
+        primitive_type [2:4ΓÇô2:7] bytes[65ΓÇô68] id=3603800 parentId=3610424 text="int"
+        init_declarator [2:8ΓÇô2:14] bytes[69ΓÇô75] id=3605376 parentId=3610424 text="n = 10"
+          identifier [2:8ΓÇô2:9] bytes[69ΓÇô70] id=3603976 parentId=3605376 text="n"
+          = [2:10ΓÇô2:11] bytes[71ΓÇô72] id=3604248 parentId=3605376 text="="
+          number_literal [2:12ΓÇô2:14] bytes[73ΓÇô75] id=3604064 parentId=3605376 text="10"
+        , [2:14ΓÇô2:15] bytes[75ΓÇô76] id=3604712 parentId=3610424 text=","
+        init_declarator [2:16ΓÇô2:21] bytes[77ΓÇô82] id=3604720 parentId=3610424 text="m = 5"
+          identifier [2:16ΓÇô2:17] bytes[77ΓÇô78] id=3604344 parentId=3604720 text="m"
+          = [2:18ΓÇô2:19] bytes[79ΓÇô80] id=3604616 parentId=3604720 text="="
+          number_literal [2:20ΓÇô2:21] bytes[81ΓÇô82] id=3604432 parentId=3604720 text="5"
+        , [2:21ΓÇô2:22] bytes[82ΓÇô83] id=3605176 parentId=3610424 text=","
+        init_declarator [2:23ΓÇô2:28] bytes[84ΓÇô89] id=3605184 parentId=3610424 text="s = 0"
+          identifier [2:23ΓÇô2:24] bytes[84ΓÇô85] id=3604808 parentId=3605184 text="s"
+          = [2:25ΓÇô2:26] bytes[86ΓÇô87] id=3605080 parentId=3605184 text="="
+          number_literal [2:27ΓÇô2:28] bytes[88ΓÇô89] id=3604896 parentId=3605184 text="0"
+        ; [2:28ΓÇô2:29] bytes[89ΓÇô90] id=3605392 parentId=3610424 text=";"
+      function_definition [3:4ΓÇô3:30] bytes[95ΓÇô121] id=3610432 parentId=3611240 text="fo(i, n) { fo(j, m) s++; }"
+        function_declarator [3:4ΓÇô3:12] bytes[95ΓÇô103] id=3610328 parentId=3610432 text="fo(i, n)"
+          identifier [3:4ΓÇô3:6] bytes[95ΓÇô97] id=3605480 parentId=3610328 text="fo"
+          parameter_list [3:6ΓÇô3:12] bytes[97ΓÇô103] id=3606928 parentId=3610328 text="(i, n)"
+            ( [3:6ΓÇô3:7] bytes[97ΓÇô98] id=3606816 parentId=3606928 text="("
+            parameter_declaration [3:7ΓÇô3:8] bytes[98ΓÇô99] id=3606824 parentId=3606928 text="i"
+              type_identifier [3:7ΓÇô3:8] bytes[98ΓÇô99] id=3606096 parentId=3606824 text="i"
+            , [3:8ΓÇô3:9] bytes[99ΓÇô100] id=3606720 parentId=3606928 text=","
+            parameter_declaration [3:10ΓÇô3:11] bytes[101ΓÇô102] id=3606728 parentId=3606928 text="n"
+              type_identifier [3:10ΓÇô3:11] bytes[101ΓÇô102] id=3606456 parentId=3606728 text="n"
+            ) [3:11ΓÇô3:12] bytes[102ΓÇô103] id=3606840 parentId=3606928 text=")"
+        compound_statement [3:13ΓÇô3:30] bytes[104ΓÇô121] id=3610336 parentId=3610432 text="{ fo(j, m) s++; }"
+          { [3:13ΓÇô3:14] bytes[104ΓÇô105] id=3610224 parentId=3610336 text="{"
+          expression_statement [3:15ΓÇô3:28] bytes[106ΓÇô119] id=3610232 parentId=3610336 text="fo(j, m) s++;"
+            update_expression [3:15ΓÇô3:27] bytes[106ΓÇô118] id=3607536 parentId=3610232 text="fo(j, m) s++"
+              call_expression [3:15ΓÇô3:23] bytes[106ΓÇô114] id=3608080 parentId=3607536 text="fo(j, m)"
+                identifier [3:15ΓÇô3:17] bytes[106ΓÇô108] id=3605656 parentId=3608080 text="fo"
+                argument_list [3:17ΓÇô3:23] bytes[108ΓÇô114] id=3608288 parentId=3608080 text="(j, m)"
+                  ( [3:17ΓÇô3:18] bytes[108ΓÇô109] id=3608168 parentId=3608288 text="("
+                  identifier [3:18ΓÇô3:19] bytes[109ΓÇô110] id=3605920 parentId=3608288 text="j"
+                  , [3:19ΓÇô3:20] bytes[110ΓÇô111] id=3607712 parentId=3608288 text=","
+                  identifier [3:21ΓÇô3:22] bytes[112ΓÇô113] id=3605568 parentId=3608288 text="m"
+                  ) [3:22ΓÇô3:23] bytes[113ΓÇô114] id=3608192 parentId=3608288 text=")"
+              ERROR [3:24ΓÇô3:25] bytes[115ΓÇô116] id=3608656 parentId=3607536 text="s"
+                identifier [3:24ΓÇô3:25] bytes[115ΓÇô116] id=3609072 parentId=3608656 text="s"
+              ++ [3:25ΓÇô3:27] bytes[116ΓÇô118] id=3608664 parentId=3607536 text="++"
+            ; [3:27ΓÇô3:28] bytes[118ΓÇô119] id=3609848 parentId=3610232 text=";"
+          } [3:29ΓÇô3:30] bytes[120ΓÇô121] id=3610240 parentId=3610336 text="}"
+      } [4:0ΓÇô4:1] bytes[122ΓÇô123] id=3611136 parentId=3611240 text="}"
+
+--- ALL call_expression NODES ---
+
+call_expression: text="fo(j, m)"
+  call_expression [3:15ΓÇô3:23] bytes[106ΓÇô114] id=3608080 parentId=3607536 text="fo(j, m)"
+  Siblings:
+  Parent: update_expression(id=3607536), childCount=3
+  >>> sibling[0]: call_expression(id=3608080) text="fo(j, m)"
+      sibling[1]: ERROR(id=3608656) text="s"
+      sibling[2]: ++(id=3608664) text="++"
+  Parent chain:
+Parent chain: call_expression(id=3608080) -> update_expression(id=3607536) -> expression_statement(id=3610232) -> compound_statement(id=3610336) -> function_definition(id=3610432) -> compound_statement(id=3611240) -> function_definition(id=3611336) -> translation_unit(id=3608752)
+
+--- ALL for_statement / for_range_loop NODES ---
+
+--- expression_statement NODES ---
+
+expression_statement: text="fo(j, m) s++;"
+  expression_statement [3:15ΓÇô3:28] bytes[106ΓÇô119] id=3610232 parentId=3610336 text="fo(j, m) s++;"
+  Siblings:
+  Parent: compound_statement(id=3610336), childCount=3
+      sibling[0]: {(id=3610224) text="{"
+  >>> sibling[1]: expression_statement(id=3610232) text="fo(j, m) s++;"
+      sibling[2]: }(id=3610240) text="}"
+
+================================================================================
+CASE: FULLY BRACED: fo(i, n) { fo(j, m) { s++; } }
+SOURCE:
+  1: #define fo(i, n) for (int i = 0; i < (n); i++)
+  2: void test() {
+  3:     int n = 10, m = 5, s = 0;
+  4:     fo(i, n) { fo(j, m) { s++; } }
+  5: }
+================================================================================
+
+--- FULL AST ---
+translation_unit [0:0ΓÇô4:1] bytes[0ΓÇô127] id=3603688 parentId=ROOT text="#define fo(i, n) for (int i = 0; i < (n); i++)\nvoid test() {"
+  preproc_function_def [0:0ΓÇô1:0] bytes[0ΓÇô47] id=3616040 parentId=3603688 text="#define fo(i, n) for (int i = 0; i < (n); i++)\n"
+    #define [0:0ΓÇô0:7] bytes[0ΓÇô7] id=3608376 parentId=3616040 text="#define"
+    identifier [0:8ΓÇô0:10] bytes[8ΓÇô10] id=3608384 parentId=3616040 text="fo"
+    preproc_params [0:10ΓÇô0:16] bytes[10ΓÇô16] id=3608392 parentId=3616040 text="(i, n)"
+      ( [0:10ΓÇô0:11] bytes[10ΓÇô11] id=3608872 parentId=3608392 text="("
+      identifier [0:11ΓÇô0:12] bytes[11ΓÇô12] id=3608880 parentId=3608392 text="i"
+      , [0:12ΓÇô0:13] bytes[12ΓÇô13] id=3608776 parentId=3608392 text=","
+      identifier [0:14ΓÇô0:15] bytes[14ΓÇô15] id=3608784 parentId=3608392 text="n"
+      ) [0:15ΓÇô0:16] bytes[15ΓÇô16] id=3608896 parentId=3608392 text=")"
+    preproc_arg [0:17ΓÇô0:46] bytes[17ΓÇô46] id=3608400 parentId=3616040 text="for (int i = 0; i < (n); i++)"
+  function_definition [1:0ΓÇô4:1] bytes[47ΓÇô127] id=3616048 parentId=3603688 text="void test() {\n    int n = 10, m = 5, s = 0;\n    fo(i, n) { f"
+    primitive_type [1:0ΓÇô1:4] bytes[47ΓÇô51] id=3608984 parentId=3616048 text="void"
+    function_declarator [1:5ΓÇô1:11] bytes[52ΓÇô58] id=3607904 parentId=3616048 text="test()"
+      identifier [1:5ΓÇô1:9] bytes[52ΓÇô56] id=3607624 parentId=3607904 text="test"
+      parameter_list [1:9ΓÇô1:11] bytes[56ΓÇô58] id=3611424 parentId=3607904 text="()"
+        ( [1:9ΓÇô1:10] bytes[56ΓÇô57] id=3608496 parentId=3611424 text="("
+        ) [1:10ΓÇô1:11] bytes[57ΓÇô58] id=3608504 parentId=3611424 text=")"
+    compound_statement [1:12ΓÇô4:1] bytes[59ΓÇô127] id=3615952 parentId=3616048 text="{\n    int n = 10, m = 5, s = 0;\n    fo(i, n) { fo(j, m) { s+"
+      { [1:12ΓÇô1:13] bytes[59ΓÇô60] id=3615832 parentId=3615952 text="{"
+      declaration [2:4ΓÇô2:29] bytes[65ΓÇô90] id=3615736 parentId=3615952 text="int n = 10, m = 5, s = 0;"
+        primitive_type [2:4ΓÇô2:7] bytes[65ΓÇô68] id=3607992 parentId=3615736 text="int"
+        init_declarator [2:8ΓÇô2:14] bytes[69ΓÇô75] id=3612688 parentId=3615736 text="n = 10"
+          identifier [2:8ΓÇô2:9] bytes[69ΓÇô70] id=3610024 parentId=3612688 text="n"
+          = [2:10ΓÇô2:11] bytes[71ΓÇô72] id=3603416 parentId=3612688 text="="
+          number_literal [2:12ΓÇô2:14] bytes[73ΓÇô75] id=3610112 parentId=3612688 text="10"
+        , [2:14ΓÇô2:15] bytes[75ΓÇô76] id=3610712 parentId=3615736 text=","
+        init_declarator [2:16ΓÇô2:21] bytes[77ΓÇô82] id=3610720 parentId=3615736 text="m = 5"
+          identifier [2:16ΓÇô2:17] bytes[77ΓÇô78] id=3603512 parentId=3610720 text="m"
+          = [2:18ΓÇô2:19] bytes[79ΓÇô80] id=3610616 parentId=3610720 text="="
+          number_literal [2:20ΓÇô2:21] bytes[81ΓÇô82] id=3603600 parentId=3610720 text="5"
+        , [2:21ΓÇô2:22] bytes[82ΓÇô83] id=3612488 parentId=3615736 text=","
+        init_declarator [2:23ΓÇô2:28] bytes[84ΓÇô89] id=3612496 parentId=3615736 text="s = 0"
+          identifier [2:23ΓÇô2:24] bytes[84ΓÇô85] id=3610808 parentId=3612496 text="s"
+          = [2:25ΓÇô2:26] bytes[86ΓÇô87] id=3612392 parentId=3612496 text="="
+          number_literal [2:27ΓÇô2:28] bytes[88ΓÇô89] id=3610896 parentId=3612496 text="0"
+        ; [2:28ΓÇô2:29] bytes[89ΓÇô90] id=3612704 parentId=3615736 text=";"
+      function_definition [3:4ΓÇô3:34] bytes[95ΓÇô125] id=3615744 parentId=3615952 text="fo(i, n) { fo(j, m) { s++; } }"
+        function_declarator [3:4ΓÇô3:12] bytes[95ΓÇô103] id=3615640 parentId=3615744 text="fo(i, n)"
+          identifier [3:4ΓÇô3:6] bytes[95ΓÇô97] id=3612792 parentId=3615640 text="fo"
+          parameter_list [3:6ΓÇô3:12] bytes[97ΓÇô103] id=3614240 parentId=3615640 text="(i, n)"
+            ( [3:6ΓÇô3:7] bytes[97ΓÇô98] id=3614128 parentId=3614240 text="("
+            parameter_declaration [3:7ΓÇô3:8] bytes[98ΓÇô99] id=3614136 parentId=3614240 text="i"
+              type_identifier [3:7ΓÇô3:8] bytes[98ΓÇô99] id=3613408 parentId=3614136 text="i"
+            , [3:8ΓÇô3:9] bytes[99ΓÇô100] id=3614032 parentId=3614240 text=","
+            parameter_declaration [3:10ΓÇô3:11] bytes[101ΓÇô102] id=3614040 parentId=3614240 text="n"
+              type_identifier [3:10ΓÇô3:11] bytes[101ΓÇô102] id=3613768 parentId=3614040 text="n"
+            ) [3:11ΓÇô3:12] bytes[102ΓÇô103] id=3614152 parentId=3614240 text=")"
+        compound_statement [3:13ΓÇô3:34] bytes[104ΓÇô125] id=3615648 parentId=3615744 text="{ fo(j, m) { s++; } }"
+          { [3:13ΓÇô3:14] bytes[104ΓÇô105] id=3615536 parentId=3615648 text="{"
+          function_definition [3:15ΓÇô3:32] bytes[106ΓÇô123] id=3615544 parentId=3615648 text="fo(j, m) { s++; }"
+            function_declarator [3:15ΓÇô3:23] bytes[106ΓÇô114] id=3615440 parentId=3615544 text="fo(j, m)"
+              identifier [3:15ΓÇô3:17] bytes[106ΓÇô108] id=3613672 parentId=3615440 text="fo"
+              parameter_list [3:17ΓÇô3:23] bytes[108ΓÇô114] id=3615256 parentId=3615440 text="(j, m)"
+                ( [3:17ΓÇô3:18] bytes[108ΓÇô109] id=3615144 parentId=3615256 text="("
+                parameter_declaration [3:18ΓÇô3:19] bytes[109ΓÇô110] id=3615152 parentId=3615256 text="j"
+                  type_identifier [3:18ΓÇô3:19] bytes[109ΓÇô110] id=3614424 parentId=3615152 text="j"
+                , [3:19ΓÇô3:20] bytes[110ΓÇô111] id=3615048 parentId=3615256 text=","
+                parameter_declaration [3:21ΓÇô3:22] bytes[112ΓÇô113] id=3615056 parentId=3615256 text="m"
+                  type_identifier [3:21ΓÇô3:22] bytes[112ΓÇô113] id=3614784 parentId=3615056 text="m"
+                ) [3:22ΓÇô3:23] bytes[113ΓÇô114] id=3615168 parentId=3615256 text=")"
+            compound_statement [3:24ΓÇô3:32] bytes[115ΓÇô123] id=3615448 parentId=3615544 text="{ s++; }"
+              { [3:24ΓÇô3:25] bytes[115ΓÇô116] id=3613248 parentId=3615448 text="{"
+              expression_statement [3:26ΓÇô3:30] bytes[117ΓÇô121] id=3613256 parentId=3615448 text="s++;"
+                update_expression [3:26ΓÇô3:29] bytes[117ΓÇô120] id=3613064 parentId=3613256 text="s++"
+                  identifier [3:26ΓÇô3:27] bytes[117ΓÇô118] id=3614688 parentId=3613064 text="s"
+                  ++ [3:27ΓÇô3:29] bytes[118ΓÇô120] id=3612976 parentId=3613064 text="++"
+                ; [3:29ΓÇô3:30] bytes[120ΓÇô121] id=3613160 parentId=3613256 text=";"
+              } [3:31ΓÇô3:32] bytes[122ΓÇô123] id=3613264 parentId=3615448 text="}"
+          } [3:33ΓÇô3:34] bytes[124ΓÇô125] id=3615552 parentId=3615648 text="}"
+      } [4:0ΓÇô4:1] bytes[126ΓÇô127] id=3615848 parentId=3615952 text="}"
+
+--- ALL call_expression NODES ---
+
+--- ALL for_statement / for_range_loop NODES ---
+
+--- expression_statement NODES ---
+
+expression_statement: text="s++;"
+  expression_statement [3:26ΓÇô3:30] bytes[117ΓÇô121] id=3613256 parentId=3615448 text="s++;"
+  Siblings:
+  Parent: compound_statement(id=3615448), childCount=3
+      sibling[0]: {(id=3613248) text="{"
+  >>> sibling[1]: expression_statement(id=3613256) text="s++;"
+      sibling[2]: }(id=3613264) text="}"
+
+================================================================================
+CASE: REFERENCE: for(int i=0;i<n;i++) for(int j=0;j<m;j++) s++;
+SOURCE:
+  1: void test() {
+  2:     int n = 10, m = 5, s = 0;
+  3:     for (int i = 0; i < n; i++) for (int j = 0; j < m; j++) s++;
+  4: }
+================================================================================
+
+--- FULL AST ---
+translation_unit [0:0ΓÇô3:1] bytes[0ΓÇô110] id=3610200 parentId=ROOT text="void test() {\n    int n = 10, m = 5, s = 0;\n    for (int i ="
+  function_definition [0:0ΓÇô3:1] bytes[0ΓÇô110] id=3622960 parentId=3610200 text="void test() {\n    int n = 10, m = 5, s = 0;\n    for (int i ="
+    primitive_type [0:0ΓÇô0:4] bytes[0ΓÇô4] id=3616136 parentId=3622960 text="void"
+    function_declarator [0:5ΓÇô0:11] bytes[5ΓÇô11] id=3616776 parentId=3622960 text="test()"
+      identifier [0:5ΓÇô0:9] bytes[5ΓÇô9] id=3616408 parentId=3616776 text="test"
+      parameter_list [0:9ΓÇô0:11] bytes[9ΓÇô11] id=3616592 parentId=3616776 text="()"
+        ( [0:9ΓÇô0:10] bytes[9ΓÇô10] id=3616496 parentId=3616592 text="("
+        ) [0:10ΓÇô0:11] bytes[10ΓÇô11] id=3616504 parentId=3616592 text=")"
+    compound_statement [0:12ΓÇô3:1] bytes[12ΓÇô110] id=3622784 parentId=3622960 text="{\n    int n = 10, m = 5, s = 0;\n    for (int i = 0; i < n; i"
+      { [0:12ΓÇô0:13] bytes[12ΓÇô13] id=3622664 parentId=3622784 text="{"
+      declaration [1:4ΓÇô1:29] bytes[18ΓÇô43] id=3622568 parentId=3622784 text="int n = 10, m = 5, s = 0;"
+        primitive_type [1:4ΓÇô1:7] bytes[18ΓÇô21] id=3616864 parentId=3622568 text="int"
+        init_declarator [1:8ΓÇô1:14] bytes[22ΓÇô28] id=3618440 parentId=3622568 text="n = 10"
+          identifier [1:8ΓÇô1:9] bytes[22ΓÇô23] id=3617040 parentId=3618440 text="n"
+          = [1:10ΓÇô1:11] bytes[24ΓÇô25] id=3617312 parentId=3618440 text="="
+          number_literal [1:12ΓÇô1:14] bytes[26ΓÇô28] id=3617128 parentId=3618440 text="10"
+        , [1:14ΓÇô1:15] bytes[28ΓÇô29] id=3617776 parentId=3622568 text=","
+        init_declarator [1:16ΓÇô1:21] bytes[30ΓÇô35] id=3617784 parentId=3622568 text="m = 5"
+          identifier [1:16ΓÇô1:17] bytes[30ΓÇô31] id=3617408 parentId=3617784 text="m"
+          = [1:18ΓÇô1:19] bytes[32ΓÇô33] id=3617680 parentId=3617784 text="="
+          number_literal [1:20ΓÇô1:21] bytes[34ΓÇô35] id=3617496 parentId=3617784 text="5"
+        , [1:21ΓÇô1:22] bytes[35ΓÇô36] id=3618240 parentId=3622568 text=","
+        init_declarator [1:23ΓÇô1:28] bytes[37ΓÇô42] id=3618248 parentId=3622568 text="s = 0"
+          identifier [1:23ΓÇô1:24] bytes[37ΓÇô38] id=3617872 parentId=3618248 text="s"
+          = [1:25ΓÇô1:26] bytes[39ΓÇô40] id=3618144 parentId=3618248 text="="
+          number_literal [1:27ΓÇô1:28] bytes[41ΓÇô42] id=3617960 parentId=3618248 text="0"
+        ; [1:28ΓÇô1:29] bytes[42ΓÇô43] id=3618456 parentId=3622568 text=";"
+      for_statement [2:4ΓÇô2:64] bytes[48ΓÇô108] id=3622576 parentId=3622784 text="for (int i = 0; i < n; i++) for (int j = 0; j < m; j++) s++;"
+        for [2:4ΓÇô2:7] bytes[48ΓÇô51] id=3622448 parentId=3622576 text="for"
+        ( [2:8ΓÇô2:9] bytes[52ΓÇô53] id=3622456 parentId=3622576 text="("
+        declaration [2:9ΓÇô2:19] bytes[53ΓÇô63] id=3620096 parentId=3622576 text="int i = 0;"
+          primitive_type [2:9ΓÇô2:12] bytes[53ΓÇô56] id=3618544 parentId=3620096 text="int"
+          init_declarator [2:13ΓÇô2:18] bytes[57ΓÇô62] id=3619096 parentId=3620096 text="i = 0"
+            identifier [2:13ΓÇô2:14] bytes[57ΓÇô58] id=3618720 parentId=3619096 text="i"
+            = [2:15ΓÇô2:16] bytes[59ΓÇô60] id=3618992 parentId=3619096 text="="
+            number_literal [2:17ΓÇô2:18] bytes[61ΓÇô62] id=3618808 parentId=3619096 text="0"
+          ; [2:18ΓÇô2:19] bytes[62ΓÇô63] id=3619104 parentId=3620096 text=";"
+        binary_expression [2:20ΓÇô2:25] bytes[64ΓÇô69] id=3619736 parentId=3622576 text="i < n"
+          identifier [2:20ΓÇô2:21] bytes[64ΓÇô65] id=3619280 parentId=3619736 text="i"
+          < [2:22ΓÇô2:23] bytes[66ΓÇô67] id=3619640 parentId=3619736 text="<"
+          identifier [2:24ΓÇô2:25] bytes[68ΓÇô69] id=3619456 parentId=3619736 text="n"
+        ; [2:25ΓÇô2:26] bytes[69ΓÇô70] id=3620112 parentId=3622576 text=";"
+        update_expression [2:27ΓÇô2:30] bytes[71ΓÇô74] id=3620008 parentId=3622576 text="i++"
+          identifier [2:27ΓÇô2:28] bytes[71ΓÇô72] id=3619192 parentId=3620008 text="i"
+          ++ [2:28ΓÇô2:30] bytes[72ΓÇô74] id=3619920 parentId=3620008 text="++"
+        ) [2:30ΓÇô2:31] bytes[74ΓÇô75] id=3622472 parentId=3622576 text=")"
+        for_statement [2:32ΓÇô2:64] bytes[76ΓÇô108] id=3622480 parentId=3622576 text="for (int j = 0; j < m; j++) s++;"
+          for [2:32ΓÇô2:35] bytes[76ΓÇô79] id=3622328 parentId=3622480 text="for"
+          ( [2:36ΓÇô2:37] bytes[80ΓÇô81] id=3622336 parentId=3622480 text="("
+          declaration [2:37ΓÇô2:47] bytes[81ΓÇô91] id=3621760 parentId=3622480 text="int j = 0;"
+            primitive_type [2:37ΓÇô2:40] bytes[81ΓÇô84] id=3620208 parentId=3621760 text="int"
+            init_declarator [2:41ΓÇô2:46] bytes[85ΓÇô90] id=3620760 parentId=3621760 text="j = 0"
+              identifier [2:41ΓÇô2:42] bytes[85ΓÇô86] id=3620384 parentId=3620760 text="j"
+              = [2:43ΓÇô2:44] bytes[87ΓÇô88] id=3620656 parentId=3620760 text="="
+              number_literal [2:45ΓÇô2:46] bytes[89ΓÇô90] id=3620472 parentId=3620760 text="0"
+            ; [2:46ΓÇô2:47] bytes[90ΓÇô91] id=3620768 parentId=3621760 text=";"
+          binary_expression [2:48ΓÇô2:53] bytes[92ΓÇô97] id=3621400 parentId=3622480 text="j < m"
+            identifier [2:48ΓÇô2:49] bytes[92ΓÇô93] id=3620944 parentId=3621400 text="j"
+            < [2:50ΓÇô2:51] bytes[94ΓÇô95] id=3621304 parentId=3621400 text="<"
+            identifier [2:52ΓÇô2:53] bytes[96ΓÇô97] id=3621120 parentId=3621400 text="m"
+          ; [2:53ΓÇô2:54] bytes[97ΓÇô98] id=3621776 parentId=3622480 text=";"
+          update_expression [2:55ΓÇô2:58] bytes[99ΓÇô102] id=3621672 parentId=3622480 text="j++"
+            identifier [2:55ΓÇô2:56] bytes[99ΓÇô100] id=3620856 parentId=3621672 text="j"
+            ++ [2:56ΓÇô2:58] bytes[100ΓÇô102] id=3621584 parentId=3621672 text="++"
+          ) [2:58ΓÇô2:59] bytes[102ΓÇô103] id=3622352 parentId=3622480 text=")"
+          expression_statement [2:60ΓÇô2:64] bytes[104ΓÇô108] id=3622360 parentId=3622480 text="s++;"
+            update_expression [2:60ΓÇô2:63] bytes[104ΓÇô107] id=3622144 parentId=3622360 text="s++"
+              identifier [2:60ΓÇô2:61] bytes[104ΓÇô105] id=3621872 parentId=3622144 text="s"
+              ++ [2:61ΓÇô2:63] bytes[105ΓÇô107] id=3622056 parentId=3622144 text="++"
+            ; [2:63ΓÇô2:64] bytes[107ΓÇô108] id=3622240 parentId=3622360 text=";"
+      } [3:0ΓÇô3:1] bytes[109ΓÇô110] id=3622680 parentId=3622784 text="}"
+
+--- ALL call_expression NODES ---
+
+--- ALL for_statement / for_range_loop NODES ---
+
+for_statement: text="for (int i = 0; i < n; i++) for (int j = 0; j < m; j++) s++;"
+  for_statement [2:4ΓÇô2:64] bytes[48ΓÇô108] id=3622576 parentId=3622784 text="for (int i = 0; i < n; i++) for (int j = 0; j < m; j++) s++;"
+  Siblings:
+  Parent: compound_statement(id=3622784), childCount=4
+      sibling[0]: {(id=3622664) text="{"
+      sibling[1]: declaration(id=3622568) text="int n = 10, m = 5, s = 0;"
+  >>> sibling[2]: for_statement(id=3622576) text="for (int i = 0; i < n; i++) for (int j ="
+      sibling[3]: }(id=3622680) text="}"
+  Parent chain:
+Parent chain: for_statement(id=3622576) -> compound_statement(id=3622784) -> function_definition(id=3622960) -> translation_unit(id=3610200)
+  Children:
+    child[0]: for named=true text="for"
+    child[1]: ( named=true text="("
+    child[2]: declaration named=true text="int i = 0;"
+    child[3]: binary_expression named=true text="i < n"
+    child[4]: ; named=false text=";"
+    child[5]: update_expression named=false text="i++"
+    child[6]: ) named=false text=")"
+    child[7]: for_statement named=false text="for (int j = 0; j < m; j++) s++;"
+  body field: for_statement(id=3622480)
+
+for_statement: text="for (int j = 0; j < m; j++) s++;"
+  for_statement [2:32ΓÇô2:64] bytes[76ΓÇô108] id=3622480 parentId=3622576 text="for (int j = 0; j < m; j++) s++;"
+  Siblings:
+  Parent: for_statement(id=3622576), childCount=8
+      sibling[0]: for(id=3622448) text="for"
+      sibling[1]: ((id=3622456) text="("
+      sibling[2]: declaration(id=3620096) text="int i = 0;"
+      sibling[3]: binary_expression(id=3619736) text="i < n"
+      sibling[4]: ;(id=3620112) text=";"
+      sibling[5]: update_expression(id=3620008) text="i++"
+      sibling[6]: )(id=3622472) text=")"
+  >>> sibling[7]: for_statement(id=3622480) text="for (int j = 0; j < m; j++) s++;"
+  Parent chain:
+Parent chain: for_statement(id=3622480) -> for_statement(id=3622576) -> compound_statement(id=3622784) -> function_definition(id=3622960) -> translation_unit(id=3610200)
+  Children:
+    child[0]: for named=true text="for"
+    child[1]: ( named=true text="("
+    child[2]: declaration named=true text="int j = 0;"
+    child[3]: binary_expression named=true text="j < m"
+    child[4]: ; named=false text=";"
+    child[5]: update_expression named=false text="j++"
+    child[6]: ) named=false text=")"
+    child[7]: expression_statement named=false text="s++;"
+  body field: expression_statement(id=3622360)
+
+--- expression_statement NODES ---
+
+expression_statement: text="s++;"
+  expression_statement [2:60ΓÇô2:64] bytes[104ΓÇô108] id=3622360 parentId=3622480 text="s++;"
+  Siblings:
+  Parent: for_statement(id=3622480), childCount=8
+      sibling[0]: for(id=3622328) text="for"
+      sibling[1]: ((id=3622336) text="("
+      sibling[2]: declaration(id=3621760) text="int j = 0;"
+      sibling[3]: binary_expression(id=3621400) text="j < m"
+      sibling[4]: ;(id=3621776) text=";"
+      sibling[5]: update_expression(id=3621672) text="j++"
+      sibling[6]: )(id=3622352) text=")"
+  >>> sibling[7]: expression_statement(id=3622360) text="s++;"
+
+================================================================================
+CASE: REP NESTED: rep(i, 0, n) rep(j, 0, m) s++;
+SOURCE:
+  1: #define rep(i, a, b) for (int i = (a); i < (b); i++)
+  2: void test() {
+  3:     int n = 10, m = 5, s = 0;
+  4:     rep(i, 0, n) rep(j, 0, m) s++;
+  5: }
+================================================================================
+
+--- FULL AST ---
+translation_unit [0:0ΓÇô4:1] bytes[0ΓÇô133] id=3613384 parentId=ROOT text="#define rep(i, a, b) for (int i = (a); i < (b); i++)\nvoid te"
+  preproc_function_def [0:0ΓÇô1:0] bytes[0ΓÇô53] id=3630720 parentId=3613384 text="#define rep(i, a, b) for (int i = (a); i < (b); i++)\n"
+    #define [0:0ΓÇô0:7] bytes[0ΓÇô7] id=3623456 parentId=3630720 text="#define"
+    identifier [0:8ΓÇô0:11] bytes[8ΓÇô11] id=3623464 parentId=3630720 text="rep"
+    preproc_params [0:11ΓÇô0:20] bytes[11ΓÇô20] id=3623472 parentId=3630720 text="(i, a, b)"
+      ( [0:11ΓÇô0:12] bytes[11ΓÇô12] id=3623344 parentId=3623472 text="("
+      identifier [0:12ΓÇô0:13] bytes[12ΓÇô13] id=3623352 parentId=3623472 text="i"
+      , [0:13ΓÇô0:14] bytes[13ΓÇô14] id=3623056 parentId=3623472 text=","
+      identifier [0:15ΓÇô0:16] bytes[15ΓÇô16] id=3623064 parentId=3623472 text="a"
+      , [0:16ΓÇô0:17] bytes[16ΓÇô17] id=3623152 parentId=3623472 text=","
+      identifier [0:18ΓÇô0:19] bytes[18ΓÇô19] id=3623160 parentId=3623472 text="b"
+      ) [0:19ΓÇô0:20] bytes[19ΓÇô20] id=3623368 parentId=3623472 text=")"
+    preproc_arg [0:21ΓÇô0:52] bytes[21ΓÇô52] id=3623480 parentId=3630720 text="for (int i = (a); i < (b); i++)"
+  function_definition [1:0ΓÇô4:1] bytes[53ΓÇô133] id=3630728 parentId=3613384 text="void test() {\n    int n = 10, m = 5, s = 0;\n    rep(i, 0, n)"
+    primitive_type [1:0ΓÇô1:4] bytes[53ΓÇô57] id=3623576 parentId=3630728 text="void"
+    function_declarator [1:5ΓÇô1:11] bytes[58ΓÇô64] id=3624120 parentId=3630728 text="test()"
+      identifier [1:5ΓÇô1:9] bytes[58ΓÇô62] id=3623752 parentId=3624120 text="test"
+      parameter_list [1:9ΓÇô1:11] bytes[62ΓÇô64] id=3623936 parentId=3624120 text="()"
+        ( [1:9ΓÇô1:10] bytes[62ΓÇô63] id=3623840 parentId=3623936 text="("
+        ) [1:10ΓÇô1:11] bytes[63ΓÇô64] id=3623848 parentId=3623936 text=")"
+    compound_statement [1:12ΓÇô4:1] bytes[65ΓÇô133] id=3630632 parentId=3630728 text="{\n    int n = 10, m = 5, s = 0;\n    rep(i, 0, n) rep(j, 0, m"
+      { [1:12ΓÇô1:13] bytes[65ΓÇô66] id=3630512 parentId=3630632 text="{"
+      declaration [2:4ΓÇô2:29] bytes[71ΓÇô96] id=3627360 parentId=3630632 text="int n = 10, m = 5, s = 0;"
+        primitive_type [2:4ΓÇô2:7] bytes[71ΓÇô74] id=3624208 parentId=3627360 text="int"
+        init_declarator [2:8ΓÇô2:14] bytes[75ΓÇô81] id=3625784 parentId=3627360 text="n = 10"
+          identifier [2:8ΓÇô2:9] bytes[75ΓÇô76] id=3624384 parentId=3625784 text="n"
+          = [2:10ΓÇô2:11] bytes[77ΓÇô78] id=3624656 parentId=3625784 text="="
+          number_literal [2:12ΓÇô2:14] bytes[79ΓÇô81] id=3624472 parentId=3625784 text="10"
+        , [2:14ΓÇô2:15] bytes[81ΓÇô82] id=3625120 parentId=3627360 text=","
+        init_declarator [2:16ΓÇô2:21] bytes[83ΓÇô88] id=3625128 parentId=3627360 text="m = 5"
+          identifier [2:16ΓÇô2:17] bytes[83ΓÇô84] id=3624752 parentId=3625128 text="m"
+          = [2:18ΓÇô2:19] bytes[85ΓÇô86] id=3625024 parentId=3625128 text="="
+          number_literal [2:20ΓÇô2:21] bytes[87ΓÇô88] id=3624840 parentId=3625128 text="5"
+        , [2:21ΓÇô2:22] bytes[88ΓÇô89] id=3625584 parentId=3627360 text=","
+        init_declarator [2:23ΓÇô2:28] bytes[90ΓÇô95] id=3625592 parentId=3627360 text="s = 0"
+          identifier [2:23ΓÇô2:24] bytes[90ΓÇô91] id=3625216 parentId=3625592 text="s"
+          = [2:25ΓÇô2:26] bytes[92ΓÇô93] id=3625488 parentId=3625592 text="="
+          number_literal [2:27ΓÇô2:28] bytes[94ΓÇô95] id=3625304 parentId=3625592 text="0"
+        ; [2:28ΓÇô2:29] bytes[95ΓÇô96] id=3625800 parentId=3627360 text=";"
+      expression_statement [3:4ΓÇô3:16] bytes[101ΓÇô113] id=3627368 parentId=3630632 text="rep(i, 0, n)"
+        call_expression [3:4ΓÇô3:16] bytes[101ΓÇô113] id=3627088 parentId=3627368 text="rep(i, 0, n)"
+          identifier [3:4ΓÇô3:7] bytes[101ΓÇô104] id=3626064 parentId=3627088 text="rep"
+          argument_list [3:7ΓÇô3:16] bytes[104ΓÇô113] id=3627000 parentId=3627088 text="(i, 0, n)"
+            ( [3:7ΓÇô3:8] bytes[104ΓÇô105] id=3626880 parentId=3627000 text="("
+            identifier [3:8ΓÇô3:9] bytes[105ΓÇô106] id=3626328 parentId=3627000 text="i"
+            , [3:9ΓÇô3:10] bytes[106ΓÇô107] id=3626504 parentId=3627000 text=","
+            number_literal [3:11ΓÇô3:12] bytes[108ΓÇô109] id=3626240 parentId=3627000 text="0"
+            , [3:12ΓÇô3:13] bytes[109ΓÇô110] id=3626688 parentId=3627000 text=","
+            identifier [3:14ΓÇô3:15] bytes[111ΓÇô112] id=3625976 parentId=3627000 text="n"
+            ) [3:15ΓÇô3:16] bytes[112ΓÇô113] id=3626904 parentId=3627000 text=")"
+        ; [3:16ΓÇô3:16] bytes[113ΓÇô113] id=3627272 parentId=3626904 text=""
+      expression_statement [3:17ΓÇô3:34] bytes[114ΓÇô131] id=3630232 parentId=3630632 text="rep(j, 0, m) s++;"
+        update_expression [3:17ΓÇô3:33] bytes[114ΓÇô130] id=3629080 parentId=3630232 text="rep(j, 0, m) s++"
+          call_expression [3:17ΓÇô3:29] bytes[114ΓÇô126] id=3629952 parentId=3629080 text="rep(j, 0, m)"
+            identifier [3:17ΓÇô3:20] bytes[114ΓÇô117] id=3628232 parentId=3629952 text="rep"
+            argument_list [3:20ΓÇô3:29] bytes[117ΓÇô126] id=3628624 parentId=3629952 text="(j, 0, m)"
+              ( [3:20ΓÇô3:21] bytes[117ΓÇô118] id=3628504 parentId=3628624 text="("
+              identifier [3:21ΓÇô3:22] bytes[118ΓÇô119] id=3627456 parentId=3628624 text="j"
+              , [3:22ΓÇô3:23] bytes[119ΓÇô120] id=3627808 parentId=3628624 text=","
+              number_literal [3:24ΓÇô3:25] bytes[121ΓÇô122] id=3627632 parentId=3628624 text="0"
+              , [3:25ΓÇô3:26] bytes[122ΓÇô123] id=3628080 parentId=3628624 text=","
+              identifier [3:27ΓÇô3:28] bytes[124ΓÇô125] id=3627904 parentId=3628624 text="m"
+              ) [3:28ΓÇô3:29] bytes[125ΓÇô126] id=3628528 parentId=3628624 text=")"
+          ERROR [3:30ΓÇô3:31] bytes[127ΓÇô128] id=3629600 parentId=3629080 text="s"
+            identifier [3:30ΓÇô3:31] bytes[127ΓÇô128] id=3629408 parentId=3629600 text="s"
+          ++ [3:31ΓÇô3:33] bytes[128ΓÇô130] id=3629608 parentId=3629080 text="++"
+        ; [3:33ΓÇô3:34] bytes[130ΓÇô131] id=3630136 parentId=3630232 text=";"
+      } [4:0ΓÇô4:1] bytes[132ΓÇô133] id=3630528 parentId=3630632 text="}"
+
+--- ALL call_expression NODES ---
+
+call_expression: text="rep(i, 0, n)"
+  call_expression [3:4ΓÇô3:16] bytes[101ΓÇô113] id=3627088 parentId=3627368 text="rep(i, 0, n)"
+  Siblings:
+  Parent: expression_statement(id=3627368), childCount=2
+  >>> sibling[0]: call_expression(id=3627088) text="rep(i, 0, n)"
+      sibling[1]: ;(id=3627272) text=""
+  Parent chain:
+Parent chain: call_expression(id=3627088) -> expression_statement(id=3627368) -> compound_statement(id=3630632) -> function_definition(id=3630728) -> translation_unit(id=3613384)
+
+call_expression: text="rep(j, 0, m)"
+  call_expression [3:17ΓÇô3:29] bytes[114ΓÇô126] id=3629952 parentId=3629080 text="rep(j, 0, m)"
+  Siblings:
+  Parent: update_expression(id=3629080), childCount=3
+  >>> sibling[0]: call_expression(id=3629952) text="rep(j, 0, m)"
+      sibling[1]: ERROR(id=3629600) text="s"
+      sibling[2]: ++(id=3629608) text="++"
+  Parent chain:
+Parent chain: call_expression(id=3629952) -> update_expression(id=3629080) -> expression_statement(id=3630232) -> compound_statement(id=3630632) -> function_definition(id=3630728) -> translation_unit(id=3613384)
+
+--- ALL for_statement / for_range_loop NODES ---
+
+--- expression_statement NODES ---
+
+expression_statement: text="rep(i, 0, n)"
+  expression_statement [3:4ΓÇô3:16] bytes[101ΓÇô113] id=3627368 parentId=3630632 text="rep(i, 0, n)"
+  Siblings:
+  Parent: compound_statement(id=3630632), childCount=5
+      sibling[0]: {(id=3630512) text="{"
+      sibling[1]: declaration(id=3627360) text="int n = 10, m = 5, s = 0;"
+  >>> sibling[2]: expression_statement(id=3627368) text="rep(i, 0, n)"
+      sibling[3]: expression_statement(id=3630232) text="rep(j, 0, m) s++;"
+      sibling[4]: }(id=3630528) text="}"
+
+expression_statement: text="rep(j, 0, m) s++;"
+  expression_statement [3:17ΓÇô3:34] bytes[114ΓÇô131] id=3630232 parentId=3630632 text="rep(j, 0, m) s++;"
+  Siblings:
+  Parent: compound_statement(id=3630632), childCount=5
+      sibling[0]: {(id=3630512) text="{"
+      sibling[1]: declaration(id=3627360) text="int n = 10, m = 5, s = 0;"
+      sibling[2]: expression_statement(id=3627368) text="rep(i, 0, n)"
+  >>> sibling[3]: expression_statement(id=3630232) text="rep(j, 0, m) s++;"
+      sibling[4]: }(id=3630528) text="}"
+
+================================================================================
+CASE: MACRO CALL SITE (no #define): fo(i, n) fo(j, m) s++;
+SOURCE:
+  1: void test() {
+  2:     int n = 10, m = 5, s = 0;
+  3:     fo(i, n) fo(j, m) s++;
+  4: }
+================================================================================
+
+--- FULL AST ---
+translation_unit [0:0ΓÇô3:1] bytes[0ΓÇô72] id=3629376 parentId=ROOT text="void test() {\n    int n = 10, m = 5, s = 0;\n    fo(i, n) fo("
+  function_definition [0:0ΓÇô3:1] bytes[0ΓÇô72] id=3636560 parentId=3629376 text="void test() {\n    int n = 10, m = 5, s = 0;\n    fo(i, n) fo("
+    primitive_type [0:0ΓÇô0:4] bytes[0ΓÇô4] id=3630816 parentId=3636560 text="void"
+    function_declarator [0:5ΓÇô0:11] bytes[5ΓÇô11] id=3629792 parentId=3636560 text="test()"
+      identifier [0:5ΓÇô0:9] bytes[5ΓÇô9] id=3629288 parentId=3629792 text="test"
+      parameter_list [0:9ΓÇô0:11] bytes[9ΓÇô11] id=3630416 parentId=3629792 text="()"
+        ( [0:9ΓÇô0:10] bytes[9ΓÇô10] id=3630320 parentId=3630416 text="("
+        ) [0:10ΓÇô0:11] bytes[10ΓÇô11] id=3630328 parentId=3630416 text=")"
+    compound_statement [0:12ΓÇô3:1] bytes[12ΓÇô72] id=3636384 parentId=3636560 text="{\n    int n = 10, m = 5, s = 0;\n    fo(i, n) fo(j, m) s++;\n}"
+      { [0:12ΓÇô0:13] bytes[12ΓÇô13] id=3636264 parentId=3636384 text="{"
+      declaration [1:4ΓÇô1:29] bytes[18ΓÇô43] id=3634144 parentId=3636384 text="int n = 10, m = 5, s = 0;"
+        primitive_type [1:4ΓÇô1:7] bytes[18ΓÇô21] id=3628712 parentId=3634144 text="int"
+        init_declarator [1:8ΓÇô1:14] bytes[22ΓÇô28] id=3632224 parentId=3634144 text="n = 10"
+          identifier [1:8ΓÇô1:9] bytes[22ΓÇô23] id=3628888 parentId=3632224 text="n"
+          = [1:10ΓÇô1:11] bytes[24ΓÇô25] id=3631096 parentId=3632224 text="="
+          number_literal [1:12ΓÇô1:14] bytes[26ΓÇô28] id=3628976 parentId=3632224 text="10"
+        , [1:14ΓÇô1:15] bytes[28ΓÇô29] id=3631560 parentId=3634144 text=","
+        init_declarator [1:16ΓÇô1:21] bytes[30ΓÇô35] id=3631568 parentId=3634144 text="m = 5"
+          identifier [1:16ΓÇô1:17] bytes[30ΓÇô31] id=3631192 parentId=3631568 text="m"
+          = [1:18ΓÇô1:19] bytes[32ΓÇô33] id=3631464 parentId=3631568 text="="
+          number_literal [1:20ΓÇô1:21] bytes[34ΓÇô35] id=3631280 parentId=3631568 text="5"
+        , [1:21ΓÇô1:22] bytes[35ΓÇô36] id=3632024 parentId=3634144 text=","
+        init_declarator [1:23ΓÇô1:28] bytes[37ΓÇô42] id=3632032 parentId=3634144 text="s = 0"
+          identifier [1:23ΓÇô1:24] bytes[37ΓÇô38] id=3631656 parentId=3632032 text="s"
+          = [1:25ΓÇô1:26] bytes[39ΓÇô40] id=3631928 parentId=3632032 text="="
+          number_literal [1:27ΓÇô1:28] bytes[41ΓÇô42] id=3631744 parentId=3632032 text="0"
+        ; [1:28ΓÇô1:29] bytes[42ΓÇô43] id=3632240 parentId=3634144 text=";"
+      expression_statement [2:4ΓÇô2:12] bytes[48ΓÇô56] id=3634152 parentId=3636384 text="fo(i, n)"
+        call_expression [2:4ΓÇô2:12] bytes[48ΓÇô56] id=3633872 parentId=3634152 text="fo(i, n)"
+          identifier [2:4ΓÇô2:6] bytes[48ΓÇô50] id=3632504 parentId=3633872 text="fo"
+          argument_list [2:6ΓÇô2:12] bytes[50ΓÇô56] id=3633784 parentId=3633872 text="(i, n)"
+            ( [2:6ΓÇô2:7] bytes[50ΓÇô51] id=3633664 parentId=3633784 text="("
+            identifier [2:7ΓÇô2:8] bytes[51ΓÇô52] id=3632768 parentId=3633784 text="i"
+            , [2:8ΓÇô2:9] bytes[52ΓÇô53] id=3633208 parentId=3633784 text=","
+            identifier [2:10ΓÇô2:11] bytes[54ΓÇô55] id=3632416 parentId=3633784 text="n"
+            ) [2:11ΓÇô2:12] bytes[55ΓÇô56] id=3633688 parentId=3633784 text=")"
+        ; [2:12ΓÇô2:12] bytes[56ΓÇô56] id=3634056 parentId=3633688 text=""
+      expression_statement [2:13ΓÇô2:26] bytes[57ΓÇô70] id=3635984 parentId=3636384 text="fo(j, m) s++;"
+        update_expression [2:13ΓÇô2:25] bytes[57ΓÇô69] id=3634240 parentId=3635984 text="fo(j, m) s++"
+          call_expression [2:13ΓÇô2:21] bytes[57ΓÇô65] id=3634776 parentId=3634240 text="fo(j, m)"
+            identifier [2:13ΓÇô2:15] bytes[57ΓÇô59] id=3633392 parentId=3634776 text="fo"
+            argument_list [2:15ΓÇô2:21] bytes[59ΓÇô65] id=3635080 parentId=3634776 text="(j, m)"
+              ( [2:15ΓÇô2:16] bytes[59ΓÇô60] id=3634960 parentId=3635080 text="("
+              identifier [2:16ΓÇô2:17] bytes[60ΓÇô61] id=3632328 parentId=3635080 text="j"
+              , [2:17ΓÇô2:18] bytes[61ΓÇô62] id=3634504 parentId=3635080 text=","
+              identifier [2:19ΓÇô2:20] bytes[63ΓÇô64] id=3633304 parentId=3635080 text="m"
+              ) [2:20ΓÇô2:21] bytes[64ΓÇô65] id=3634984 parentId=3635080 text=")"
+          ERROR [2:22ΓÇô2:23] bytes[66ΓÇô67] id=3635544 parentId=3634240 text="s"
+            identifier [2:22ΓÇô2:23] bytes[66ΓÇô67] id=3635704 parentId=3635544 text="s"
+          ++ [2:23ΓÇô2:25] bytes[67ΓÇô69] id=3635552 parentId=3634240 text="++"
+        ; [2:25ΓÇô2:26] bytes[69ΓÇô70] id=3635888 parentId=3635984 text=";"
+      } [3:0ΓÇô3:1] bytes[71ΓÇô72] id=3636280 parentId=3636384 text="}"
+
+--- ALL call_expression NODES ---
+
+call_expression: text="fo(i, n)"
+  call_expression [2:4ΓÇô2:12] bytes[48ΓÇô56] id=3633872 parentId=3634152 text="fo(i, n)"
+  Siblings:
+  Parent: expression_statement(id=3634152), childCount=2
+  >>> sibling[0]: call_expression(id=3633872) text="fo(i, n)"
+      sibling[1]: ;(id=3634056) text=""
+  Parent chain:
+Parent chain: call_expression(id=3633872) -> expression_statement(id=3634152) -> compound_statement(id=3636384) -> function_definition(id=3636560) -> translation_unit(id=3629376)
+
+call_expression: text="fo(j, m)"
+  call_expression [2:13ΓÇô2:21] bytes[57ΓÇô65] id=3634776 parentId=3634240 text="fo(j, m)"
+  Siblings:
+  Parent: update_expression(id=3634240), childCount=3
+  >>> sibling[0]: call_expression(id=3634776) text="fo(j, m)"
+      sibling[1]: ERROR(id=3635544) text="s"
+      sibling[2]: ++(id=3635552) text="++"
+  Parent chain:
+Parent chain: call_expression(id=3634776) -> update_expression(id=3634240) -> expression_statement(id=3635984) -> compound_statement(id=3636384) -> function_definition(id=3636560) -> translation_unit(id=3629376)
+
+--- ALL for_statement / for_range_loop NODES ---
+
+--- expression_statement NODES ---
+
+expression_statement: text="fo(i, n)"
+  expression_statement [2:4ΓÇô2:12] bytes[48ΓÇô56] id=3634152 parentId=3636384 text="fo(i, n)"
+  Siblings:
+  Parent: compound_statement(id=3636384), childCount=5
+      sibling[0]: {(id=3636264) text="{"
+      sibling[1]: declaration(id=3634144) text="int n = 10, m = 5, s = 0;"
+  >>> sibling[2]: expression_statement(id=3634152) text="fo(i, n)"
+      sibling[3]: expression_statement(id=3635984) text="fo(j, m) s++;"
+      sibling[4]: }(id=3636280) text="}"
+
+expression_statement: text="fo(j, m) s++;"
+  expression_statement [2:13ΓÇô2:26] bytes[57ΓÇô70] id=3635984 parentId=3636384 text="fo(j, m) s++;"
+  Siblings:
+  Parent: compound_statement(id=3636384), childCount=5
+      sibling[0]: {(id=3636264) text="{"
+      sibling[1]: declaration(id=3634144) text="int n = 10, m = 5, s = 0;"
+      sibling[2]: expression_statement(id=3634152) text="fo(i, n)"
+  >>> sibling[3]: expression_statement(id=3635984) text="fo(j, m) s++;"
+      sibling[4]: }(id=3636280) text="}"

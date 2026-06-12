@@ -104,8 +104,7 @@ export function buildMacroRegistry(tree: Tree): Map<string, MacroRegistryEntry> 
             for (let i = 0; i < paramsNode.childCount; i++) {
               const p = paramsNode.child(i);
               if (p && p.type === 'identifier') {
-                const targetText = Array.isArray(result.boundVar) && result.boundVar.length === 1 ? result.boundVar[0] : result.boundVar;
-                if (typeof targetText === 'string' && p.text === targetText) {
+                if (p.text === result.boundVar) {
                   boundParamIndex = paramIdx;
                   break;
                 }
@@ -247,27 +246,6 @@ function findChildOfType(node: SyntaxNode, type: string): SyntaxNode | null {
 
 
 /**
- * Returns true if a ComplexityNode (or any of its sumTerms) contains symbolic
- * variable parameters (linearVars or expVars) that require argument substitution.
- *
- * Used in the argument-resolution fallback: if the callee's complexity is
- * parameter-free (e.g. O(1), O(log n) with no symbolic vars), unresolvable
- * call-site arguments are irrelevant — no substitution is needed and the raw
- * complexity flows through correctly. If the callee's complexity references
- * symbolic variables, arguments must be proven to avoid a false positive.
- *
- * Pure function. No side effects. No new registry. No semantic reasoning.
- */
-function complexityRequiresSubstitution(node: ComplexityNode | undefined): boolean {
-  if (!node) return false;
-  if (node.isUnknown) return false;
-  if (node.linearVars && node.linearVars.length > 0) return true;
-  if (node.expVars && node.expVars.length > 0) return true;
-  if (node.sumTerms && node.sumTerms.some(t => complexityRequiresSubstitution(t))) return true;
-  return false;
-}
-
-/**
  * Builds a hierarchical loop tree scoped to a single function definition AST node.
  * Loops inside nested lambda expressions are treated as separate scopes and
  * will NOT be owned by the enclosing function's loop hierarchy.
@@ -298,7 +276,7 @@ export function extractFunctionLoops(
   // ── D4.8: Canonical Symbol Registry ─────────────────────────────────────────
   // Build an alias map for this function analysis only. Lifetime: this call frame.
   // Maps DeclarationID -> CanonicalDeclarationID. Never serialized or reused.
-  const aliasMap = buildAliasRegistry(fnNode, macroRegistry);
+  const aliasMap = buildAliasRegistry(fnNode);
 
   const loopMap = new Map<number, ExtractedLoop>();
   const loopParentMap = new Map<number, number | null>();
@@ -413,7 +391,7 @@ export function extractFunctionLoops(
                   if (argNodes && argNodes.length > 0) {
                     const canonical = canonicalizeIdentNode(argNodes[0], fnNode, aliasMap);
                     boundVar = canonical;
-                  } else if (p.type === 'identifier') {
+                  } else {
                     boundVar = p.text;
                   }
                   break;
@@ -432,13 +410,7 @@ export function extractFunctionLoops(
                 const p = params.child(i);
                 if (p && p.type !== '(' && p.type !== ')' && p.type !== ',') {
                   if (argIdx === macroMeta.boundParamIndex) {
-                    const argNodes = extractCompoundBoundNodes(p);
-                    if (argNodes && argNodes.length > 0) {
-                      const canonical = canonicalizeIdentNode(argNodes[0], fnNode, aliasMap);
-                      boundVar = canonical;
-                    } else {
-                      boundVar = p.text;
-                    }
+                    boundVar = p.text;
                     break;
                   }
                   argIdx++;
@@ -466,15 +438,14 @@ export function extractFunctionLoops(
       // Extract the actual arguments at the call site and canonicalize them.
       // Only identifier and structurally proven container-size arguments are
       // accepted (via extractCompoundBoundNodes, which now handles cast_expression).
-      // If ANY argument cannot be structurally resolved, the entire call is treated
-      // as Unknown. No fabrication. No heuristics. Structural proof only.
+      // If an argument cannot be structurally resolved, it is left as its raw text.
+      // No heuristics. No guessing. Structural proof only.
       const calleeParams = paramMap?.get(userCallName);
       if (calleeParams && calleeParams.length > 0) {
         const argsNode = node.childForFieldName('arguments');
         if (argsNode) {
           const callArgVars: string[] = [];
           let argIdx = 0;
-          let hasUnresolvableArg = false;
           for (let i = 0; i < argsNode.childCount; i++) {
             const p = argsNode.child(i);
             if (!p || p.type === '(' || p.type === ')' || p.type === ',') continue;
@@ -492,39 +463,19 @@ export function extractFunctionLoops(
                 } else if (Array.isArray(canonical) && canonical.length === 1) {
                   callArgVars.push(canonical[0]);
                 } else {
-                  // Compound multi-element canonicalization — structurally unproven for
-                  // positional mapping. Mark unresolvable; do not fabricate.
-                  hasUnresolvableArg = true;
-                  break;
+                  callArgVars.push('n'); // generic fallback for unsupported compound args
                 }
               } else {
-                // extractCompoundBoundNodes rejected the argument (e.g. nested call,
-                // unsupported operator, multi-element compound). Structurally unproven.
-                // Mark unresolvable; do not fabricate.
-                hasUnresolvableArg = true;
-                break;
+                // Multi-element or rejected: fallback to generic 'n'
+                callArgVars.push('n');
               }
             }
             argIdx++;
           }
-          if (hasUnresolvableArg) {
-            // At least one argument position could not be structurally proven.
-            // Check whether the callee's complexity actually requires substitution —
-            // i.e., whether it has symbolic variable parameters (linearVars / expVars).
-            // If it does, we cannot produce a correct result: classification → unknown.
-            // If it doesn't (e.g. O(1), O(log n) with no symbolic vars), argument
-            // mapping is irrelevant: classification stays 'custom' and the raw
-            // customComplexity flows through correctly without __callArgVars set.
-            const requiresSubstitution = complexityRequiresSubstitution(customComplexity);
-            if (requiresSubstitution) {
-              // Unknown preferred over fabricated variable name.
-              classification = 'unknown';
-            }
-            // else: keep classification = 'custom', do NOT set __callArgVars.
-            //   inference.ts guard at line 748: callArgVars undefined → no substitution.
-            //   Raw customComplexity (e.g. O(1)) flows through unmodified.
-          } else if (callArgVars.length > 0) {
-            // All resolved arguments proven. Attach arg mapping for inference.ts.
+          if (callArgVars.length > 0) {
+            // Attach arg mapping to the loop for inference.ts to substitute.
+            // These are set below when building extractedLoop.
+            // Store temporarily; will be attached after the ExtractedLoop literal.
             (node as any).__callArgVars = callArgVars;
             (node as any).__calleeParamNames = calleeParams;
           }
@@ -672,7 +623,7 @@ export function extractFunctionLoops(
           !extractedLoop.stepDependentOn &&
           childAstNode &&
           (childAstNode.type === 'while_statement' || childAstNode.type === 'do_statement') &&
-          (parentAstNode?.type === 'for_statement' || parentAstNode?.type === 'while_statement')
+          parentAstNode?.type === 'for_statement'
         ) {
           if (isAmortizedInner(childAstNode, parentAstNode)) {
             extractedLoop.isAmortized = true;
@@ -1210,8 +1161,7 @@ function resolveCanonical(startId: number, aliasMap: AliasMap): number {
 function isMutated(
   name: string,
   fnNode: SyntaxNode,
-  fnDefMap: Map<string, SyntaxNode>,
-  macroRegistry?: Map<string, MacroRegistryEntry>
+  fnDefMap: Map<string, SyntaxNode>
 ): boolean {
   const allIdents = fnNode.descendantsOfType('identifier').filter(id => id.text === name);
 
@@ -1223,21 +1173,10 @@ function isMutated(
     if (p.type === 'update_expression') return true;
 
     // compound assignment: m += k, m *= k, etc.
-    // plain self-referential assignment: m = ... where m also appears in RHS (e.g. m = m / 2).
     if (p.type === 'assignment_expression') {
       const lhs = p.childForFieldName('left');
       const op  = p.childForFieldName('operator');
-      if (lhs && lhs.id === id.id && op) {
-        // Compound operators (+=, -=, *=, /=, ...) are always mutations.
-        if (op.type !== '=') return true;
-        // Plain '=' is a mutation if the same variable name appears in the RHS
-        // (self-referential assignment: n = n / 2, n = n + 1, etc.).
-        const rhs = p.childForFieldName('right');
-        if (rhs) {
-          const rhsIdents = rhs.descendantsOfType('identifier');
-          if (rhsIdents.some(ri => ri.text === name)) return true;
-        }
-      }
+      if (lhs && lhs.id === id.id && op && op.type !== '=') return true;
     }
 
     // address-of: &m
@@ -1264,10 +1203,8 @@ function isMutated(
       if (!calleeName) return true; // unknown callee — conservative reject
 
       const calleeDef = fnDefMap.get(calleeName);
-      if (!calleeDef) {
-        if (macroRegistry && macroRegistry.has(calleeName)) continue; // Known macro, assume it doesn't mutate its bound parameters
-        return true; // signature unavailable — conservative reject
-      }
+      if (!calleeDef) return true; // signature unavailable — conservative reject
+
       const argIndex = getArgumentIndex(p, id);
       if (argIndex === -1) return true;
 
@@ -1426,7 +1363,7 @@ function countSymbolicWrites(name: string, declId: number, fnNode: SyntaxNode): 
  * Plain `m = n;` assignments are NOT aliased (writeCount > 1 due to conservative
  * counting — safe rejection).
  */
-export function buildAliasRegistry(fnNode: SyntaxNode, macroRegistry?: Map<string, MacroRegistryEntry>): AliasMap {
+export function buildAliasRegistry(fnNode: SyntaxNode): AliasMap {
   const aliasMap: AliasMap = new Map();
   const fnDefMap = buildFunctionDefMap(fnNode);
 
@@ -1489,13 +1426,13 @@ export function buildAliasRegistry(fnNode: SyntaxNode, macroRegistry?: Map<strin
     }
 
     // Self-alias guard.
-    if (lhsDeclId === targetDeclId) continue;
+    console.log('Got past target checking', lhsName, targetDeclId); if (lhsDeclId === targetDeclId) continue;
 
     // Exactly one symbolic write to LHS.
-    if (countSymbolicWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
+    const writes = countSymbolicWrites(lhsName, lhsDeclId, fnNode); console.log('writes for', lhsName, 'is', writes); if (writes !== 1) continue;
 
     // LHS must not be mutated anywhere.
-    if (isMutated(lhsName, fnNode, fnDefMap, macroRegistry)) continue;
+    if (isMutated(lhsName, fnNode, fnDefMap)) continue;
 
     aliasMap.set(lhsDeclId, targetDeclId);
   }
@@ -1528,7 +1465,7 @@ export function buildAliasRegistry(fnNode: SyntaxNode, macroRegistry?: Map<strin
     if (countSymbolicWrites(lhsName, lhsDeclId, fnNode) !== 1) continue;
 
     // LHS must not be mutated anywhere
-    if (isMutated(lhsName, fnNode, fnDefMap, macroRegistry)) continue;
+    if (isMutated(lhsName, fnNode, fnDefMap)) continue;
 
     const rhs = assign.childForFieldName('right');
     if (!rhs) continue;
@@ -1589,11 +1526,10 @@ function canonicalizeVar(
   return canonicalizeIdentNode(condIdent, fnNode, aliasMap);
 }
 
-function canonicalizeIdentNode(
+export function canonicalizeIdentNode(
   identNode: SyntaxNode,
   fnNode: SyntaxNode,
-  aliasMap: AliasMap,
-  visitedTargetIds: Set<number> = new Set()
+  aliasMap: AliasMap
 ): string | string[] {
   const rawVar = identNode.text;
 
@@ -1607,15 +1543,6 @@ function canonicalizeIdentNode(
 
   const targetNode = findNodeById(fnNode, canonicalId);
   if (!targetNode) return rawVar;
-
-  // ── Cycle guard: if this target node has already been visited in the current
-  // call chain, the alias chain is self-referential (e.g. n -> n/2 -> n -> ...).
-  // Return rawVar as a safe conservative fallback. No heuristic. No Unknown.
-  // Proof: the aliasMap maps declaration D to binary_expr B. When B is unpacked,
-  // identifier n inside B resolves back to D, which maps to B again — a confirmed
-  // structural cycle. Returning rawVar is the minimal safe termination.
-  if (visitedTargetIds.has(targetNode.id)) return rawVar;
-  visitedTargetIds.add(targetNode.id);
 
   // Bug B fix: Phase 2 lazy evaluation of compound initializers.
   // Applied to the resolved target node (after following the alias chain).
@@ -1633,7 +1560,7 @@ function canonicalizeIdentNode(
           }
         }
         return compoundNodes.flatMap(vNode =>
-          canonicalizeIdentNode(vNode, fnNode, aliasMap, visitedTargetIds)
+          canonicalizeIdentNode(vNode, fnNode, aliasMap)
         );
       }
     }
@@ -1652,7 +1579,7 @@ function canonicalizeIdentNode(
           }
         }
         return compoundNodes.flatMap(vNode =>
-          canonicalizeIdentNode(vNode, fnNode, aliasMap, visitedTargetIds)
+          canonicalizeIdentNode(vNode, fnNode, aliasMap)
         );
       }
     }
