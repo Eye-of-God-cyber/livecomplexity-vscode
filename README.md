@@ -3,11 +3,19 @@
 
 ![License](https://img.shields.io/github/license/Eye-of-God-cyber/livecomplexity-vscode)
 
-Deterministic AST-Based Time Complexity Analysis for C++.
+Deterministic AST-based real-time Big-O time complexity analysis for C++.
 
 **Proven. Not Guessed.**
 
-LiveComplexity derives Big-O time complexity from the syntactic structure of your code using deterministic AST analysis, never heuristics or probabilistic inference.
+## Current Scope
+
+LiveComplexity currently focuses on deterministic **time complexity analysis for C++**.
+
+Version 1 intentionally prioritizes correctness, structural proof, and low-latency editor feedback over broad language coverage or heuristic inference.
+
+Space complexity analysis (Version 2) and additional language support are planned for future releases.
+
+LiveComplexity derives Big-O time complexity directly from the abstract syntax tree (AST) of your code using deterministic structural analysis—not heuristics, probabilistic inference, or AI-generated guesses.
 
 ## Visuals
 
@@ -31,6 +39,7 @@ LiveComplexity derives Big-O time complexity from the syntactic structure of you
 - Symbolic bound preservation
 - Unknown instead of unsound inference
 - Correctness-first structural reasoning
+- Preserves structurally proven symbolic bounds (e.g. `O(m)`, `O(rows)`, `O(cols)`)
 
 ## Installation
 
@@ -39,10 +48,7 @@ LiveComplexity derives Big-O time complexity from the syntactic structure of you
 3. Search for "LiveComplexity".
 4. Click Install.
 
-Alternatively, install via the CLI:
-```bash
-code --install-extension livecomplexity.livecomplexity
-```
+
 
 ## Usage
 
