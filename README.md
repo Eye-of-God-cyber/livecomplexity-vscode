@@ -1,8 +1,7 @@
 ![LiveComplexity](assets/readme-hero.png)
 
-![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/livecomplexity.livecomplexity)
-![Installs](https://img.shields.io/visual-studio-marketplace/i/livecomplexity.livecomplexity)
-![License](https://img.github.com/license/livecomplexity/livecomplexity-vscode)
+
+![License](https://img.shields.io/github/license/Eye-of-God-cyber/livecomplexity-vscode)
 
 Deterministic AST-Based Time Complexity Analysis for C++.
 
@@ -26,12 +25,12 @@ LiveComplexity derives Big-O time complexity from the syntactic structure of you
 
 ## Features
 
-- Real-time deterministic analysis
-- Inline `O(...)` annotations
-- Hover trace of structural derivation
-- Web Tree-Sitter parsing
+- Deterministic AST-based analysis
+- Real-time inline `O(...)` annotations
+- Hover explanations with structural derivation
 - Symbolic bound preservation
-- `Unknown` instead of unsound inference
+- Unknown instead of unsound inference
+- Correctness-first structural reasoning
 
 ## Installation
 
@@ -137,13 +136,13 @@ No. The engine is a deterministic static analysis pipeline. There is no model in
 
 ## Roadmap
 
-- Support for Python and Java.
-- Memory/Space complexity analysis.
-- Detection of recursive pattern complexity.
+- Support for additional programming languages.
+- Space complexity analysis (planned for Version 2).
+- Recursive complexity analysis.
 
 ## Contributing
 
-We welcome contributions! Please visit our [GitHub repository](https://github.com/livecomplexity/livecomplexity-vscode) to report issues, suggest features, or submit pull requests.
+We welcome contributions! Please visit our [GitHub repository](https://github.com/Eye-of-God-cyber/livecomplexity-vscode) to report issues, suggest features, or submit pull requests.
 
 ## License
 

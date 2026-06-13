@@ -1,7 +1,7 @@
 {
   "name": "livecomplexity",
   "displayName": "LiveComplexity: Real-time Big-O Analysis",
-  "description": "Instantly analyze and display Big-O time complexity for C++ loops and functions inline as you type.",
+  "description": "Real-time AST-based Big-O time complexity analysis for C++ with inline editor annotations and hover explanations.",
   "version": "0.1.0",
   "publisher": "livecomplexity",
   "license": "MIT",
@@ -16,20 +16,24 @@
   "keywords": [
     "c++",
     "cpp",
-    "ast",
-    "static analysis",
+    "big-o",
     "complexity",
-    "big-o"
+    "time complexity",
+    "algorithm",
+    "static analysis",
+    "ast",
+    "competitive programming",
+    "dsa"
   ],
   "icon": "assets/icon.png",
   "repository": {
-    "type": "git",
-    "url": "https://github.com/livecomplexity/livecomplexity-vscode.git"
-  },
-  "bugs": {
-    "url": "https://github.com/livecomplexity/livecomplexity-vscode/issues"
-  },
-  "homepage": "https://github.com/livecomplexity/livecomplexity-vscode#readme",
+  "type": "git",
+  "url": "https://github.com/Eye-of-God-cyber/livecomplexity-vscode.git"
+},
+"bugs": {
+  "url": "https://github.com/Eye-of-God-cyber/livecomplexity-vscode/issues"
+},
+"homepage": "https://github.com/Eye-of-God-cyber/livecomplexity-vscode#readme",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
