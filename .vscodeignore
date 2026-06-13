@@ -17,3 +17,51 @@ pnpm-workspace.yaml
 test_ast.js
 test_wasm.js
 assets/ASSETS_TODO.md
+
+# Scratch / temporary
+scratch/**
+scratch_assets/**
+scratch.js
+restore.patch
+
+# Investigation / audit documents
+batch*_audit*.md
+architectural_investigation_*.md
+pathological_*.md
+polished_*.md
+pre_mvp_*.md
+premium_*.md
+release_readiness_*.md
+targeted_reaudit_*.md
+
+# Temporary scripts
+parse_*.js
+test_*.js
+test_*.ts
+
+# Misc
+*.patch
+
+# Validation corpus
+validation_*
+
+# Internal reports
+verification_report.md
+final_*.md
+extension_audit_report.md
+
+# Branding documents
+branding_*.md
+
+# Internal investigations
+architecture_investigation_*.md
+
+# Internal reaudits
+batch*_reaudit*.md
+
+# Validation answers
+*.txt
+
+# Optional marketing assets
+assets/social-preview.png
+assets/marketplace-banner.png

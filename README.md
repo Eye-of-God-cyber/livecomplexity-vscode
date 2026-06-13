@@ -1,4 +1,4 @@
-![LiveComplexityIDE](assets/readme-hero.png)
+![LiveComplexity](assets/readme-hero.png)
 
 ![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/livecomplexity.livecomplexity)
 ![Installs](https://img.shields.io/visual-studio-marketplace/i/livecomplexity.livecomplexity)
@@ -72,7 +72,7 @@ LiveComplexity is built on a correctness-first foundation. The engine operates o
 
 ### Unknown > False Positives
 
-`Unknown` indicates that the engine cannot structurally prove the loop bound from the available AST information. Rather than making an unsound inference, the engine reports `Unknown`.
+`Unknown` indicates that the engine cannot structurally prove the loop bound from the available AST information.
 
 ![Unknown example](assets/screenshot-unknown.png)
 
@@ -115,7 +115,7 @@ Static AST analysis without full semantic type resolution has some inherent limi
 
 The engine is validated against a hand-verified corpus of patterns covering:
 
-- Simple linear, logarithmic, and polynomial loops
+- Linear, logarithmic, and polynomial loops
 - Symbolic variables (`m`, `n`, `rows`, `cols`, `limit`)
 - Nested and sequential loop compositions
 - Opaque loop bounds (function calls, member method conditions)
