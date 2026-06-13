@@ -86,7 +86,7 @@ describe('D5.1 Container Size Canonicalization', () => {
         }
       `);
       const fn = result.functions[0];
-      expect(fn.complexity).toBe('O(n)');
+      expect(fn.complexity).toBe('O(sz)');
     });
 
     it('7. foo().size() -> rejected, generic O(n)', () => {
@@ -97,7 +97,7 @@ describe('D5.1 Container Size Canonicalization', () => {
         }
       `);
       const fn = result.functions[0];
-      expect(fn.complexity).toBe('O(n)');
+      expect(fn.complexity).toBe('O(sz)');
     });
 
     it('8. expr.size() -> rejected, generic O(n)', () => {
@@ -108,7 +108,7 @@ describe('D5.1 Container Size Canonicalization', () => {
         }
       `);
       const fn = result.functions[0];
-      expect(fn.complexity).toBe('O(n)');
+      expect(fn.complexity).toBe('O(sz)');
     });
 
     it('9. a+b.size() -> rejected, generic O(n)', () => {
@@ -120,7 +120,7 @@ describe('D5.1 Container Size Canonicalization', () => {
       `);
       const fn = result.functions[0];
       // Due to how tree-sitter parses 'int sz = a + b.size()', the RHS is not a call_expression.
-      expect(fn.complexity).toBe('O(n)');
+      expect(fn.complexity).toBe('O(sz)');
     });
 
     it('10. mutated container: sz = v.size() but v is mutated -> sz remains valid alias structurally', () => {

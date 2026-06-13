@@ -30,6 +30,7 @@ export interface ComplexityNode {
   loglogPower: number;  // 0 = absent, 1 = O(... log log n)
   isUnknown: boolean;
   linearVars?: string[]; // variables extracted from loop bound — e.g. ['m', 'V'] (D1+)
+  logVars?: string[];    // variables extracted for logarithmic bounds — e.g. ['limit']
   isGraphSum?:    boolean;  // true → format as O(V+E) (D2.2+)
   isGraphSumLog?: boolean;  // true → format as O((V+E) log V) (D2.3+)
   expVars?: string[];        // per-variable 2^x entries — e.g. ['n'] → 2ⁿ, ['n','m'] → 2ⁿ·2ᵐ (D3.1+)

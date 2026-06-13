@@ -91,8 +91,8 @@ const CASES: Case[] = [
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n;j++){}'), expected: 'O(n²)' },
   { id: 24, label: 'Nested loops over n and m',
     code: wrap('for(int i=0;i<n;i++) for(int j=0;j<m;j++){}'), expected: 'O(nm)' as any },
-  { id: 25, label: 'Bubble sort inner (j < n-i)',
-    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n-i;j++){}'), expected: 'O(n²)' },
+  { id: 25, label: 'Bubble sort inner (j < n-i) → Unknown (n-i is subtraction, structurally unprovable)',
+    code: wrap('for(int i=0;i<n;i++) for(int j=0;j<n-i;j++){}'), expected: 'Unknown' },
   { id: 26, label: 'Selection sort (i and j from i+1)',
     code: wrap('for(int i=0;i<n;i++) for(int j=i+1;j<n;j++){}'), expected: 'O(n²)' },
   { id: 27, label: 'While inside for',
@@ -501,13 +501,13 @@ void foo(int n, int m, int p) {
   }
 }`, expected: 'O(V+E)' as any },
 
-  { id: 143, label: 'D2.2: Queue loop WITHOUT for_range_loop → O(n) [no graph detection]',
+  { id: 143, label: 'D2.2: Queue loop WITHOUT for_range_loop → Unknown (opaque call bound, no update proof)',
     code: `void process(int n) {
   queue<int> q;
   while(!q.empty()) {
     int u = q.front(); q.pop();
   }
-}`, expected: 'O(n)' as any },
+}`, expected: 'Unknown' as any },
 
   { id: 144, label: 'D2.2: Non-queue nested while+for_range_loop → O(n²) [no graph detection]',
     code: wrap('int cnt = n;\nwhile(cnt > 0) { cnt--;\nfor(auto v : adj[cnt]) {} }'), expected: 'O(n²)' as any },
@@ -520,13 +520,13 @@ void foo(int n, int m, int p) {
   }
 }`, expected: 'O(n²)' as any },
 
-  { id: 146, label: 'D2.2: Queue + sort (NOT for_range_loop) → no graph detection, sort multiplied',
+  { id: 146, label: 'D2.2: Queue + sort (NOT for_range_loop) → Unknown (while bound is opaque call)',
     code: `void f(int n, vector<int>& v) {
   queue<int> q;
   while(!q.empty()) {
     sort(v.begin(), v.end());
   }
-}`, expected: 'O(n² log n)' as any },
+}`, expected: 'Unknown' as any },
 
   // ── D2.3: Dijkstra & Priority-Queue Graph Algorithms ───────────────────────
 
@@ -569,7 +569,7 @@ void solve() {
   }
 }`, expected: 'O((V+E) log V + log n)' as any },
 
-  { id: 150, label: 'D2.3: priority_queue without for_range_loop → existing behavior (no graph detection)', code: `
+  { id: 150, label: 'D2.3: priority_queue without for_range_loop → Unknown (while bound is opaque call)', code: `
 void process() {
   priority_queue<int> pq;
   for(int i=0;i<n;i++) pq.push(a[i]);
@@ -577,7 +577,7 @@ void process() {
     int x = pq.top();
     pq.pop();
   }
-}`, expected: 'O(n log n)' as any },
+}`, expected: 'Unknown' as any },
 
   { id: 151, label: 'D2.3: priority_queue + for(int i<n) inside → multiplicative (no graph detection)', code: `
 void process() {
@@ -719,11 +719,11 @@ void solve() {
   }
 }`, expected: 'O(1)' as any },
 
-  { id: 166, label: 'D3.1: Guard — k<<n (non-literal left) → no exponential detection', code: `
+  { id: 166, label: 'D3.1: Guard — k<<n (non-literal left) → Unknown (opaque bound, shift rejected)', code: `
 void solve() {
   for(int mask=0; mask<(k<<n); mask++) {
   }
-}`, expected: 'O(n)' as any },
+}`, expected: 'Unknown' as any },
 
   { id: 167, label: 'D3.1: Double-parenthesized ((1<<n)) → O(2ⁿ)', code: `
 void solve() {
@@ -1652,11 +1652,30 @@ void foo(int n) {
   { id: 294, label: 'D5.4: harmonic alias — step=i; j+=step -> O(n log n)',
     code: wrap('for(int i=1;i<=n;i++) { int step=i; for(int j=step;j<=n;j+=step){} }'), expected: 'O(n log n)' },
 
+  // ── D5.7: Opaque Loop Bound Correctness ─────────────────────────────────
+  // The following loops have structurally unprovable upper bounds.
+  // The engine has NO proof of what the bound is — it must emit Unknown.
+
+  { id: 295, label: 'D5.7: for(i<getLimit()) — bare function call bound → Unknown',
+    code: wrap('int getLimit(); for(int i=0;i<getLimit();i++){}'), expected: 'Unknown' },
+
+  { id: 296, label: 'D5.7: while(network.hasNext()) — method call condition, no update → Unknown',
+    code: `void f() { while(network.hasNext()) { network.process(); } }`, expected: 'Unknown' },
+
+  { id: 297, label: 'D5.7: for(i<foo()) — arbitrary free call bound → Unknown',
+    code: wrap('int foo(); for(int i=0;i<foo();i++){}'), expected: 'Unknown' },
+
+  { id: 298, label: 'D5.7: while(socket.isConnected()) — method call condition, no update → Unknown',
+    code: `void f() { while(socket.isConnected()) { recv(); } }`, expected: 'Unknown' },
+
+  { id: 299, label: 'D5.7: while(database.hasMoreRows()) — method call condition, no update → Unknown',
+    code: `void f() { while(database.hasMoreRows()) { fetch(); } }`, expected: 'Unknown' },
+
 ];
 
 // ─── vitest suite ───────────────────────────────────────────────────────────
 
-describe('Validation Suite — 294 patterns', () => {
+describe('Validation Suite — 299 patterns', () => {
   beforeAll(async () => {
     await initParser(distDir);
   });

@@ -45,20 +45,19 @@ function getBaseComplexity(classification: LoopClassification | 'custom', custom
     case 'constant':
       return { power: 0, logPower: 0, loglogPower: 0, isUnknown: false };
     case 'linear':
-      return { power: 1, logPower: 0, loglogPower: 0, isUnknown: false, linearVars: classification === 'linear' && singleVar ? [singleVar] : undefined };
+      return { power: 1, logPower: 0, loglogPower: 0, isUnknown: false, linearVars: singleVar ? [singleVar] : undefined };
     case 'logarithmic':
-      return { power: 0, logPower: 1, loglogPower: 0, isUnknown: false };
+      return { power: 0, logPower: 1, loglogPower: 0, isUnknown: false, logVars: singleVar ? [singleVar] : undefined };
     case 'fractional':
-      return { power: 0.5, logPower: 0, loglogPower: 0, isUnknown: false };
+      return { power: 0.5, logPower: 0, loglogPower: 0, isUnknown: false, linearVars: singleVar ? [singleVar] : undefined };
     case 'linear_logarithmic':
-      return { power: 1, logPower: 1, loglogPower: 0, isUnknown: false, linearVars: singleVar ? [singleVar] : undefined };
+      return { power: 1, logPower: 1, loglogPower: 0, isUnknown: false, linearVars: singleVar ? [singleVar] : undefined, logVars: singleVar ? [singleVar] : undefined };
     case 'graph_traversal':
       return { power: 1, logPower: 0, loglogPower: 0, isUnknown: false, isGraphSum: true };
     case 'graph_log_traversal':
       return { power: 1, logPower: 1, loglogPower: 0, isUnknown: false, isGraphSumLog: true };
     case 'exponential':
-      return { power: 0, logPower: 0, loglogPower: 0, isUnknown: false,
-               expVars: singleVar ? [singleVar] : [] };
+      return { power: 0, logPower: 0, loglogPower: 0, isUnknown: false, expVars: singleVar ? [singleVar] : [] };
     case 'unknown':
     default:
       return { power: 0, logPower: 0, loglogPower: 0, isUnknown: true };
@@ -94,6 +93,15 @@ function substituteNodeVars(node: ComplexityNode, calleeParamNames: string[], ca
     }
     if (clone.expVars) {
       clone.expVars = clone.expVars.map(v => {
+        if (substitutionMap.has(v)) {
+          didSubstitute = true;
+          return substitutionMap.get(v)!;
+        }
+        return v;
+      });
+    }
+    if (clone.logVars) {
+      clone.logVars = clone.logVars.map(v => {
         if (substitutionMap.has(v)) {
           didSubstitute = true;
           return substitutionMap.get(v)!;
@@ -444,6 +452,10 @@ function multiplyNodes(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
   if (a.linearVars || b.linearVars) {
     mergedVars = [...(a.linearVars || []), ...(b.linearVars || [])];
   }
+  let mergedLogVars: string[] | undefined = undefined;
+  if (a.logVars || b.logVars) {
+    mergedLogVars = [...(a.logVars || []), ...(b.logVars || [])];
+  }
 
   return {
     power: a.power + b.power,
@@ -452,6 +464,7 @@ function multiplyNodes(a: ComplexityNode, b: ComplexityNode): ComplexityNode {
     isUnknown: false,
     linearVars: mergedVars,
     expVars: mergedExpVars,
+    logVars: mergedLogVars,
     isSubstituted: a.isSubstituted || b.isSubstituted
   };
 }
@@ -518,73 +531,31 @@ function mergeConfidence(a: ConfidenceLevel, b: ConfidenceLevel): ConfidenceLeve
 function formatComplexity(node: ComplexityNode, preserveVars: boolean = false): ComplexityClass {
   if (node.isUnknown) return 'Unknown';
 
-  // D4.7: Sum Node formatting — checked before all Scalar paths.
-  // Each term in sumTerms is a Scalar Node; formatComplexity recurse cannot loop.
-  // Terms are already in canonical order (mergeAndReduce Step 5) so output is
-  // deterministic: same ComplexityNode always produces the same string.
-  // We pass preserveVars=true so that individual terms like O(m) are not forced to O(n).
   if (node.sumTerms && node.sumTerms.length > 0) {
     const parts = node.sumTerms.map(t => {
       const s = formatComplexity(t, true);
-      // Strip outer 'O(' and ')' to get the inner expression for joining.
       return s.startsWith('O(') ? s.slice(2, -1) : s;
     });
     return 'O(' + parts.join(' + ') + ')';
   }
 
-  // D2.2 / D2.3: Graph traversal summation — checked before all polynomial formatting.
-  // isGraphSumLog (Dijkstra, O((V+E) log V)) must be checked before isGraphSum (BFS/DFS, O(V+E))
-  // because both flags could theoretically coexist in maxNode comparisons.
   if (node.isGraphSumLog) return 'O((V+E) log V)';
   if (node.isGraphSum)    return 'O(V+E)';
 
-  // D3.1: Exponential formatting — checked before polynomial.
-  // Any node with expVars set is routed through formatExponential.
   if (node.expVars && node.expVars.length > 0) return formatExponential(node);
   
-  // Mixed / Heuristic check:
-  // If the number of extracted linear symbolic variables does NOT perfectly match the expected linear polynomial degree,
-  // we MUST abort symbolic formatting and fall back to the exact 'n' representation.
   const explicitVars = node.linearVars || [];
   const expectedLinearFactors = Math.floor(node.power);
-  const isFullySymbolic = explicitVars.length === expectedLinearFactors;
   
-  // If the entire complexity is just a single linear factor, force fallback to 'O(n)'
-  // to perfectly preserve single-loop test expectations like test 16: for(i<m) -> O(n).
-  // Symbolic formatting only triggers when there are MULTIPLE explicit variables multiplying,
-  // OR when we are inside a Sum Node (preserveVars is true) and need to distinguish n vs m.
-  const isSingleVariable = !preserveVars && !node.isSubstituted && explicitVars.length === 1 && node.power === 1 && node.logPower === 0 && node.loglogPower === 0 && !explicitVars[0].includes('.');
-  
-  // Backward compatibility fast-paths for pure 'n', OR when we abort symbolic formatting
-  if (!isFullySymbolic || explicitVars.length === 0 || explicitVars.every(v => v === 'n') || isSingleVariable) {
-    if (node.power === 1 && node.logPower === 0 && node.loglogPower === 1) return 'O(n log log n)';
-    if (node.power === 0 && node.logPower === 0) return 'O(1)';
-    if (node.power === 0 && node.logPower === 1) return 'O(log n)';
-    if (node.power === 0 && node.logPower === 2) return 'O(log² n)';
-    if (node.power === 0 && node.logPower >= 3) return 'O(log³ n)';
-    if (node.power === 0.5 && node.logPower === 0) return 'O(sqrt n)';
-    if (node.power === 1 && node.logPower === 0) return 'O(n)';
-    if (node.power === 1 && node.logPower === 1) return 'O(n log n)';
-    if (node.power === 1.5 && node.logPower === 0) return 'O(n sqrt n)';
-    if (node.power === 1 && node.logPower === 2) return 'O(n log² n)';
-    if (node.power === 2 && node.logPower === 0) return 'O(n²)';
-    if (node.power === 2 && node.logPower === 1) return 'O(n² log n)';
-    if (node.power === 2.5 && node.logPower === 0) return 'O(n² sqrt n)';
-    if (node.power === 1.5 && node.logPower === 1) return 'O(n sqrt n log n)';
-    if (node.power >= 3) {
-      const powFloor = Math.floor(node.power);
-      const isFractional = (node.power % 1 === 0.5);
-      const powStr = powFloor === 3 ? '³' : `^${powFloor}`;
-      const fracStr = isFractional ? ' sqrt n' : '';
-      if (node.logPower === 0) return `O(n${powStr}${fracStr})`;
-      if (node.logPower === 1) return `O(n${powStr}${fracStr} log n)`;
-      if (node.logPower === 2) return `O(n${powStr}${fracStr} log² n)`;
-      return `O(n${powStr}${fracStr} log³ n)`;
-    }
-  }
-
-  // Multi-variable formatting
   const allVars = [...explicitVars];
+  
+  // Represent mathematically unproven polynomial factors with the generic variable 'n'.
+  // We ONLY add 'n' if the structural power strictly exceeds the number of extracted variables.
+  // We never pad or synthesize dimensions that the engine didn't explicitly track as missing.
+  const missingPower = expectedLinearFactors - allVars.length;
+  for (let i = 0; i < missingPower; i++) {
+    allVars.push('n');
+  }
 
   allVars.sort((a, b) => {
     if (a === 'n') return -1;
@@ -605,24 +576,45 @@ function formatComplexity(node: ComplexityNode, preserveVars: boolean = false): 
     else polyTerms.push(v + '^' + count);
   }
 
-  let result = polyTerms.join('');
+  // Join multiple terms. Use spaces for readability if any variable is multi-character (e.g. 'rows cols').
+  let result = polyTerms.join(allVars.some(v => v.length > 1) ? ' ' : '');
 
-  const logVar = explicitVars.length > 0 ? explicitVars[0] : 'n';
-
-  if (node.power % 1 === 0.5) {
-    result += (result ? ' ' : '') + `sqrt ${logVar}`;
+  // Logarithmic formatting: natively format explicit logarithmic bounds.
+  const explicitLogVars = node.logVars || [];
+  const expectedLogFactors = Math.floor(node.logPower);
+  const logVarsToFormat = [...explicitLogVars];
+  
+  // Unproven logarithmic loops fallback securely to generic 'n'. We NEVER synthesize relationships
+  // by borrowing from linear dimensions. Correctness Before Guessing.
+  const missingLogPower = expectedLogFactors - logVarsToFormat.length;
+  for (let i = 0; i < missingLogPower; i++) {
+    logVarsToFormat.push('n');
   }
 
-  if (node.logPower === 1) {
-    result += (result ? ' ' : '') + `log ${logVar}`;
-  } else if (node.logPower === 2) {
-    result += (result ? ' ' : '') + `log² ${logVar}`;
-  } else if (node.logPower >= 3) {
-    result += (result ? ' ' : '') + `log³ ${logVar}`;
+  const logVarCounts = new Map<string, number>();
+  for (const v of logVarsToFormat) {
+    logVarCounts.set(v, (logVarCounts.get(v) || 0) + 1);
+  }
+
+  const logTerms: string[] = [];
+  for (const [v, count] of logVarCounts.entries()) {
+    if (count === 1) logTerms.push(`log ${v}`);
+    else if (count === 2) logTerms.push(`log² ${v}`);
+    else if (count >= 3) logTerms.push(`log³ ${v}`);
+  }
+
+  let logResult = logTerms.join(logVarsToFormat.some(v => v.length > 1) ? ' ' : '');
+
+  if (node.power % 1 === 0.5) {
+    result += (result ? ' ' : '') + `sqrt n`;
+  }
+
+  if (logResult) {
+    result += (result ? ' ' : '') + logResult;
   }
 
   if (node.loglogPower === 1) {
-    result += (result ? ' ' : '') + `log log ${logVar}`;
+    result += (result ? ' ' : '') + `log log n`;
   }
 
   if (!result) return 'O(1)';
@@ -714,15 +706,8 @@ export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
   for (const loop of loops) {
     const { node, confidence, explanation } = analyzeLoopHierarchy(loop);
     
-    // Check if the current loop dominates the overall complexity
-    const isDominant = !node.isUnknown && !overallNode.isUnknown && 
-                       (node.power > overallNode.power || (node.power === overallNode.power && node.logPower > overallNode.logPower));
-    
-    if (isDominant || overallNode.isUnknown === false && overallNode.power === 0 && overallNode.logPower === 0) {
-      if (explanations.length > 0 && isDominant) {
-        explanations.push(`Sequential loop at line ${loop.startLine + 1} dominates previous loops.`);
-      }
-    }
+    // Sequential aggregation (addNode performs max/add for incommensurable variables).
+    // The summary max is printed after the loop over sequential elements.
 
     // D4.7: addNode (not maxNode) for sequential aggregation (M1).
     // addNode correctly emits O(n+m) for incommensurable sequential loops instead
@@ -730,6 +715,11 @@ export function inferComplexity(loops: ExtractedLoop[]): ComplexityResult {
     overallNode = addNode(overallNode, node);
     overallConfidence = mergeConfidence(overallConfidence, confidence);
     explanations.push(...explanation);
+  }
+
+  // Summary for multiple sequential loops
+  if (loops.length > 1 && !overallNode.isUnknown) {
+    explanations.push(`↳ max → ${formatComplexity(overallNode)}`);
   }
 
   // Deduplicate some explanations if needed, but linear flow is fine
@@ -768,7 +758,20 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
   const explanations: string[] = [];
   let currentConfidence = loop.confidence;
   
-  explanations.push(`Loop at line ${loop.startLine + 1} classified as ${loop.classification}.`);
+  let boundStr = '';
+  if (loop.boundVar) {
+    if (Array.isArray(loop.boundVar)) {
+      boundStr = ` (${loop.boundVar.join(', ')})`;
+    } else {
+      boundStr = ` (${loop.boundVar})`;
+    }
+  }
+
+  if (loop.classification === 'unknown') {
+    explanations.push(`✗ L${loop.startLine + 1} → unprovable bound`);
+  } else {
+    explanations.push(`✓ L${loop.startLine + 1} → ${loop.classification}${boundStr}`);
+  }
 
   if (!loop.childLoops || loop.childLoops.length === 0) {
     return { node: baseNode, confidence: currentConfidence, explanation: explanations };
@@ -782,10 +785,7 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
       const childResult = analyzeLoopHierarchy(child);
       explanations.push(...childResult.explanation);
     }
-    explanations.push(
-      `Graph traversal at line ${loop.startLine + 1}: outer while (vertices) + ` +
-      `inner for_range_loop (edges) = O(V+E).`
-    );
+    explanations.push(`↳ L${loop.startLine + 1} BFS/DFS → O(V) + O(E) = O(V+E)`);
     return { node: baseNode, confidence: currentConfidence, explanation: explanations };
   }
 
@@ -798,10 +798,7 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
       const childResult = analyzeLoopHierarchy(child);
       explanations.push(...childResult.explanation);
     }
-    explanations.push(
-      `Dijkstra / priority-queue graph traversal at line ${loop.startLine + 1}: ` +
-      `outer while (vertices/edges) + priority_queue ops (log V) = O((V+E) log V).`
-    );
+    explanations.push(`↳ L${loop.startLine + 1} Dijkstra → O(V+E) × O(log V)`);
     return { node: baseNode, confidence: currentConfidence, explanation: explanations };
   }
 
@@ -853,26 +850,17 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
     if (baseNode.power === 1 && baseNode.logPower === 0 && baseNode.loglogPower === 0) {
       // Outer is O(n): Σ(n/i) for i=1..n = O(n log n)
       harmonicResultNode = { power: 1, logPower: 1, loglogPower: 0, isUnknown: false, linearVars: baseNode.linearVars };
-      explanations.push(
-        `Step-dependent inner loop at line ${harmonicChildren[0].startLine + 1} creates harmonic series: ` +
-        `outer O(n) × Σ(n/i) = O(n log n).`
-      );
+      explanations.push(`↳ L${harmonicChildren[0].startLine + 1} harmonic Σ(n/i) → O(n log n)`);
     } else if (baseNode.power === 0.5 && baseNode.logPower === 0 && baseNode.loglogPower === 0) {
       // Outer is O(sqrt n): Σ(n/i) for i=1..sqrt(n) = O(n log log n)  [Sieve]
       harmonicResultNode = { power: 1, logPower: 0, loglogPower: 1, isUnknown: false, linearVars: baseNode.linearVars };
-      explanations.push(
-        `Step-dependent inner loop at line ${harmonicChildren[0].startLine + 1} with outer O(sqrt n): ` +
-        `sieve-style harmonic sum = O(n log log n).`
-      );
+      explanations.push(`↳ L${harmonicChildren[0].startLine + 1} sieve Σ(sqrt(n)/i) → O(n log log n)`);
     } else {
       // For other outer complexities, fall back to conservative multiply.
       // e.g. outer O(n log n) × inner O(n) is still O(n² log n) upper bound.
       const childSelfResult = analyzeLoopHierarchy(harmonicChildren[0]);
       harmonicResultNode = multiplyNodes(baseNode, childSelfResult.node);
-      explanations.push(
-        `Step-dependent inner loop at line ${harmonicChildren[0].startLine + 1}: ` +
-        `harmonic reduction not applicable for outer ${formatComplexity(baseNode)}, using conservative multiply.`
-      );
+      explanations.push(`↳ fallback to multiply`);
     }
     maxHarmonicNode = maxNode(maxHarmonicNode, harmonicResultNode);
   }
@@ -892,10 +880,7 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
     const childResult = analyzeLoopHierarchy(child);
     amortizedConfidence = mergeConfidence(amortizedConfidence, childResult.confidence);
     explanations.push(...childResult.explanation);
-    explanations.push(
-      `Inner loop at line ${child.startLine + 1} is amortized: total work across all outer ` +
-      `iterations is bounded by the outer loop's complexity.`
-    );
+    explanations.push(`↳ L${child.startLine + 1} amortized → add (not multiply)`);
   }
 
   // ── Combine: independent × outer, harmonic precomputed, amortized = free ─
@@ -927,15 +912,13 @@ function analyzeLoopHierarchy(loop: ExtractedLoop): { node: ComplexityNode, conf
 
   if (!resultNode.isUnknown && !baseNode.isUnknown) {
     if (baseNode.power === 0 && baseNode.logPower === 0) {
-      explanations.push(`Outer loop at line ${loop.startLine + 1} is constant, so it does not multiply inner complexity.`);
+      explanations.push(`↳ L${loop.startLine + 1} constant → does not multiply`);
     } else if (hasIndependent && !hasHarmonic && !hasAmortized) {
-      const innerStr = formatComplexity(maxIndependentNode);
-      const outerStr = formatComplexity(baseNode);
       const totalStr = formatComplexity(resultNode);
-      explanations.push(`Nested ${innerStr} loop inside ${outerStr} loop multiply to produce ${totalStr}.`);
+      explanations.push(`↳ multiply → ${totalStr}`);
     }
   } else if (resultNode.isUnknown) {
-    explanations.push(`Unknown complexity in nested hierarchy leads to overall Unknown.`);
+    explanations.push(`↳ Unknown`);
   }
 
   return {
@@ -1055,7 +1038,7 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
           endLine: fnNode.endPosition.row,
           complexity: 'O(1)',
           confidence: 'high',
-          explanation: [`Function "${name}" recognized as DSU recursive path compression. Complexity is amortized O(1).`]
+          explanation: [`✓ DSU path compression → amortized O(1)`]
         });
         continue;
       }
@@ -1076,7 +1059,7 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
           endLine: fnNode.endPosition.row,
           complexity: memoComplexity,
           confidence: 'medium',
-          explanation: [`Function "${name}" recognized as memoized recursion with ${dimLabel}-dimension cache. Each state computed once: ${memoComplexity}.`]
+          explanation: [`✓ memoized (${dimLabel}-dim) → ${memoComplexity}`]
         });
         continue;
       }
@@ -1093,7 +1076,7 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
           endLine: fnNode.endPosition.row,
           complexity: 'O(log n)',
           confidence: 'high',
-          explanation: [`Function "${name}" recognized as recursive binary search (halving with branch-isolated self-calls). Complexity is O(log n).`]
+          explanation: [`✓ recursive binary search → O(log n)`]
         });
         continue;
       }
@@ -1106,7 +1089,7 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
         endLine: fnNode.endPosition.row,
         complexity: 'Unknown',
         confidence: 'low',
-        explanation: [`Function "${name}" participates in recursion. Complexity is Unknown.`]
+        explanation: [`↳ unhandled recursion → Unknown`]
       });
       continue;
     }
@@ -1115,7 +1098,7 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
     const { complexity, confidence, explanation, node } = inferComplexity(loops);
 
     const summaryLine = buildSummary(name, complexity);
-    const finalExplanation = [...explanation, summaryLine];
+    const finalExplanation = summaryLine ? [...explanation, summaryLine] : explanation;
 
     if (node) {
       functionRegistry.set(name, node);
@@ -1142,9 +1125,9 @@ export function analyzeFunctions(tree: Tree): DocumentComplexityResult {
 
 function buildSummary(name: string, complexity: ComplexityClass): string {
   if (complexity === 'O(1)') {
-    return `Function "${name}" contains no loops or only constant loops. Time complexity is O(1).`;
+    return `✓ no loops → O(1)`;
   }
-  return `Overall time complexity of function "${name}" is ${complexity}.`;
+  return '';
 }
 
 // ─── D3.2: DSU Path Compression Helper ──────────────────────────────────────────────────

@@ -123,6 +123,8 @@ export class AnalysisController implements vscode.Disposable {
       this.logger.log(
         `Skipping analysis: file size ${fileSizeKB.toFixed(1)} KB exceeds limit of ${settings.maxFileSizeKB} KB`,
       );
+      this.cache.clearResult(doc.uri);
+      this.decorations.clearForUri(doc.uri);
       return;
     }
 
@@ -141,6 +143,20 @@ export class AnalysisController implements vscode.Disposable {
     if (token.isCancellationRequested) return;
 
     const entry = this.cache.getOrCreate(doc.uri);
+
+    // Skip analysis if the document hasn't changed since the last successful run
+    if (entry.version === doc.version && entry.result) {
+      if (settings.showInlineAnnotations) {
+        for (const editor of vscode.window.visibleTextEditors) {
+          if (editor.document.uri.toString() === doc.uri.toString()) {
+            this.decorations.apply(editor, entry.result);
+          }
+        }
+      } else {
+        this.decorations.clearForUri(doc.uri);
+      }
+      return;
+    }
 
     try {
       const source = doc.getText();
@@ -164,7 +180,7 @@ export class AnalysisController implements vscode.Disposable {
 
       if (token.isCancellationRequested) return;
 
-      this.cache.setResult(doc.uri, result);
+      this.cache.setResult(doc.uri, result, doc.version);
 
       // Apply decorations to every visible editor showing this document
       if (settings.showInlineAnnotations) {
@@ -173,6 +189,8 @@ export class AnalysisController implements vscode.Disposable {
             this.decorations.apply(editor, result);
           }
         }
+      } else {
+        this.decorations.clearForUri(doc.uri);
       }
     } catch (err) {
       this.logger.log(`Analysis error for ${doc.uri.fsPath}: ${String(err)}`);

@@ -14,7 +14,7 @@ describe('getSettings', () => {
     expect(settings.debounceMs).toBe(300);
     expect(settings.showInlineAnnotations).toBe(true);
     expect(settings.showHover).toBe(true);
-    expect(settings.maxFileSizeKB).toBe(500);
+    expect(settings.maxFileSizeKB).toBe(100);
   });
 
   it('should return correct types for all settings', () => {

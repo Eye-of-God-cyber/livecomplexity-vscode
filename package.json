@@ -16,10 +16,10 @@
   "keywords": [
     "c++",
     "cpp",
+    "ast",
+    "static analysis",
     "complexity",
-    "big-o",
-    "algorithm",
-    "time complexity"
+    "big-o"
   ],
   "icon": "assets/icon.png",
   "repository": {
@@ -35,7 +35,8 @@
     "theme": "dark"
   },
   "activationEvents": [
-    "onLanguage:cpp"
+    "onLanguage:cpp",
+    "onLanguage:c"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -72,7 +73,7 @@
         },
         "liveComplexity.maxFileSizeKB": {
           "type": "number",
-          "default": 500,
+          "default": 100,
           "minimum": 50,
           "maximum": 5000,
           "description": "Safety limit: Skip AST analysis for files larger than this size (KB) to maintain editor performance."

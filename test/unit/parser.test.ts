@@ -145,7 +145,7 @@ describe('C++ Parser and AST Utilities', () => {
     expect(result.loops).toHaveLength(1);
     expect(result.loops[0].type).toBe('while');
     expect(result.loops[0].childLoops).toHaveLength(0);
-    expect(result.loops[0].classification).toBe('linear');
+    expect(result.loops[0].classification).toBe('unknown');
     expect(result.loops[0].confidence).toBe('low');
   });
 

@@ -11,6 +11,8 @@ export interface CacheEntry {
   ast: DocumentAST;
   /** Latest analysis result. Null until the first successful run. */
   result: DocumentComplexityResult | null;
+  /** Document version of the analyzed result. Used to detect stale cache. */
+  version: number;
 }
 
 /**
@@ -26,7 +28,7 @@ export class AnalysisCache implements vscode.Disposable {
     const key = uri.toString();
     let entry = this.entries.get(key);
     if (!entry) {
-      entry = { ast: new DocumentAST(), result: null };
+      entry = { ast: new DocumentAST(), result: null, version: -1 };
       this.entries.set(key, entry);
     }
     return entry;
@@ -38,10 +40,11 @@ export class AnalysisCache implements vscode.Disposable {
   }
 
   /** Stores an analysis result. */
-  setResult(uri: vscode.Uri, result: DocumentComplexityResult): void {
+  setResult(uri: vscode.Uri, result: DocumentComplexityResult, version: number): void {
     const entry = this.entries.get(uri.toString());
     if (entry) {
       entry.result = result;
+      entry.version = version;
     }
   }
 
@@ -57,10 +60,10 @@ export class AnalysisCache implements vscode.Disposable {
    * Returns the FunctionComplexityResult whose source range contains the given line.
    * Used by the hover provider.
    */
-  getFunctionAt(uri: vscode.Uri, line: number): FunctionComplexityResult | null {
-    const result = this.getResult(uri);
-    if (!result) return null;
-    return result.functions.find(
+  getFunctionAt(uri: vscode.Uri, line: number, currentVersion: number): FunctionComplexityResult | null {
+    const entry = this.entries.get(uri.toString());
+    if (!entry || !entry.result || entry.version !== currentVersion) return null;
+    return entry.result.functions.find(
       (fn) => line >= fn.startLine && line <= fn.endLine
     ) ?? null;
   }

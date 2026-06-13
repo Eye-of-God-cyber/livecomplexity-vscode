@@ -217,8 +217,8 @@ describe('Complexity Inference Engine', () => {
     const result = inferComplexity(loops);
     expect(result.explanation.length).toBeGreaterThan(0);
     const text = result.explanation.join(' ');
-    expect(text).toContain('Loop at line 2 classified as linear');
-    expect(text).toContain('Loop at line 3 classified as linear');
-    expect(text).toContain('multiply to produce O(n²)');
+    expect(text).toContain('✓ L2 → linear');
+    expect(text).toContain('✓ L3 → linear');
+    expect(text).toContain('↳ multiply → O(n²)');
   });
 });

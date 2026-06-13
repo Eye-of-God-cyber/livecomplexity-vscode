@@ -124,7 +124,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)'); // falls back to abstract linear, emits O(n)
+    expect(result).toBe('Unknown'); // bound is n-m (subtraction), structurally unprovable
   });
 
   it('D5.2 NEG: n * m — multiplication rejected', async () => {
@@ -134,7 +134,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // bound is n*m (multiplication), structurally unprovable
   });
 
   it('D5.2 NEG: n / m — division rejected', async () => {
@@ -144,7 +144,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // bound is n/m (division by variable), structurally unprovable
   });
 
   it('D5.2 NEG: n % m — modulo rejected', async () => {
@@ -154,7 +154,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // bound is n%m (modulo), structurally unprovable
   });
 
   it('D5.2 NEG: n + foo() — arbitrary call rejected atomically', async () => {
@@ -164,7 +164,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)'); // Entire expression rejected, fallback to O(n) abstract
+    expect(result).toBe('Unknown'); // Entire expression rejected, opaque bound
   });
 
   it('D5.2 NEG: foo() + n — arbitrary call left rejected atomically', async () => {
@@ -174,7 +174,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // foo() call not obj.size(), opaque
   });
 
   it('D5.2 NEG: n + min(a,b) — min/max rejected', async () => {
@@ -184,7 +184,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // min/max rejected by extractor, opaque
   });
 
   it('D5.2 NEG: n + (m * k) — nested unsupported operator rejected', async () => {
@@ -194,7 +194,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // multiplication nested in +, extractor rejects atomically
   });
 
   it('D5.2 NEG: ternary rejected', async () => {
@@ -204,7 +204,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // ternary bound is unprovable
   });
 
   it('D5.2 NEG: bitwise operators rejected', async () => {
@@ -214,7 +214,7 @@ describe('D5.2: Compound Symbolic Bounds', () => {
       }
     `;
     const result = await analyzeCode(code);
-    expect(result).toBe('O(n)');
+    expect(result).toBe('Unknown'); // bitwise OR bound is structurally unprovable
   });
 
 });

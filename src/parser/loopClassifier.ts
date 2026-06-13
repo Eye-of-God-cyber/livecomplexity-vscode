@@ -174,18 +174,12 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
     }
   }
 
-  // Task 2: Support call_expression conditions such as while(!q.empty()).
-  // These are container-driven queue loops — classify as linear by default,
-  // bypassing the missing-update check (since they usually just do q.pop() which isn't an assignment).
-  if (node.type === 'while_statement' || node.type === 'do_statement') {
-    if (conditionNode && isCallExpressionCondition(conditionNode)) {
-      // If we did find a body update, let analyzeUpdatePattern classify it.
-      // Otherwise, return linear directly.
-      if (!updateNode) {
-        return { classification: 'linear', confidence: 'low' };
-      }
-    }
-  }
+  // NOTE: while(call()) loops — e.g. while(q.empty()), while(network.hasNext()) —
+  // are NOT assumed linear. The call expression bound is structurally unprovable.
+  // A while loop with a call_expression condition and no detectable body update
+  // will fall through to the !updateNode → unknown path below.
+  // Loops that ARE provably linear (e.g. while(!q.empty()) with q.pop() body update)
+  // are handled by analyzeUpdatePattern after the updateNode is found.
 
   if (!updateNode) {
     return { classification: 'unknown', confidence: 'low' };
@@ -287,9 +281,55 @@ export function classifyLoop(node: SyntaxNode): LoopClassificationResult {
   const result = analyzeUpdatePattern(updateNode, conditionNode, initializerNode, bodyNode, isForLoopUpdate);
   if (result.classification === 'linear') {
     const boundVar = getBoundVariable(conditionNode);
-    if (boundVar) result.boundVar = boundVar;
+    if (boundVar) {
+      result.boundVar = boundVar;
+    } else if (hasOpaqueUpperBound(conditionNode)) {
+      // The step pattern is linear (i++) but the upper bound in the condition is an
+      // opaque expression that extractCompoundBoundNodes cannot prove structurally
+      // (e.g. for(i=0; i<getLimit(); i++) or for(i=0; i<n-m; i++)).
+      // The engine has proven the step direction but not the bound range.
+      // Correctness Before Guessing: return unknown rather than emitting a bare O(n).
+      return { classification: 'unknown', confidence: 'low' };
+    }
   }
   return result;
+}
+
+/**
+ * Returns true when the condition node is a binary_expression using a < or <=
+ * operator whose right-hand side cannot be structurally proven by extractCompoundBoundNodes.
+ *
+ * This is the precise trigger for the "opaque upper bound" case:
+ *   for(int i = 0; i < getLimit(); i++)   → RHS is bare call_expression (not obj.size())
+ *   for(int i = 0; i < n - m; i++)        → RHS is subtraction (rejected by extractor)
+ *   for(int i = 0; i < n * m; i++)        → RHS is multiplication (rejected)
+ *   for(int i = 0; i < (n > 0 ? n : m); i++) → RHS is ternary (rejected)
+ *
+ * It does NOT fire for:
+ *   for(int i = n; i > 0; i--)            → operator is >, not < / <=
+ *   while(n % i == 0)                     → operator is ==, not < / <=
+ *   for(int i = 0; i < n; i++)            → RHS is identifier, extractor succeeds
+ *   for(int i = 0; i < vec.size(); i++)   → RHS is obj.size(), extractor succeeds
+ */
+function hasOpaqueUpperBound(conditionNode: SyntaxNode | null): boolean {
+  if (!conditionNode) return false;
+  // Unwrap condition_clause wrapper (while/do nodes).
+  let cond = conditionNode;
+  if (cond.type === 'condition_clause') {
+    for (let i = 0; i < cond.childCount; i++) {
+      const ch = cond.child(i);
+      if (ch && ch.type !== '(' && ch.type !== ')') { cond = ch; break; }
+    }
+  }
+  if (cond.type !== 'binary_expression') return false;
+  const op = cond.childForFieldName('operator')?.type;
+  if (op !== '<' && op !== '<=') return false;
+  const right = cond.childForFieldName('right');
+  if (!right) return false;
+  // The extractor already handles identifier, number_literal, obj.size(), obj.length(), +, /.
+  // If it returns undefined for this RHS, the bound is opaque.
+  const extracted = extractCompoundBoundNodes(right);
+  return extracted === undefined;
 }
 
 export function getBoundVariable(conditionNode: SyntaxNode | null): string | string[] | undefined {

@@ -18,7 +18,6 @@ export class DecorationProvider implements vscode.Disposable {
       after: {
         margin: '0 0 0 2em',
         fontStyle: 'normal',
-        color: new vscode.ThemeColor('editorCodeLens.foreground'),
       },
       isWholeLine: false,
     });
@@ -32,10 +31,7 @@ export class DecorationProvider implements vscode.Disposable {
     const decorations: vscode.DecorationOptions[] = [];
 
     for (const fn of result.functions) {
-      // Suppress Unknown complexity or low-confidence results
-      if (fn.complexity === 'Unknown' || fn.confidence === 'low') {
-        continue;
-      }
+
 
       const line = fn.startLine;
       const lineLength = editor.document.lineAt(line).text.length;
@@ -44,15 +40,32 @@ export class DecorationProvider implements vscode.Disposable {
       const confidenceBadge = fn.confidence === 'medium' ? ' ~' : '';
       const label = `  ${fn.complexity}${confidenceBadge}`;
 
+      const color = this.getComplexityColor(fn.complexity);
+
       decorations.push({
         range,
         renderOptions: {
-          after: { contentText: label },
+          after: { 
+            contentText: label,
+            color: color
+          },
         },
       });
     }
 
     editor.setDecorations(this.decorationType, decorations);
+  }
+
+  private getComplexityColor(complexity: string): string {
+    if (complexity === 'Unknown') return '#F85149';
+    if (complexity === 'O(1)') return '#9CA3AF';
+    if (complexity.includes('log n') && !complexity.includes('n log') && !complexity.includes('^')) return '#00D9FF';
+    if (complexity === 'O(n)' || (complexity.includes('O(n)') && !complexity.includes('log') && !complexity.includes('^'))) return '#4CAF50';
+    if (complexity.includes('n log n') && !complexity.includes('^')) return '#3B82F6';
+    if (complexity.includes('^2') || complexity.includes('²')) return '#FFB020';
+    if (complexity.includes('^3') || complexity.includes('³') || complexity.match(/\^[4-9]/) || complexity.match(/[⁴-⁹]/)) return '#FB923C';
+    if (complexity.includes('^') || complexity.includes('2^')) return '#FB923C';
+    return '#4CAF50'; // Default to green for variables like O(V+E)
   }
 
   /**

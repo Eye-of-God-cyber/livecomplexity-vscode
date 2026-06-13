@@ -20,6 +20,6 @@ export function getSettings(): LiveComplexitySettings {
     debounceMs: config.get<number>('debounceMs', 300),
     showInlineAnnotations: config.get<boolean>('showInlineAnnotations', true),
     showHover: config.get<boolean>('showHover', true),
-    maxFileSizeKB: config.get<number>('maxFileSizeKB', 500),
+    maxFileSizeKB: config.get<number>('maxFileSizeKB', 100),
   };
 }

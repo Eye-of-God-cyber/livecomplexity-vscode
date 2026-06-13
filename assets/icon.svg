@@ -1,0 +1,36 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%">
+  <!-- O Symbol -->
+  <circle cx="380" cy="500" r="280" fill="none" stroke="#FFFFFF" stroke-width="48" stroke-linecap="round" />
+  <path d="M 280 660 Q 560 700 680 180" fill="none" stroke="#181818" stroke-width="88" stroke-linecap="round" />
+  <path d="M 280 660 Q 560 700 680 180" fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round" />
+  
+  <!-- AST Lines -->
+  <g stroke="#00D9FF" stroke-width="16" stroke-linecap="round">
+    <line x1="750" y1="360" x2="650" y2="460" />
+    <line x1="750" y1="360" x2="850" y2="560" />
+    <line x1="650" y1="460" x2="530" y2="560" />
+    <line x1="650" y1="460" x2="650" y2="660" />
+    <line x1="530" y1="560" x2="470" y2="740" />
+    <line x1="530" y1="560" x2="530" y2="740" />
+    <line x1="850" y1="560" x2="750" y2="660" />
+    <line x1="850" y1="560" x2="850" y2="740" />
+    <line x1="750" y1="660" x2="690" y2="740" />
+    <line x1="750" y1="660" x2="750" y2="740" />
+  </g>
+  
+  <!-- AST Nodes -->
+  <g fill="#FFFFFF" stroke="#00D9FF" stroke-width="16">
+    <circle cx="750" cy="360" r="28" />
+    <circle cx="650" cy="460" r="28" />
+    <circle cx="850" cy="560" r="28" />
+    <circle cx="530" cy="560" r="28" />
+    <circle cx="650" cy="660" r="24" />
+    <circle cx="470" cy="740" r="24" />
+    <circle cx="530" cy="740" r="24" />
+    <circle cx="750" cy="660" r="28" />
+    <circle cx="850" cy="740" r="24" />
+    <circle cx="690" cy="740" r="24" />
+    <circle cx="750" cy="740" r="24" />
+  </g>
+</svg>
