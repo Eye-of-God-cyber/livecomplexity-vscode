@@ -5,7 +5,14 @@
 
 Deterministic AST-based real-time Big-O time complexity analysis for C++.
 
-**Proven. Not Guessed.**
+**Proven, Not Guessed.**
+
+## Quick Links
+
+- 📦 VS Code Marketplace: https://marketplace.visualstudio.com/items?itemName=livecomplexity.livecomplexity
+- 💻 Install via CLI: `code --install-extension livecomplexity.livecomplexity`
+- 🐙 GitHub: https://github.com/Eye-of-God-cyber/livecomplexity-vscode
+- 🐞 Issues: https://github.com/Eye-of-God-cyber/livecomplexity-vscode/issues
 
 ## Current Scope
 
@@ -43,12 +50,22 @@ LiveComplexity derives Big-O time complexity directly from the abstract syntax t
 
 ## Installation
 
+### From the VS Code Marketplace
+
 1. Open VS Code.
 2. Go to the Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`).
-3. Search for "LiveComplexity".
-4. Click Install.
+3. Search for **LiveComplexity: Real-time Big-O Analysis**.
+4. Click **Install**.
 
+Or install directly from the Marketplace:
 
+https://marketplace.visualstudio.com/items?itemName=livecomplexity.livecomplexity
+
+### Via the VS Code CLI
+
+```bash
+code --install-extension livecomplexity.livecomplexity
+```
 
 ## Usage
 
