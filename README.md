@@ -1,7 +1,7 @@
 ![LiveComplexity](assets/readme-hero.png)
 
 
-![License](https://img.shields.io/github/license/Eye-of-God-cyber/livecomplexity-vscode)
+![License](https://img.shields.io/github/license/Eye-of-God-cyber/livecomplexity-vscode.svg)
 
 Deterministic AST-based real-time Big-O time complexity analysis for C++.
 
