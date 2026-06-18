@@ -2,7 +2,7 @@
   "name": "livecomplexity",
   "displayName": "LiveComplexity: Real-time Big-O Analysis",
   "description": "Real-time AST-based Big-O time complexity analysis for C++ with inline editor annotations and hover explanations.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "livecomplexity",
   "license": "MIT",
   "engines": {

@@ -418,8 +418,17 @@ export function extractCompoundBoundNodes(node: SyntaxNode): SyntaxNode[] | unde
         return extractCompoundBoundNodes(left);
       }
       return undefined;
+    } else if (op.type === '-') {
+      // identifier - number_literal: a constant offset is asymptotically irrelevant.
+      // n - k = Θ(n) for any fixed compile-time constant k.
+      // ONLY proven when the right-hand side is a number_literal node.
+      // n - m, n - getLimit(), n - (a+b), etc. fall through to undefined → Unknown.
+      if (right.type === 'number_literal') {
+        return extractCompoundBoundNodes(left);
+      }
+      return undefined;
     } else {
-      // Immediate rejection of -, *, %, logical, bitwise, etc.
+      // Immediate rejection of *, %, logical, bitwise, etc.
       return undefined;
     }
   }

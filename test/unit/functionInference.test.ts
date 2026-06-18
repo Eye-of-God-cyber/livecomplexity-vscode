@@ -234,7 +234,7 @@ describe('Function-Level Complexity Inference', () => {
       }
     `);
     expect(result.functions).toHaveLength(1);
-    expect(result.functions[0].complexity).toBe('O(r)');
+    expect(result.functions[0].complexity).toBe('O(n)');
     expect(result.functions[0].confidence).toBe('high');
   });
 });

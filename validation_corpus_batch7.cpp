@@ -3859,3 +3859,55 @@ int test1500(pair<int,int>& p, pair<int,int>& q) {
     // total_rows = n = p.first; total_cols = m = q.first;
     // NEST_ILOOP: n * m iterations, O(1) body => O(n*m)
 }
+
+// ─── CONSTANT-OFFSET SUBTRACTION FIX (identifier - number_literal) ───────────
+
+// test_sub1: O(n)
+// Classic n-1 upper bound. Constant offset is asymptotically irrelevant.
+int test_sub1(int n) {
+    int s = 0;
+    for (int i = 0; i < n - 1; i++) s++;
+    return s;
+}
+
+// test_sub2: O(n)
+// Larger constant offset. Same reasoning: n - 100 = Theta(n).
+int test_sub2(int n) {
+    int s = 0;
+    for (int i = 0; i < n - 100; i++) s++;
+    return s;
+}
+
+// test_sub3: O(m)
+// Symbolic variable preserved exactly despite constant offset.
+int test_sub3(int m) {
+    int s = 0;
+    for (int j = 0; j < m - 1; j++) s++;
+    return s;
+}
+
+// test_sub4: O(n * t)
+// Inner loop bounded by n-1, nested inside outer t loop.
+int test_sub4(int n, int t) {
+    int s = 0;
+    for (int i = 0; i < t; i++)
+        for (int j = 0; j < n - 1; j++) s++;
+    return s;
+}
+
+// test_sub5: Unknown
+// n - m: both sides are symbolic identifiers; bound is indeterminate.
+int test_sub5(int n, int m) {
+    int s = 0;
+    for (int i = 0; i < n - m; i++) s++;
+    return s;
+}
+
+// test_sub6: Unknown
+// n - getLimit6(): RHS is an opaque function call, not a number_literal.
+int getLimit6();
+int test_sub6(int n) {
+    int s = 0;
+    for (int i = 0; i < n - getLimit6(); i++) s++;
+    return s;
+}

@@ -115,6 +115,71 @@ describe('D5.2: Compound Symbolic Bounds', () => {
   });
 
 
+  // ─── CONSTANT-OFFSET SUBTRACTION (identifier - number_literal) ───────────
+
+  it('D5.2 POS: n - 1 — constant offset discarded, yields O(n)', async () => {
+    const code = `
+      void f(int n) {
+        for (int i = 0; i < n - 1; i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('O(n)');
+  });
+
+  it('D5.2 POS: n - 2 — larger constant offset discarded, yields O(n)', async () => {
+    const code = `
+      void f(int n) {
+        for (int i = 0; i < n - 2; i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('O(n)');
+  });
+
+  it('D5.2 POS: m - 1 — symbolic variable preserved exactly', async () => {
+    const code = `
+      void f(int m) {
+        for (int i = 0; i < m - 1; i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('O(m)');
+  });
+
+  it('D5.2 POS: i <= n - 1 — leq operator with constant offset', async () => {
+    const code = `
+      void f(int n) {
+        for (int i = 0; i <= n - 1; i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('O(n)');
+  });
+
+  it('D5.2 POS: v.size() - 1 — container size minus constant', async () => {
+    const code = `
+      void f(vector<int>& v) {
+        for (int i = 0; i < v.size() - 1; i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('O(v.size())');
+  });
+
+  it('D5.2 POS: nested n-1 inner, outer t — yields O(n * t)', async () => {
+    const code = `
+      void f(int n, int t) {
+        for (int i = 0; i < t; i++) {
+          for (int j = 0; j < n - 1; j++) {}
+        }
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('O(nt)');
+  });
+
+
   // ─── NEGATIVE TESTS (MUST REJECT AND FALLBACK) ────────────────────────────
 
   it('D5.2 NEG: n - m — subtraction rejected', async () => {
@@ -215,6 +280,37 @@ describe('D5.2: Compound Symbolic Bounds', () => {
     `;
     const result = await analyzeCode(code);
     expect(result).toBe('Unknown'); // bitwise OR bound is structurally unprovable
+  });
+
+  it('D5.2 NEG: n - m — variable subtraction remains Unknown', async () => {
+    const code = `
+      void f(int n, int m) {
+        for (int i = 0; i < n - m; i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('Unknown'); // m is identifier, not number_literal → unknown
+  });
+
+  it('D5.2 NEG: n - getLimit() — opaque call subtraction remains Unknown', async () => {
+    const code = `
+      int getLimit();
+      void f(int n) {
+        for (int i = 0; i < n - getLimit(); i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('Unknown'); // call_expression RHS, not number_literal → unknown
+  });
+
+  it('D5.2 NEG: n - (a + b) — complex subtraction remains Unknown', async () => {
+    const code = `
+      void f(int n, int a, int b) {
+        for (int i = 0; i < n - (a + b); i++) {}
+      }
+    `;
+    const result = await analyzeCode(code);
+    expect(result).toBe('Unknown'); // parenthesized expression RHS, not number_literal → unknown
   });
 
 });
